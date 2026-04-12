@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#06080a">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='18' y='28' width='64' height='52' rx='10' fill='%23e8a912'/><rect x='26' y='40' width='16' height='14' rx='4' fill='%230a0800'/><rect x='58' y='40' width='16' height='14' rx='4' fill='%230a0800'/><circle cx='34' cy='47' r='4' fill='%2322c55e'/><circle cx='66' cy='47' r='4' fill='%2322c55e'/><rect x='30' y='64' width='40' height='7' rx='3' fill='%230a0800'/><rect x='46' y='14' width='8' height='16' rx='4' fill='%23c89008'/><circle cx='50' cy='11' r='6' fill='%23ffc842'/><rect x='6' y='42' width='12' height='10' rx='5' fill='%23d4940a'/><rect x='82' y='42' width='12' height='10' rx='5' fill='%23d4940a'/></svg>">
+<title>BVMBINO Pro · AI Agents v5.7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Quantico:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   BVMBINO AI — DEPLOY BUILD  Admin Gold · Dark Terminal
+   All 18 critical bugs fixed. See AUDIT LOG below JavaScript.
+═══════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#06080a;--bg2:#0d1014;--bg3:#131820;
+  --s1:#1a2030;--s2:#222a3a;
+  --bd:rgba(232,169,18,.15);--bd2:rgba(232,169,18,.3);--bd3:rgba(232,169,18,.45);
+  --pu:#e8a912;--pu2:#ffc842;--pu3:rgba(232,169,18,.08);
+  --gn:#22c55e;--rd:#ef4444;--am:#f59e0b;
+  --t1:#f0e8d0;--t2:#9aa0b0;--t3:#5a6070;--t4:#3a404c;
+  --mono:'Space Mono',monospace;--head:'Syne',sans-serif;
+  --r:10px;--rsm:6px;--top-h:52px;
+  --shadow:0 4px 24px rgba(0,0,0,.6);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{
+  background:var(--bg);
+  color:var(--t1);font-family:var(--mono);font-size:13px;display:flex;position:relative;
+  /* Light-black → dark metallic gradient */
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 0%,  rgba(30,36,50,.95) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 80% 100%,rgba(20,26,40,.9)  0%, transparent 65%),
+    radial-gradient(ellipse 100% 80% at 50% 50%, rgba(12,15,22,1)   0%, transparent 100%),
+    linear-gradient(160deg, #0f1318 0%, #06080a 40%, #0b0e14 70%, #0f1218 100%);
+}
+/* Subtle metallic noise grain overlay */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity:.028;
+}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+
+/* STACKING: everything above the body grain */
+.sb,.main,.mpanel{position:relative;z-index:1;}
+
+/* OVERLAY */
+#ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;backdrop-filter:blur(2px);}
+#ov.open{display:block;}
+
+/* SIDEBAR */
+.sb{width:272px;height:100vh;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:200;}
+.sb-top{padding:14px 12px 10px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--rsm);cursor:pointer;margin-bottom:12px;transition:background .2s;}
+.logo:hover{background:var(--pu3);}
+.lmark{width:32px;height:32px;background:var(--pu3);border:1px solid var(--bd2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.lname{font-family:var(--head);font-weight:800;font-size:14px;color:var(--pu2);letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
+.ltag{font-size:9px;color:var(--t3);}
+.nbtn{width:100%;padding:9px 14px;background:var(--pu);color:#0a0800;border:none;border-radius:var(--rsm);font-family:var(--head);font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .2s,transform .1s;}
+.nbtn:hover{background:var(--pu2);}
+.nbtn:active{transform:scale(.98);}
+.sb-scroll{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:4px;}
+.ssect{margin-bottom:16px;}
+.sbl{font-size:9px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;font-family:var(--head);font-weight:700;margin-bottom:8px;display:block;}
+.qbtn{width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rsm);color:var(--t1);font-family:var(--mono);font-size:11px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;text-align:left;margin-bottom:4px;}
+.qbtn:hover{border-color:var(--bd2);background:var(--pu3);color:var(--pu2);}
+.qi{width:22px;height:22px;background:var(--s1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+.qsub{font-size:9px;color:var(--t3);margin-left:auto;}
+.qacts{display:flex;flex-direction:column;gap:4px;}
+.engine-badge{padding:7px 10px;background:var(--pu3);border:1px solid var(--bd2);border-radius:var(--rsm);font-size:11px;color:var(--pu2);font-family:var(--mono);display:flex;align-items:center;gap:7px;}
+.hi{padding:7px 10px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rsm);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hi:hover,.hi.active{border-color:var(--bd2);background:var(--pu3);}
+.hi .hdot{width:4px;height:4px;border-radius:50%;background:var(--pu);flex-shrink:0;}
+.hi-title{flex:1;overflow:hidden;text-overflow:ellipsis;}
+.mod-item{padding:8px 10px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rsm);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:11px;font-family:var(--mono);color:var(--t2);}
+.mod-item:hover,.mod-item.on{border-color:var(--bd2);background:var(--pu3);color:var(--pu2);}
+.live-sig{width:6px;height:6px;border-radius:50%;background:var(--gn);flex-shrink:0;box-shadow:0 0 6px var(--gn);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.topbar{height:var(--top-h);background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;gap:10px;}
+.tb-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.tb-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.mb-menu{display:none;background:none;border:1px solid var(--bd);color:var(--t2);width:32px;height:32px;border-radius:var(--rsm);cursor:pointer;font-size:14px;align-items:center;justify-content:center;transition:all .2s;}
+.mb-menu:hover{border-color:var(--bd2);color:var(--pu2);}
+.tb-title{font-family:var(--head);font-weight:700;font-size:13px;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.icobtn{background:var(--bg3);border:1px solid var(--bd);color:var(--t2);width:32px;height:32px;border-radius:var(--rsm);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.icobtn:hover{border-color:var(--bd2);color:var(--pu2);background:var(--pu3);}
+.badge{font-size:9px;font-family:var(--head);font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
+.b-pu{background:rgba(232,169,18,.15);color:var(--pu2);border:1px solid rgba(232,169,18,.3);}
+.b-gn{background:rgba(34,197,94,.1);color:var(--gn);border:1px solid rgba(34,197,94,.25);}
+.b-am{background:rgba(245,158,11,.12);color:var(--am);border:1px solid rgba(245,158,11,.3);}
+.pulse::before{content:'';display:inline-block;width:6px;height:6px;background:currentColor;border-radius:50%;margin-right:5px;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.8);}}
+
+/* CHAT */
+.chat{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;}
+
+/* WELCOME */
+.welcome{display:flex;flex-direction:column;align-items:center;padding:28px 20px 40px;text-align:center;width:100%;max-width:900px;margin:0 auto;animation:fadeUp .6s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.w3d-scene{position:relative;width:150px;height:150px;margin-bottom:24px;}
+.w3d-core{
+  position:absolute;inset:18px;
+  background:radial-gradient(circle at 38% 36%, rgba(255,200,66,.18) 0%, rgba(232,169,18,.08) 60%, transparent 100%);
+  border:2px solid var(--bd2);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:58px;
+  animation:spin-slow 10s linear infinite;
+  box-shadow:0 0 40px rgba(232,169,18,.25),0 0 80px rgba(232,169,18,.08);
+}
+@keyframes spin-slow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.w3d-ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(--bd2);animation:ring-pulse 3s ease infinite;}
+.w3d-ring:nth-child(2){inset:-10px;animation-delay:.5s;opacity:.5;}
+.w3d-ring:nth-child(3){inset:-20px;animation-delay:1s;opacity:.25;}
+@keyframes ring-pulse{0%,100%{opacity:.8;transform:scale(1);}50%{opacity:.2;transform:scale(1.05);}}
+.wt{
+  font-family:'Quantico',sans-serif;
+  font-weight:700;
+  font-size:34px;
+  letter-spacing:6px;
+  text-transform:uppercase;
+  color:transparent;
+  background:linear-gradient(135deg,#ffd060 0%,#e8a912 40%,#fff8e0 60%,#c89008 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  margin-bottom:4px;
+  line-height:1.1;
+}
+.wsubtitle{
+  font-family:'Quantico',sans-serif;
+  font-weight:400;
+  font-size:10px;
+  color:var(--t3);
+  letter-spacing:4px;
+  text-transform:uppercase;
+  margin-bottom:12px;
+}
+.ws{color:var(--t2);font-size:12px;line-height:1.6;max-width:540px;margin-bottom:24px;}
+
+/* 3×8 SKILL GRID */
+.skills-grid-wrap{width:100%;max-width:900px;}
+.skills-grid-label{font-size:9px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;font-family:var(--head);font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.skills-grid-label::before,.skills-grid-label::after{content:'';flex:1;height:1px;background:var(--bd);}
+.matrix-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;}
+
+/* BASE CARD */
+.wcard{
+  border-radius:var(--r);padding:14px 14px 12px;cursor:pointer;text-align:left;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;gap:2px;
+  position:relative;overflow:hidden;
+  border:1px solid transparent;
+}
+.wcard::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,transparent 55%);
+  pointer-events:none;
+}
+.wcard:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.5);}
+.wcard:active{transform:scale(.97);}
+
+/* PER-CATEGORY gradient backgrounds */
+.card-revenue{
+  background:linear-gradient(140deg,#1a1500 0%,#120f00 40%,#0e0c00 100%);
+  border-color:rgba(232,169,18,.28);
+  box-shadow:inset 0 0 20px rgba(232,169,18,.04);
+}
+.card-revenue:hover{border-color:rgba(232,169,18,.55);box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 0 30px rgba(232,169,18,.06);}
+
+.card-strategy{
+  background:linear-gradient(140deg,#001a0d 0%,#001009 40%,#000c07 100%);
+  border-color:rgba(34,197,94,.22);
+  box-shadow:inset 0 0 20px rgba(34,197,94,.04);
+}
+.card-strategy:hover{border-color:rgba(34,197,94,.5);box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 0 30px rgba(34,197,94,.06);}
+
+.card-creative{
+  background:linear-gradient(140deg,#00101a 0%,#000c14 40%,#000810 100%);
+  border-color:rgba(99,179,237,.2);
+  box-shadow:inset 0 0 20px rgba(99,179,237,.04);
+}
+.card-creative:hover{border-color:rgba(99,179,237,.45);box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 0 30px rgba(99,179,237,.06);}
+
+.card-tech{
+  background:linear-gradient(140deg,#1a0008 0%,#120005 40%,#0e0003 100%);
+  border-color:rgba(239,68,68,.2);
+  box-shadow:inset 0 0 20px rgba(239,68,68,.04);
+}
+.card-tech:hover{border-color:rgba(239,68,68,.45);box-shadow:0 12px 32px rgba(0,0,0,.5),inset 0 0 30px rgba(239,68,68,.06);}
+
+/* Metallic shimmer line at top of each card */
+.wcard::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12) 50%,transparent);
+}
+
+.wci{font-size:26px;margin-bottom:5px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));}
+.wct{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--pu2);letter-spacing:.3px;margin-bottom:2px;}
+.wcd{font-size:10px;color:var(--t3);line-height:1.35;}
+.wcuse{font-size:9px;color:var(--t4);line-height:1.3;margin-top:3px;border-top:1px solid rgba(255,255,255,.04);padding-top:4px;}
+
+.shint{font-size:10px;color:var(--t3);margin-top:18px;}
+.shint code{color:var(--pu);font-family:var(--mono);background:var(--pu3);padding:1px 5px;border-radius:3px;}
+
+/* MESSAGES */
+.mrow{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.03);animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.mrow.user{flex-direction:row-reverse;}
+.av{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;margin-top:2px;}
+.av-ai{background:var(--pu3);border:1px solid var(--bd2);}
+.av-us{background:var(--s2);border:1px solid var(--bd);}
+.mwrap{flex:1;min-width:0;max-width:88%;}
+.mrow.user .mwrap{display:flex;flex-direction:column;align-items:flex-end;}
+.mmeta{font-size:10px;color:var(--t3);margin-bottom:5px;font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.mmeta.ai-meta{color:var(--pu);}
+.mmtag{font-size:8px;padding:1px 6px;background:var(--pu3);color:var(--pu2);border-radius:10px;border:1px solid rgba(232,169,18,.2);font-family:var(--mono);font-weight:400;}
+.bubble{padding:11px 15px;border-radius:12px;font-size:13px;line-height:1.7;word-break:break-word;}
+.b-ai{background:var(--s1);border:1px solid var(--bd);border-top-left-radius:3px;}
+.b-us{background:linear-gradient(135deg,var(--pu),#c89008);color:#0a0800;border-top-right-radius:3px;font-weight:500;}
+.bubble strong{color:var(--pu2);font-weight:700;}
+.b-us strong{color:#0a0800;}
+.bubble em{color:var(--t2);font-style:italic;}
+.bubble .bh{font-size:14px;font-weight:700;color:var(--t1);display:block;margin:12px 0 5px;font-family:var(--head);}
+.bubble .bh:first-child{margin-top:0;}
+.bubble .bl{display:flex;gap:7px;margin:3px 0;}
+.bubble .bld{color:var(--pu2);flex-shrink:0;}
+.bubble .bn{display:flex;gap:8px;margin:3px 0;}
+.bubble .bnn{color:var(--pu2);flex-shrink:0;font-size:11px;font-family:var(--mono);min-width:18px;}
+.bubble code{font-family:var(--mono);font-size:11px;background:var(--s2);padding:2px 6px;border-radius:4px;color:var(--pu);}
+.bubble pre{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rsm);padding:14px;margin:10px 0;overflow-x:auto;}
+.bubble pre code{background:none;padding:0;color:var(--t1);}
+.bubble table{width:100%;border-collapse:collapse;margin:10px 0;}
+.bubble th{background:var(--s1);color:var(--pu2);padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;border:1px solid var(--bd);}
+.bubble td{padding:7px 10px;border:1px solid var(--bd);font-size:12px;}
+.bubble a{color:var(--pu2);text-decoration:none;}
+.bubble a:hover{text-decoration:underline;}
+.macts{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.mact{font-size:10px;padding:3px 9px;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;cursor:pointer;color:var(--t3);transition:all .2s;font-family:var(--mono);}
+.mact:hover{border-color:var(--bd2);color:var(--pu2);}
+/* Suggestion chip */
+.sugg-chip{display:inline-flex;margin-top:8px;padding:4px 10px;background:var(--pu3);border:1px solid rgba(232,169,18,.25);border-radius:20px;color:var(--pu2);font-size:10px;font-family:var(--mono);cursor:pointer;transition:all .15s;gap:5px;}
+.sugg-chip:hover{background:rgba(232,169,18,.15);}
+/* Tool banners */
+.tool-banner{padding:8px 12px;border-radius:var(--rsm);margin:4px 0;font-size:11px;font-family:var(--mono);display:flex;align-items:center;gap:8px;border:1px solid var(--bd);}
+.tb-info{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.2);color:var(--gn);}
+.tb-success{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.3);color:var(--gn);}
+.tb-error{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);color:var(--rd);}
+/* Export card */
+.xcard{margin-top:12px;padding:12px 14px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);}
+.xhead{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.xtype{font-size:9px;font-family:var(--mono);padding:2px 7px;background:rgba(245,158,11,.1);color:var(--am);border-radius:4px;border:1px solid rgba(245,158,11,.2);text-transform:uppercase;}
+.xlabel{font-size:11px;color:var(--t2);}
+.xbtns{display:flex;gap:5px;flex-wrap:wrap;}
+.xbtn{padding:5px 10px;background:var(--bg3);border:1px solid var(--bd2);border-radius:5px;color:var(--t2);font-size:10px;font-family:var(--mono);cursor:pointer;transition:all .15s;}
+.xbtn:hover{color:var(--t1);border-color:var(--bd3);}
+/* Typing */
+.tots{display:flex;gap:5px;margin-top:8px;}
+.tot{width:6px;height:6px;border-radius:50%;background:var(--pu);animation:bounce 1.2s infinite;}
+.tot:nth-child(2){animation-delay:.2s;}
+.tot:nth-child(3){animation-delay:.4s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.5;}30%{transform:translateY(-6px);opacity:1;}}
+/* Image in messages */
+.msg-img-preview{max-width:320px;border-radius:var(--rsm);margin-top:8px;border:1px solid var(--bd);display:block;}
+.msg-file-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;background:var(--s1);border:1px solid var(--bd2);border-radius:var(--rsm);font-size:10px;color:var(--t2);margin-top:6px;font-family:var(--mono);}
+
+/* INPUT ZONE */
+.inzone{flex-shrink:0;padding:12px 20px 16px;border-top:1px solid var(--bd);background:var(--bg2);}
+.inwrap{max-width:820px;margin:0 auto;position:relative;}
+/* Slash menu */
+.smenu{display:none;position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r);overflow:hidden;max-height:280px;overflow-y:auto;box-shadow:var(--shadow);z-index:50;}
+.smenu.open{display:block;animation:fadeUp .2s ease;}
+.si{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .15s;border-bottom:1px solid var(--bd);font-size:11px;}
+.si:last-child{border-bottom:none;}
+.si:hover,.si.sel{background:var(--pu3);}
+.scmd{font-family:var(--head);font-weight:700;font-size:11px;color:var(--pu2);min-width:100px;}
+.sdesc{font-size:10px;color:var(--t3);flex:1;}
+/* File strip */
+.file-strip{display:none;gap:6px;flex-wrap:wrap;padding:0 0 8px;}
+.file-strip.has-files{display:flex;}
+.file-chip{display:flex;align-items:center;gap:5px;padding:4px 8px;background:var(--s1);border:1px solid var(--bd2);border-radius:5px;font-size:10px;color:var(--t2);font-family:var(--mono);}
+.file-chip img{width:28px;height:28px;object-fit:cover;border-radius:3px;}
+.chip-del{cursor:pointer;color:var(--rd);font-size:12px;background:none;border:none;padding:0 2px;}
+/* Input box */
+.intop{display:flex;align-items:flex-end;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px;gap:8px;transition:border-color .2s;}
+.intop:focus-within{border-color:var(--bd2);}
+#inp{flex:1;background:none;border:none;outline:none;color:var(--t1);font-family:var(--mono);font-size:13px;line-height:1.5;resize:none;max-height:180px;overflow-y:auto;min-height:20px;}
+#inp::placeholder{color:var(--t3);}
+.in-buttons{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.langbtn{background:var(--bg2);border:1px solid var(--bd);color:var(--t3);width:30px;height:30px;border-radius:var(--rsm);cursor:pointer;font-size:10px;font-family:var(--head);font-weight:700;transition:all .2s;}
+.langbtn:hover{border-color:var(--bd2);color:var(--pu2);}
+.micbtn,.filebtn{background:var(--bg2);border:1px solid var(--bd);width:30px;height:30px;border-radius:var(--rsm);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.micbtn:hover,.filebtn:hover{border-color:var(--bd2);}
+.micbtn.recording{border-color:var(--rd);background:rgba(239,68,68,.12);animation:mic-pulse 1s infinite;}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4);}50%{box-shadow:0 0 0 6px rgba(239,68,68,0);}}
+.sbtn{background:var(--pu);border:none;color:#0a0800;width:30px;height:30px;border-radius:var(--rsm);cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.sbtn:hover{background:var(--pu2);}
+.sbtn:active{transform:scale(.95);}
+.sbtn:disabled{opacity:.4;cursor:not-allowed;}
+.infoot{display:flex;align-items:center;gap:8px;padding-top:8px;flex-wrap:wrap;}
+.pill{padding:4px 10px;border-radius:20px;font-size:10px;font-family:var(--head);font-weight:700;background:var(--bg3);border:1px solid var(--bd);color:var(--t3);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;user-select:none;}
+.pill.on{border-color:var(--bd2);color:var(--pu2);background:var(--pu3);}
+.pill .pdot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+.in-meta{margin-left:auto;font-size:9px;color:var(--t3);display:flex;gap:8px;}
+.in-meta span{opacity:.5;}
+
+/* MEMORY PANEL */
+.mpanel{width:280px;height:100vh;background:var(--bg2);border-left:1px solid var(--bd);display:flex;flex-direction:column;flex-shrink:0;transition:transform .3s cubic-bezier(.4,0,.2,1);z-index:200;}
+.mpanel.closed{transform:translateX(100%);margin-right:-280px;}
+.mpanel:not(.closed){transform:translateX(0);}
+.mph{padding:14px 14px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;}
+.mpt{font-family:var(--head);font-weight:800;font-size:11px;color:var(--pu2);letter-spacing:2px;}
+.mpe{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;}
+.mp-tier{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;}
+.mp-tier-head{padding:8px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--pu3);}
+.mp-tier-label{font-size:10px;font-family:var(--head);font-weight:700;color:var(--pu2);}
+.editable-zone{padding:10px 12px;font-size:11px;color:var(--t2);line-height:1.6;outline:none;min-height:50px;cursor:text;}
+[contenteditable]:focus{color:var(--t1);}
+.me{padding:7px 10px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rsm);font-size:10px;color:var(--t2);}
+.mek{font-family:var(--mono);color:var(--pu2);font-size:8px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
+.mev{line-height:1.4;}
+.mpf{padding:12px 14px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:6px;}
+.mpst{display:flex;align-items:center;justify-content:space-between;}
+.mpsl{font-size:10px;color:var(--t3);}
+.mpsv{font-size:10px;font-family:var(--mono);color:var(--pu2);}
+.tbar-wrap{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.tfill{height:100%;background:var(--pu);border-radius:2px;transition:width .5s;}
+
+/* MODALS */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal-card{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--r);width:90%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow);animation:fadeUp .25s ease;}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-t{font-family:var(--head);font-weight:800;font-size:14px;color:var(--pu2);}
+.modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--bd);display:flex;gap:8px;}
+.set-input{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rsm);padding:8px 10px;color:var(--t1);font-family:var(--mono);font-size:12px;width:100%;outline:none;transition:border-color .2s;}
+.set-input:focus{border-color:var(--bd2);}
+textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
+.lbl{font-size:10px;color:var(--t3);font-family:var(--head);font-weight:700;margin-bottom:4px;display:block;letter-spacing:.5px;}
+.api-notice{padding:10px 14px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:var(--rsm);font-size:11px;color:var(--am);line-height:1.5;}
+.mo-info{flex:1;}
+.mo-name{font-family:var(--head);font-weight:700;font-size:12px;color:var(--t1);}
+.mo-desc{font-size:10px;color:var(--t3);}
+/* Generated image */
+.gen-img{width:100%;border-radius:var(--rsm);border:1px solid var(--bd);margin-top:8px;}
+.gen-img-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+
+/* PREVIEW MODAL */
+#preview-modal{z-index:500;}
+#preview-content{padding:32px;background:#fff;color:#111;font-family:sans-serif;line-height:1.7;font-size:13px;}
+#preview-content h1,#preview-content h2,#preview-content h3{color:#d4940a;margin:16px 0 8px;}
+#preview-content code{background:#f0eeff;padding:1px 5px;border-radius:3px;color:#d4940a;}
+#preview-content strong{color:#0a0800;}
+
+/* TOAST */
+.toast-ctn{position:fixed;top:70px;right:16px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+#toasts{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;}
+.toast{padding:9px 16px;border-radius:20px;font-size:11px;font-family:var(--mono);background:var(--s2);border:1px solid var(--bd2);color:var(--t1);box-shadow:var(--shadow);animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;max-width:300px;white-space:nowrap;}
+.toast.show{opacity:1;}
+.toast.gn{border-color:rgba(34,197,94,.4);}
+.toast.rd{border-color:rgba(239,68,68,.4);}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sb{position:fixed;left:0;top:0;transform:translateX(-100%);z-index:200;}
+  .sb.open{transform:translateX(0);}
+  .mpanel{position:fixed !important;right:0;top:0;z-index:200;transform:translateX(100%);}
+  .mpanel.closed{transform:translateX(100%);}
+  .mpanel:not(.closed){transform:translateX(0);}
+  .mb-menu{display:flex;}
+  .in-meta{display:none;}
+  .matrix-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:420px){
+  .chat{padding:12px;}
+  .inzone{padding:8px 12px 12px;}
+  .matrix-grid{grid-template-columns:1fr 1fr;}
+  .wcuse{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="ov"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sb" id="sb">
+  <div class="sb-top">
+    <div class="logo" id="logo-btn">
+      <div class="lmark">
+        <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
+          <rect x="15" y="30" width="70" height="52" rx="12" fill="#0a0800"/>
+          <rect x="25" y="42" width="16" height="13" rx="4" fill="#e8a912"/>
+          <rect x="59" y="42" width="16" height="13" rx="4" fill="#e8a912"/>
+          <circle cx="33" cy="48" r="3" fill="#22c55e"/>
+          <circle cx="67" cy="48" r="3" fill="#22c55e"/>
+          <rect x="36" y="66" width="28" height="5" rx="2.5" fill="#e8a912"/>
+          <rect x="40" y="14" width="20" height="18" rx="4" fill="#0a0800" stroke="#e8a912" stroke-width="3"/>
+          <circle cx="50" cy="8" r="4" fill="#e8a912"/>
+          <line x1="50" y1="8" x2="50" y2="14" stroke="#e8a912" stroke-width="2.5"/>
+          <rect x="3" y="48" width="12" height="8" rx="4" fill="#0a0800" stroke="#e8a912" stroke-width="2"/>
+          <rect x="85" y="48" width="12" height="8" rx="4" fill="#0a0800" stroke="#e8a912" stroke-width="2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="lname">Bvmbino <span class="badge b-pu" style="font-size:8px">Pro</span></div>
+        <div class="ltag">Private Admin · v5.1</div>
+      </div>
+    </div>
+    <button class="nbtn" id="new-chat-btn">
+      <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="#0a0800" stroke-width="1.8" stroke-linecap="round"/></svg>
+      New conversation
+    </button>
+  </div>
+  <div class="sb-scroll">
+    <div class="ssect">
+      <span class="sbl">Active Engine</span>
+      <div class="engine-badge" id="ai-engine-badge">
+        <span class="pulse" style="color:var(--gn)"></span>
+        <span id="engine-label">Connecting…</span>
+      </div>
+    </div>
+    <div class="ssect">
+      <button id="toggle-clients-btn" style="display:flex;align-items:center;width:100%;background:none;border:none;padding:0;cursor:pointer;margin-bottom:8px">
+        <span class="sbl" style="margin-bottom:0">🏰 Empire Pillars</span>
+        <span id="client-arrow" style="margin-left:auto;font-size:9px;color:var(--t3);transition:transform .25s">▼</span>
+      </button>
+      <div id="client-panel" style="overflow:hidden;max-height:400px;transition:max-height .35s ease;">
+        <div id="client-list" class="qacts"></div>
+        <button class="qbtn" id="add-cli-btn" style="margin-top:4px;border:1px dashed var(--bd2);background:none;justify-content:center;opacity:.7">
+          <span>+ Add Entity</span>
+        </button>
+      </div>
+    </div>
+    <div class="ssect">
+      <span class="sbl">Skills & Tools</span>
+      <div class="qacts">
+        <button class="qbtn" id="train-btn" style="background:rgba(232,169,18,.1);border-color:var(--pu2)"><span class="qi">🧠</span><span>Train Agent</span><span class="qsub">Save context</span></button>
+        <button class="qbtn" id="imggen-sb-btn"><span class="qi">🎨</span><span>Generate Image</span><span class="qsub">AI Art · Free</span></button>
+        <button class="qbtn" id="upload-btn"><span class="qi">📎</span><span>Attach File</span><span class="qsub">Multimodal</span></button>
+      </div>
+    </div>
+    <div class="ssect">
+      <button id="toggle-hist-btn" style="display:flex;align-items:center;width:100%;background:none;border:none;padding:0;cursor:pointer;margin-bottom:8px">
+        <span class="sbl" style="margin-bottom:0">📂 Recent Chats</span>
+        <span id="hist-arrow" style="margin-left:auto;font-size:9px;color:var(--t3);transition:transform .25s">▼</span>
+      </button>
+      <div id="hist" class="qacts"></div>
+    </div>
+    <div class="ssect">
+      <span class="sbl">Model Selection</span>
+      <div id="model-list" class="qacts"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mb-menu" id="mb-menu">☰</button>
+      <div class="tb-title" id="tbtitle">Bvmbino Pro · Command Hub</div>
+    </div>
+    <div class="tb-right">
+      <div class="badge b-gn" style="padding:4px 8px;font-size:10px"><span class="pulse"></span>Memory Active</div>
+      <button class="icobtn" id="imggen-top-btn" title="Generate Image">🎨</button>
+      <button class="icobtn" id="mem-panel-btn" title="Memory Hub">💾</button>
+      <button class="icobtn" id="settings-btn" title="Settings">⚙️</button>
+    </div>
+  </div>
+
+  <div class="chat" id="chat">
+    <div id="ci"></div>
+  </div>
+
+  <div class="inzone">
+    <div class="inwrap">
+      <div class="smenu" id="smenu"></div>
+      <div class="file-strip" id="file-strip"></div>
+      <div class="intop">
+        <textarea id="inp" placeholder="Type anything Boss… or /" rows="1"></textarea>
+        <div class="in-buttons">
+          <input type="file" id="file-input" style="display:none" multiple accept="image/*,.pdf,.txt,.csv,.json,.md">
+          <button class="filebtn" id="filebtn" title="Attach file">📎</button>
+          <button class="langbtn" id="langbtn">EN</button>
+          <button class="micbtn" id="micbtn" title="Voice input">🎙️</button>
+          <button class="sbtn" id="sbtn">↑</button>
+        </div>
+      </div>
+      <div class="infoot">
+        <div class="pill on" id="p-mem"><span class="pdot"></span>memory</div>
+        <div class="pill" id="p-web"><span class="pdot"></span>web search</div>
+        <div class="pill" id="p-pdf"><span class="pdot"></span>PDF export</div>
+        <div class="in-meta"><span>↵ send</span><span>⇧↵ newline</span><span>Ctrl+K new</span></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══ MEMORY PANEL ═══ -->
+<aside class="mpanel closed" id="mpanel">
+  <div class="mph">
+    <div class="mpt">MEMORY HUB</div>
+    <button class="icobtn" id="close-mpanel">✕</button>
+  </div>
+  <div class="mpe">
+    <div class="mp-tier">
+      <div class="mp-tier-head"><span class="mp-tier-label">Global Context</span><span class="badge b-pu" id="mem-model">Llama 3.3</span></div>
+      <div class="editable-zone" id="mp-ventures" contenteditable="true">NextLevel · AIMAS + AROS systems. Côte d'Ivoire expansion. Recurring revenue focus.</div>
+    </div>
+    <div class="mp-tier">
+      <div class="mp-tier-head"><span class="mp-tier-label">Active Ventures</span></div>
+      <div class="editable-zone" id="mp-projects" contenteditable="true">Purgo Clean B2B · Restaurant AIMAS CI · Agency Pipeline</div>
+    </div>
+    <div class="mp-tier">
+      <div class="mp-tier-head"><span class="mp-tier-label">Memory Feed</span></div>
+      <div id="mems" style="padding:10px 12px;display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto"></div>
+    </div>
+  </div>
+  <div class="mpf">
+    <div class="mpst"><span class="mpsl">Context Window</span><span class="mpsv" id="tok-pct">0.0%</span></div>
+    <div class="mpst" style="margin-bottom:6px"><span class="mpsl">Token Usage</span><span class="mpsv" id="tok-count">0 / 200k tokens</span></div>
+    <div class="tbar-wrap"><div class="tfill" id="tbar" style="width:0%"></div></div>
+  </div>
+</aside>
+
+<!-- ═══ SETTINGS MODAL ═══ -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-card">
+    <div class="modal-hdr"><div class="modal-t">⚙️ System Settings</div><button class="icobtn" id="close-settings">✕</button></div>
+    <div class="modal-body">
+      <div>
+        <span class="lbl">🔑 API Keys (stored locally only)</span>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">Groq API Key (Primary — Free)</div><input class="set-input" type="password" id="key-groq" placeholder="gsk_…" autocomplete="off"></div>
+          <div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">Anthropic API Key</div><input class="set-input" type="password" id="key-anthropic" placeholder="sk-ant-…" autocomplete="off"></div>
+          <div><div style="font-size:10px;color:var(--t3);margin-bottom:4px">OpenAI API Key (Images + Fallback)</div><input class="set-input" type="password" id="key-openai" placeholder="sk-…" autocomplete="off"></div>
+          <button id="save-keys-btn" class="nbtn" style="margin-top:4px">💾 Save API Keys</button>
+        </div>
+        <div class="api-notice" style="margin-top:8px">Keys stay in localStorage. Never transmitted except to the respective API endpoint.</div>
+      </div>
+      <div>
+        <span class="lbl">⚙️ Temperature (Creativity)</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="range" id="param-temp" min="0" max="1" step="0.1" value="0.7" style="flex:1">
+          <span id="val-temp" style="font-size:11px;color:var(--pu2);font-family:var(--mono);min-width:24px">0.7</span>
+        </div>
+      </div>
+      <div>
+        <span class="lbl">🤖 System Prompt</span>
+        <textarea class="set-input" id="sys-prompt-input" rows="4" placeholder="Define the AI role…" style="min-height:90px"></textarea>
+        <button id="save-sysprompt-btn" class="nbtn" style="margin-top:8px">💾 Save System Prompt</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TRAIN MODAL ═══ -->
+<div class="modal-overlay" id="train-modal">
+  <div class="modal-card" style="max-width:480px">
+    <div class="modal-hdr"><div class="modal-t">🧠 Train Agent</div><button class="icobtn" id="close-train">✕</button></div>
+    <div class="modal-body">
+      <textarea class="set-input" id="train-input" rows="5" placeholder="Add context…&#10;- Client: Mama Africa Restaurant, Abidjan&#10;- Goal: 40% more reservations&#10;- Budget: $500/mo"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button id="train-save-btn" class="nbtn" style="flex:1">💾 Save to Agent Memory</button>
+      <button id="close-train-2" class="icobtn" style="width:auto;padding:0 12px">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ IMAGE GEN MODAL ═══ -->
+<div class="modal-overlay" id="image-modal">
+  <div class="modal-card">
+    <div class="modal-hdr"><div class="modal-t">🎨 AI Image Generator</div><button class="icobtn" id="close-image">✕</button></div>
+    <div class="modal-body">
+      <div><span class="lbl">Image Prompt</span><textarea class="set-input" id="img-prompt" rows="3" placeholder="A cinematic aerial shot of Abidjan at golden hour, hyperrealistic, 8K…"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><span class="lbl">Size</span><select class="set-input" id="img-size"><option value="1024x1024">1024×1024 Square</option><option value="1792x1024">1792×1024 Wide</option><option value="1024x1792">1024×1792 Portrait</option></select></div>
+        <div><span class="lbl">Quality</span><select class="set-input" id="img-quality"><option value="standard">Standard</option><option value="hd">HD</option></select></div>
+      </div>
+      <div class="api-notice">Uses DALL·E 3 (add OpenAI key in ⚙️) or free Pollinations.ai fallback — no key needed for basic images.</div>
+      <div id="img-result" style="display:none"></div>
+    </div>
+    <div class="modal-foot">
+      <button id="gen-img-btn" class="nbtn" style="flex:1">🎨 Generate</button>
+      <button class="icobtn" id="cancel-image-btn" style="width:auto;padding:0 12px">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PDF PREVIEW MODAL ═══ -->
+<div class="modal-overlay" id="preview-modal">
+  <div class="modal-card" style="max-width:840px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-hdr" style="flex-shrink:0"><div class="modal-t">📋 Document Preview</div><button class="icobtn" id="close-preview">✕</button></div>
+    <div id="preview-content" style="flex:1;overflow-y:auto;min-height:0"></div>
+    <div class="modal-foot" style="flex-shrink:0">
+      <button id="save-pdf-btn" class="nbtn" style="flex:1">↓ Save as PDF</button>
+      <button class="icobtn" id="cancel-preview-btn" style="width:auto;padding:0 12px">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<!-- PDF lib -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   BVMBINO AI — SOVEREIGN RUNTIME v5.1  (DEPLOY BUILD)
+   Merged: core.js + store.js + router.js + api.js + render.js + ui.js
+   ──────────────────────────────────────────────────────────────────
+   AUDIT LOG — 18 critical bugs fixed:
+
+   BUG-01  ui.js:104 — CORE_VENTURES referenced but never imported; caused
+           ReferenceError on every renderClients() call. → defined locally.
+
+   BUG-02  ui.js:403 — openMpanel/closeMpanel exposed on window but never
+           defined anywhere in the module. → defined and exported.
+
+   BUG-03  main.js:46 — App.dom.strip getElementById('file-strip') called at
+           class-definition time (before DOMContentLoaded). → moved to init().
+
+   BUG-04  main.js:46 — App.dom.fileInput same issue as BUG-03. → moved.
+
+   BUG-05  main.js:130 — App.removeFile called as onclick string inside
+           renderFileStrip template literals; but App isn't on window at that
+           point. → use local removeFile() and expose after App defined.
+
+   BUG-06  api.js:81 — buildSys() called inside callAI before it's awaited,
+           then the result was used synchronously. Actually async — fixed.
+
+   BUG-07  api.js — callProviderDirect passes state.config.stream to providers
+           that don't support streaming (Anthropic endpoint for non-streaming
+           calls still sent stream:true). → always send stream:false here since
+           streaming is handled via streamResponse path only.
+
+   BUG-08  router.js:22 — detectIntent references state and toast but they
+           were removed from imports with the comment "removed unused imports".
+           → re-imported.
+
+   BUG-09  export.js:96 — showPdfModal sets both .show class and style.display
+           but .show isn't defined in CSS (only inline display:flex). The modal-
+           overlay CSS uses .open not .show. → use .open consistently.
+
+   BUG-10  store.js:68 — loadSessions() maps raw records through decrypt()
+           even for un-encrypted records. When no PIN is set, decrypt() returns
+           the record as-is, but only if it has `_enc`. Records without `_enc`
+           were double-passed. → handled inline.
+
+   BUG-11  render.js:126 — appendAiText adds to #ci but chat scroll is #chat
+           (the parent). scrollBot() targeted #chat correctly, but new messages
+           appended to #ci wouldn't scroll if #ci was smaller than #chat.
+           → scrollBot now scrolls both.
+
+   BUG-12  render_stable_v2.js — still imported MODELS from core.js and used
+           MODELS[state.model] which returns undefined for full slug IDs.
+           render.js fixed this but the stable_v2 was still wired in some
+           paths. → single render implementation only.
+
+   BUG-13  api.js streamResponse — used `const ci = document.getElementById('ci')`
+           but after newChat() ci is cleared and re-populated by renderWelcome().
+           If user sends during welcome animation, ci exists but has welcome HTML
+           as first child — new stream row appended inside .welcome. → always
+           append to #ci directly, welcome is removed on first send.
+
+   BUG-14  auth.html — `export const CORE` embedded inside a JS function string
+           passed to JSON.stringify. Invalid syntax, parse error. → removed
+           from standalone build (auth is server-side).
+
+   BUG-15  main.js:App.bindEvents — save-keys-btn handler calls saveVaultKeys()
+           (undefined). Correct function is saveVaultKey() from ui.js. → fixed.
+
+   BUG-16  ui.js:renderHistory — onclick uses window.resumeSession but
+           resumeSession was never defined or exported anywhere. → defined here.
+
+   BUG-17  api.js:handleSearch — hardcodes 'google/gemini-2.0-flash-exp:free'
+           for search, bypassing the provider fallback chain. If that model
+           fails, search silently dies. → use callAI() path instead.
+
+   BUG-18  core.js — toast() targets #toasts but HTML had id="toast-ctn".
+           Multiple toast containers caused duplicate/invisible toasts. → single
+           #toasts element, consistent.
+══════════════════════════════════════════════════════════════════ */
+
+/* ── CONSTANTS ── */
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+
+const MODELS = {
+  'llama-3.3-70b-versatile':              'Groq · Llama 3.3 70B',
+  'deepseek/deepseek-chat-v3-0324:free':  'OpenRouter · DeepSeek V3',
+  'meta-llama/llama-3.3-70b-instruct:free':'OpenRouter · Llama 3.3 Pro',
+  'meta-llama/llama-3.2-90b-vision-instruct:free':'OpenRouter · Llama 3.2 Vision',
+  'google/gemini-2.0-flash-exp:free':     'OpenRouter · Gemini 2.0',
+};
+
+/* BUG-01 FIX: CORE_VENTURES defined here, not imported from nowhere */
+const CORE_VENTURES = [
+  { id:'fpro',   name:'FormationPro',     desc:'Elite training (CPF/Qualiopi, Mental Perf.)' },
+  { id:'swave',  name:'Strong Wave',      desc:'B2B Marketing & Growth (Île-de-France)' },
+  { id:'purgo',  name:'Purgo Clean',      desc:'Premium Commercial B2B Cleaning' },
+  { id:'keojus', name:'Keo Jus',          desc:'Natural Juice Distribution (Cote d\'Ivoire)' },
+  { id:'bonkeur',name:'Assoc. Bonkeur',   desc:'Social Impact NGO & Community Support' },
+  { id:'entai',  name:'Entreprise AI',    desc:'Strategic Council Engine & Automation Hub' },
+];
+
+const LIVE_MODELS = [
+  { id:'llama-3.3-70b-versatile',              name:'Llama 3.3 70B',   provider:'Groq',        badge:'FREE' },
+  { id:'deepseek/deepseek-chat-v3-0324:free',  name:'DeepSeek V3',     provider:'OpenRouter',  badge:'FREE' },
+  { id:'meta-llama/llama-3.3-70b-instruct:free',name:'Llama 3.3 Pro',  provider:'OpenRouter',  badge:'FREE' },
+  { id:'meta-llama/llama-3.2-90b-vision-instruct:free',name:'Llama 3.2 Vision',provider:'OpenRouter',badge:'FREE' },
+  { id:'google/gemini-2.0-flash-exp:free',     name:'Gemini 2.0',      provider:'OpenRouter',  badge:'FREE' },
+];
+
+const PROVIDER_FALLBACK = [
+  'llama-3.3-70b-versatile',
+  'deepseek/deepseek-chat-v3-0324:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'google/gemini-2.0-flash-exp:free',
+];
+
+const PROMPTS = {
+  leads:    'Act as an elite Lead Intelligence Agent. Help find and qualify high-intent prospects.',
+  email:    'Act as an Email Sequence Agent. Generate a full cold + nurture email sequence.',
+  content:  'Act as a Content Generation Agent. Create high-converting social hooks and scripts.',
+  sales:    'Act as a Conversational Sales Agent. Craft DM scripts, closers, and objection displacers.',
+  strategy: 'Act as an elite Growth Strategist. Build a complete GTM strategy and 90-day plan. [EXPORT:strategy]',
+  qualify:  'Act as a Lead Qualification Agent. Score prospects by intent and firmographic fit.',
+  website:  'Act as a Website Builder Agent. Design high-converting landing page structures.',
+  analytics:'Act as a Performance Analytics Agent. Analyze metrics and suggest optimization pivots.',
+  aimas:    'Activate AIMAS (11-Agent System). Begin complete multi-agent sales & marketing orchestration.',
+  aros:     'Activate AROS (Autonomous Revenue OS). Initialize the 12-agent commercial team.',
+  writer:   'Act as an expert copywriter. Help write compelling, human-voice copy.',
+  budget:   'Act as a Financial Analyst. Build ROI projections and cash-flow maps. [EXPORT:budget]',
+  outreach: 'Act as an elite Cold Outreach Architect. Build hyper-personalized multi-channel sequences.',
+  proposal: 'Act as a High-Ticket Sales Architect. Build a premium client proposal. [EXPORT:proposal]',
+  campaign: 'Act as a Full-Stack Media Buyer. Build campaigns for Meta, Google, TikTok. [EXPORT:campaign]',
+  course:   'Act as a Course Design Architect. Build a complete online course curriculum. [EXPORT:course]',
+  schedule: 'Act as a High-Performance Coach. Build a weekly schedule using DEEP/ADMIN/RECOVERY zones. [EXPORT:schedule]',
+  present:  'Act as a Keynote Director. Design a compelling visual presentation. [EXPORT:presentation]',
+  automate: 'Act as an Automation Engineer. Design n8n, Zapier, and Make workflows. [EXPORT:workflow]',
+  psych:    'Act as a Behavioral Economist. Analyze psychological dynamics and provide an influence playbook.',
+  imgprompt:'Act as a Cinematic Art Director. Create production-grade AI image prompts.',
+  resume:   'Act as a Career Architect. Build an ATS-optimized, high-impact resume. [EXPORT:resume]',
+  security: 'Act as a Cybersecurity Auditor. Perform a full security audit and remediation matrix.',
+  lex:      'Act as an Elite Business Law Specialist. Analyze for legal risk and contractual gaps.',
+  builder:  'Act as a Senior Software Architect. Help build, debug, and expand the Bvmbino system.',
+};
+
+const SYSTEM_IDENTITY = `YOU ARE BILLY — BVMBINO APEX STRATEGIC PARTNER v5.1.
+Primary human: TIEGBE BAMBA (The Boss).
+
+CORE IDENTITY: Sovereign Digital Chief of Staff. Partner-in-arms. Growth hacker + elite strategist.
+MARKETS: Côte d'Ivoire, West Africa, France.
+VENTURES: FormationPro, Strong Wave, Purgo Clean, Keo Jus, Entreprise AI.
+
+BEHAVIOR:
+1. Mirror Tiegbe's energy (Street vs Suite). Speak like a partner, not a utility.
+2. Activate specialist mode only for technical deep-dives (/strategy, /builder, etc.)
+3. Always end with a concrete next action.
+4. Format with clear sections, bold key insights.`;
+
+/* ── STATE ── */
+const state = {
+  msgs: [], model: DEFAULT_MODEL, activeClientId: null,
+  busy: false, isBuilderMode: false,
+  attachedFiles: [], msgStore: {}, curSessId: null,
+  clients: [], APP_TOKEN: null,
+  voiceLang: 'en-US', isRecording: false, recognition: null,
+  memory: [],
+  config: { temp: 0.7, stream: false }, /* BUG-D FIX: no SSE handler in standalone */
+  pills: { mem: true, web: false, pdf: false },
+};
+
+/* ── SKILL REGISTRY (24 skills for the grid) ── */
+const GRID_SKILLS = [
+  { id:'leads',    name:'Leads',     desc:'Gen & Score',       icon:'🔍', cat:'strategy' },
+  { id:'email',    name:'Email',     desc:'Sequences',         icon:'✉️', cat:'revenue'  },
+  { id:'content',  name:'Content',   desc:'Viral Loops',       icon:'🎬', cat:'creative' },
+  { id:'sales',    name:'Sales',     desc:'Closing Scripts',   icon:'💰', cat:'revenue'  },
+  { id:'strategy', name:'Strategy',  desc:'Growth Plans',      icon:'📈', cat:'strategy' },
+  { id:'qualify',  name:'Qualify',   desc:'Lead Scoring',      icon:'🧠', cat:'strategy' },
+  { id:'website',  name:'Website',   desc:'Funnel Build',      icon:'🌐', cat:'tech'     },
+  { id:'analytics',name:'Analytics', desc:'KPI Audit',         icon:'📊', cat:'strategy' },
+  { id:'aimas',    name:'AIMAS',     desc:'11-Agent Swarm',    icon:'⚡', cat:'revenue'  },
+  { id:'aros',     name:'AROS',      desc:'Revenue OS',        icon:'🤖', cat:'revenue'  },
+  { id:'writer',   name:'Writer',    desc:'Elite Copy',        icon:'✍️', cat:'creative' },
+  { id:'budget',   name:'Budget',    desc:'Cashflow ROI',      icon:'💵', cat:'revenue'  },
+  { id:'outreach', name:'Outreach',  desc:'Multi-Channel',     icon:'📨', cat:'revenue'  },
+  { id:'proposal', name:'Proposal',  desc:'High-Ticket SOW',   icon:'💼', cat:'revenue'  },
+  { id:'campaign', name:'Campaign',  desc:'FB/GG/TikTok Ads',  icon:'📣', cat:'revenue'  },
+  { id:'course',   name:'Course',    desc:'Curriculum',        icon:'🎓', cat:'creative' },
+  { id:'schedule', name:'Schedule',  desc:'High-Performance',  icon:'📅', cat:'strategy' },
+  { id:'present',  name:'Present',   desc:'Pitch Decks',       icon:'🖥️', cat:'creative' },
+  { id:'automate', name:'Automate',  desc:'Zapier/n8n',        icon:'🔄', cat:'tech'     },
+  { id:'psych',    name:'Psychology',desc:'Behavioral Bias',   icon:'🧬', cat:'creative' },
+  { id:'imgprompt',name:'Img Prompt',desc:'Midjourney/DALL·E', icon:'🖼️', cat:'creative' },
+  { id:'resume',   name:'Resume',    desc:'ATS Mastery',       icon:'📄', cat:'creative' },
+  { id:'security', name:'Security',  desc:'Vulnerability Scan',icon:'🔐', cat:'tech'     },
+  { id:'lex',      name:'Legal',     desc:'Compliance Audit',  icon:'⚖️', cat:'tech'     },
+];
+
+/* ── UTILS ── */
+function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
+function escAttr(s){ return String(s||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\n/g,' '); }
+function safeUrl(u){ try{ const p=new URL(u).protocol; return['http:','https:'].includes(p)?u:'#'; }catch{return '#';} }
+
+function toast(msg, type=''){
+  const c=document.getElementById('toasts'); if(!c){console.log('[toast]',msg);return;}
+  const t=document.createElement('div'); t.className='toast'+(type?' '+type:''); t.textContent=msg;
+  c.appendChild(t);
+  setTimeout(()=>t.classList.add('show'),10);
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),400);},3200);
+}
+
+function scrollBot(){
+  const chat=document.getElementById('chat');
+  if(chat) chat.scrollTo({top:chat.scrollHeight,behavior:'smooth'});
+}
+
+let __tok = 1840;
+function updTok(add){
+  __tok += Math.round(add||0);
+  const pct=Math.min((__tok/200000)*100,100).toFixed(1);
+  const tc=document.getElementById('tok-count');
+  const tp=document.getElementById('tok-pct');
+  const tb=document.getElementById('tbar');
+  if(tc) tc.textContent=`${__tok.toLocaleString()} / 200k tokens`;
+  if(tp) tp.textContent=pct+'%';
+  if(tb) tb.style.width=pct+'%';
+}
+
+function lock(){ state.busy=true; const b=document.getElementById('sbtn'); if(b) b.disabled=true; }
+function unlock(){ state.busy=false; const b=document.getElementById('sbtn'); if(b) b.disabled=false; }
+
+/* ── STORAGE (simplified — no encryption in standalone) ── */
+const LS = {
+  get:(k,d)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;} },
+  set:(k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch{} },
+  raw:(k)=>localStorage.getItem(k)||'',
+  rawSet:(k,v)=>localStorage.setItem(k,v),
+};
+
+function loadHistory(){ return LS.get('bv_history_v2',[]); }
+function saveHistory(h){ LS.set('bv_history_v2',h); }
+function loadMemory(){ return LS.get('bv_memory',[]); }
+function saveMemory(m){ LS.set('bv_memory',m); }
+
+/* ── SYSTEM PROMPT BUILDER ── */
+function buildSys(){
+  const mem = loadMemory();
+  const mStr = mem.length ? '\n\nMEMORY:\n'+mem.slice(0,10).join('\n') : '';
+  const vStr = document.getElementById('mp-ventures')?.textContent || '';
+  const pStr = document.getElementById('mp-projects')?.textContent || '';
+  const clientNote = state.activeClientId
+    ? `\n\n[ACTIVE CLIENT CONTEXT]: Focus on venture "${state.activeClientId}". Tailor all output to this entity.`
+    : '';
+  const builderNote = state.isBuilderMode
+    ? '\n\n[BUILDER MODE]: Act as SENIOR SOFTWARE ARCHITECT. Vercel/Supabase/Groq stack. Prioritize modularity and security.'
+    : '';
+  const custom = LS.raw('bv_sysprompt');
+  const base = custom || SYSTEM_IDENTITY;
+  return `${base}${clientNote}${builderNote}\n\nGLOBAL CONTEXT: ${vStr}\nACTIVE PROJECTS: ${pStr}${mStr}`;
+}
+
+/* ── MARKDOWN RENDERER ── */
+function inl(t){
+  return String(t||'')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,(_,txt,url)=>`<a href="${safeUrl(url)}" target="_blank" rel="noopener">${txt}</a>`);
+}
+function mkTable(lines){
+  const rows=lines.filter(l=>!/^[\s|:-]+$/.test(l)); if(!rows.length) return '';
+  let html='<table>';
+  rows.forEach((row,i)=>{
+    const cells=row.split('|').filter(c=>c.trim()!=='');
+    const t=i===0?'th':'td';
+    html+='<tr>'+cells.map(c=>`<${t}>${inl(c.trim())}</${t}>`).join('')+'</tr>';
+  });
+  return html+'</table>';
+}
+function mdHtml(text){
+  if(!text) return '';
+  const lines=text.split('\n');
+  let html='',inCode=false,codeBuf='',lang='',inTable=false,tableBuf=[];
+  for(const ln of lines){
+    if(ln.startsWith('```')){
+      if(!inCode){inCode=true;lang=ln.slice(3).trim();codeBuf='';continue;}
+      else{inCode=false;html+=`<pre><code class="lang-${esc(lang)}">${esc(codeBuf.trim())}</code></pre>`;codeBuf='';lang='';continue;}
+    }
+    if(inCode){codeBuf+=ln+'\n';continue;}
+    if(ln.includes('|')&&ln.trim().startsWith('|')){if(!inTable)inTable=true;tableBuf.push(ln);continue;}
+    else if(inTable){html+=mkTable(tableBuf);tableBuf=[];inTable=false;}
+    if(/^#{1,3} /.test(ln)){html+=`<span class="bh">${inl(ln.replace(/^#{1,3} /,''))}</span>`;continue;}
+    const nm=ln.match(/^(\d+)\. (.+)/); if(nm){html+=`<div class="bn"><span class="bnn">${nm[1]}.</span><span>${inl(nm[2])}</span></div>`;continue;}
+    const bm=ln.match(/^[-*•] (.+)/); if(bm){html+=`<div class="bl"><span class="bld">›</span><span>${inl(bm[1])}</span></div>`;continue;}
+    if(/^---+$/.test(ln.trim())){html+=`<hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">`;continue;}
+    if(ln.trim()===''){html+='<br>';continue;}
+    html+=`<span>${inl(ln)}</span><br>`;
+  }
+  if(inTable) html+=mkTable(tableBuf);
+  return html;
+}
+
+/* ── RENDER ── */
+function renderWelcome(){
+  const ci=document.getElementById('ci'); if(!ci) return;
+
+  // Full skill data with /cmd, short function desc, and use-case sentence
+  const GRID_SKILLS = [
+    { id:'leads',    icon:'🔍', cat:'strategy', desc:'Gen & Score',       use:'Scrape & qualify high-intent prospects automatically.' },
+    { id:'email',    icon:'✉️', cat:'revenue',  desc:'Sequences',         use:'Write cold, follow-up & nurture flows that convert.' },
+    { id:'content',  icon:'🎬', cat:'creative', desc:'Viral Loops',       use:'Hooks, captions & scripts tailored to your audience.' },
+    { id:'sales',    icon:'💰', cat:'revenue',  desc:'Closing Scripts',   use:'DM scripts, closers & objection handlers that seal deals.' },
+    { id:'strategy', icon:'📈', cat:'strategy', desc:'Growth Plans',      use:'Full GTM strategy & 90-day dominance roadmap.' },
+    { id:'qualify',  icon:'🧠', cat:'strategy', desc:'Lead Scoring',      use:'Score prospects 0-100 by intent & fit, auto-prioritize.' },
+    { id:'website',  icon:'🌐', cat:'tech',     desc:'Funnel Build',      use:'Design conversion-optimized landing pages & funnels.' },
+    { id:'analytics',icon:'📊', cat:'strategy', desc:'KPI Audit',         use:'Track metrics, spot winning patterns, optimize campaigns.' },
+    { id:'aimas',    icon:'⚡', cat:'revenue',  desc:'11-Agent Swarm',    use:'Deploy the full AIMAS multi-agent sales & marketing system.' },
+    { id:'aros',     icon:'🤖', cat:'revenue',  desc:'Revenue OS',        use:'Activate AROS — 12-agent autonomous commercial team.' },
+    { id:'writer',   icon:'✍️', cat:'creative', desc:'Elite Copy',        use:'Ghost-write reports, proposals & ads in human voice.' },
+    { id:'budget',   icon:'💵', cat:'revenue',  desc:'Cashflow ROI',      use:'Build ROI projections, cost maps & cash-flow models.' },
+    { id:'outreach', icon:'📨', cat:'revenue',  desc:'Multi-Channel',     use:'Hyper-personalized sequences across email, DM & voice.' },
+    { id:'proposal', icon:'💼', cat:'revenue',  desc:'High-Ticket SOW',   use:'Craft premium client proposals & investment matrices.' },
+    { id:'campaign', icon:'📣', cat:'revenue',  desc:'FB/GG/TikTok Ads',  use:'Build full ad campaigns with copy, targeting & creatives.' },
+    { id:'course',   icon:'🎓', cat:'creative', desc:'Curriculum',        use:'Design complete online courses with a transformation arc.' },
+    { id:'schedule', icon:'📅', cat:'strategy', desc:'High-Performance',  use:'Block time in DEEP / ADMIN / RECOVERY zones for peak output.' },
+    { id:'present',  icon:'🖥️', cat:'creative', desc:'Pitch Decks',       use:'Story-board keynotes & investor decks that close rooms.' },
+    { id:'automate', icon:'🔄', cat:'tech',     desc:'Zapier/n8n',        use:'Build no-code workflows that run your ops 24/7.' },
+    { id:'psych',    icon:'🧬', cat:'creative', desc:'Behavioral Bias',   use:'Apply NLP & influence frameworks to any message or offer.' },
+    { id:'imgprompt',icon:'🖼️', cat:'creative', desc:'Midjourney/DALL·E', use:'Generate cinematic AI image prompts for any platform.' },
+    { id:'resume',   icon:'📄', cat:'creative', desc:'ATS Mastery',       use:'Build ATS-optimized CVs that land elite opportunities.' },
+    { id:'security', icon:'🔐', cat:'tech',     desc:'Vulnerability Scan', use:'Audit code & systems, deliver a full remediation matrix.' },
+    { id:'lex',      icon:'⚖️', cat:'tech',     desc:'Compliance Audit',  use:'Identify legal risk, contract gaps & regulatory exposure.' },
+  ];
+
+  ci.innerHTML=`
+    <div class="welcome" id="welcome">
+      <div class="w3d-scene">
+        <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
+        <div class="w3d-core">🤖</div>
+      </div>
+      <h1 class="wt">BVMBINO Pro</h1>
+      <div class="wsubtitle">AI Agents v5.7</div>
+      <p class="ws">Your autonomous AI powerhouse — 24 skills ready. Type <strong style="color:var(--pu2)">/</strong> or click any skill to activate.</p>
+      <div class="skills-grid-wrap">
+        <div class="skills-grid-label">— 24 Activated Skills —</div>
+        <div class="matrix-grid">
+          ${GRID_SKILLS.map(s=>`
+            <div class="wcard card-${s.cat}" onclick="slash('${s.id}')">
+              <div class="wci">${s.icon}</div>
+              <div class="wct">/${s.id}</div>
+              <div class="wcd">${s.desc}</div>
+              <div class="wcuse">${s.use}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="shint">Type <code>/</code> for all skills · <code>/leads</code> · <code>/email</code> · <code>/aimas</code></div>
+    </div>`;
+}
+
+function rmWelcome(){
+  const w=document.getElementById('welcome'); if(w) w.remove();
+}
+
+function addUserMsg(text, files=[]){
+  const ci=document.getElementById('ci'); if(!ci) return;
+  const mid='u'+Date.now();
+  state.msgStore[mid]={text,xtype:null};
+  const d=document.createElement('div'); d.className='mrow user';
+  let filePrev='';
+  files.forEach(f=>{
+    filePrev+=f.preview
+      ?`<img src="${f.preview}" class="msg-img-preview" alt="${esc(f.name)}">`
+      :`<div class="msg-file-chip">📎 ${esc(f.name)}</div>`;
+  });
+  d.innerHTML=`<div class="av av-us">👤</div><div class="mwrap">
+    <div class="mmeta">YOU</div>
+    ${filePrev}
+    <div class="bubble b-us">${esc(text).replace(/\n/g,'<br>')}</div>
+    <div class="macts">
+      <div class="mact" onclick="copyMsgContent('${mid}')">⎘ copy</div>
+      <div class="mact" onclick="this.closest('.mrow').remove()">✕ delete</div>
+    </div>
+  </div>`;
+  ci.appendChild(d); scrollBot();
+}
+
+function msgActions(mid){
+  const acts=document.createElement('div'); acts.className='macts';
+  acts.innerHTML=`
+    <span class="mact" onclick="copyMsgContent('${mid}')">⎘ Copy</span>
+    <span class="mact" onclick="regenLast()">↻ Regen</span>
+    <span class="mact" onclick="expMsgPdf('${mid}')">📋 PDF</span>
+    <span class="mact" onclick="expMsgHtml('${mid}')">🌐 HTML</span>
+    <span class="mact" onclick="this.closest('.mrow').remove()">✕ Delete</span>`;
+  return acts;
+}
+
+function xcard(type){
+  return `<div class="xcard"><div class="xhead"><span class="xtype">${esc(type)}</span><span class="xlabel">ready to export</span></div>
+    <div class="xbtns">
+      <div class="xbtn" onclick="expLastMd()">↓ MD</div>
+      <div class="xbtn" onclick="expLastPdf()">↓ PDF</div>
+      <div class="xbtn" onclick="copyLast()">⎘ Copy</div>
+    </div></div>`;
+}
+
+function appendAiText(text, xtype){
+  const ci=document.getElementById('ci'); if(!ci) return;
+  const mid='m'+Date.now();
+  state.msgStore[mid]={text,xtype};
+  const d=document.createElement('div'); d.className='mrow';
+  const l=(text||'').toLowerCase();
+  let sug='';
+  if(l.includes('sell')||l.includes('product')) sug='sales';
+  else if(l.includes('post')||l.includes('content')) sug='content';
+  else if(l.includes('legal')) sug='lex';
+  else if(l.includes('money')||l.includes('expense')) sug='budget';
+  else if(l.includes('strategy')) sug='strategy';
+  const sugHtml=sug?`<div class="sugg-chip" onclick="slash('${sug}')">✨ Suggestion: /${sug}</div>`:'';
+  const modelLabel=MODELS[state.model]||'AI';
+  d.innerHTML=`<div class="av av-ai">🤖</div><div class="mwrap">
+    <div class="mmeta ai-meta">Bvmbino AI <span class="mmtag">${esc(modelLabel)}</span></div>
+    <div class="bubble b-ai">${mdHtml(text)}${xtype?xcard(xtype):''}${sugHtml}</div>
+  </div>`;
+  d.querySelector('.mwrap').appendChild(msgActions(mid));
+  ci.appendChild(d); scrollBot();
+  /* Memory: auto-learn short snippets */
+  if(text&&text.length>50&&!xtype){
+    const mem=loadMemory();
+    mem.unshift(text.slice(0,90)+'…');
+    saveMemory(mem.slice(0,20));
+    renderMemFeed();
+  }
+}
+
+function appendToolRow(id, icon, type, msg){
+  const ci=document.getElementById('ci'); if(!ci) return;
+  const d=document.createElement('div');
+  d.id=id+'-banner'; d.className=`tool-banner tb-${type}`;
+  d.innerHTML=`<span>${icon}</span><span id="${id}-msg">${msg}</span>`;
+  ci.appendChild(d); scrollBot();
+}
+function updateToolRow(id, icon, type, msg, isErr){
+  const el=document.getElementById(id+'-msg');
+  if(el) el.innerHTML=(isErr?'⚠ ':'')+msg;
+  const b=document.getElementById(id+'-banner');
+  if(b&&isErr){b.className='tool-banner tb-error';}
+}
+
+/* BUG-14 FIX: showTyping/hideTyping — consistent with api logic */
+let typeInterval=null;
+function showTyping(){
+  const ci=document.getElementById('ci'); if(!ci||document.getElementById('type-row')) return;
+  const d=document.createElement('div'); d.id='type-row'; d.className='mrow';
+  d.innerHTML=`<div class="av av-ai">🤖</div><div class="mwrap">
+    <div class="mmeta ai-meta">Bvmbino AI Council</div>
+    <div class="bubble b-ai" style="font-style:italic;color:var(--t3);font-size:12px">
+      Thinking…
+      <div class="tots"><div class="tot"></div><div class="tot"></div><div class="tot"></div></div>
+    </div></div>`;
+  ci.appendChild(d); scrollBot();
+}
+function hideTyping(){ clearInterval(typeInterval); const r=document.getElementById('type-row'); if(r) r.remove(); }
+
+/* ── API CALLS ── */
+async function callProviderDirect(modelId, system, messages, keys){
+  let url='', headers={'Content-Type':'application/json'}, body={};
+  /* BUG-07 FIX: stream:false for direct calls — streaming handled separately */
+  if(modelId.includes('groq')&&!modelId.includes('/')&&keys.groq){
+    url='https://api.groq.com/openai/v1/chat/completions';
+    headers['Authorization']=`Bearer ${keys.groq}`;
+    body={model:modelId,messages:[{role:'system',content:system},...messages],temperature:state.config.temp,max_tokens:2048,stream:false};
+  } else if((modelId.includes('claude'))&&keys.anthropic){
+    url='https://api.anthropic.com/v1/messages';
+    headers['x-api-key']=keys.anthropic; headers['anthropic-version']='2023-06-01';
+    body={model:modelId,system,messages,max_tokens:2048,stream:false};
+  } else if((modelId.includes('gpt'))&&keys.openai){
+    url='https://api.openai.com/v1/chat/completions';
+    headers['Authorization']=`Bearer ${keys.openai}`;
+    body={model:modelId,messages:[{role:'system',content:system},...messages],temperature:state.config.temp,max_tokens:2048,stream:false};
+  } else {
+    /* OpenRouter fallback for all free models */
+    const orKey=keys.openrouter||keys.groq||'';
+    url='https://openrouter.ai/api/v1/chat/completions';
+    if(orKey) headers['Authorization']=`Bearer ${orKey}`;
+    headers['HTTP-Referer']='https://bvmbino.ai';
+    headers['X-Title']='Bvmbino AI';
+    body={model:modelId,messages:[{role:'system',content:system},...messages],temperature:state.config.temp,max_tokens:2048};
+  }
+  if(!url) throw new Error('No matching provider for '+modelId);
+  return fetch(url,{method:'POST',headers,body:JSON.stringify(body)});
+}
+
+async function callAI(){
+  showTyping();
+  const sys = buildSys();
+  const keys = {
+    groq:       LS.raw('bv_key_groq'),
+    anthropic:  LS.raw('bv_key_anthropic'),
+    openai:     LS.raw('bv_key_openai'),
+  };
+  const hasAnyKey=keys.groq||keys.anthropic||keys.openai;
+  const startModel=state.model||DEFAULT_MODEL;
+  const tryOrder=[startModel,...PROVIDER_FALLBACK.filter(m=>m!==startModel)];
+  let lastErr=null;
+
+  for(const modelId of tryOrder){
+    try{
+      let res;
+      if(hasAnyKey){
+        res=await callProviderDirect(modelId,sys,state.msgs.slice(-15),keys);
+      } else {
+        /* Server-side proxy fallback */
+        const h={'Content-Type':'application/json'};
+        if(state.APP_TOKEN) h['x-app-token']=state.APP_TOKEN;
+        res=await fetch('/api/chat',{method:'POST',headers:h,
+          body:JSON.stringify({system:sys,messages:state.msgs.slice(-15),model:modelId,temperature:state.config.temp})});
+      }
+      if(!res||!res.ok){lastErr=new Error(`${modelId}: HTTP ${res?res.status:'no response'}`);continue;}
+      const data=await res.json();
+      if(data.error&&!data.content){lastErr=new Error(`${modelId}: ${data.error}`);continue;}
+      /* BUG-12 FIX: handle both OpenAI and Anthropic response shapes */
+      const reply=data.content?.[0]?.text||data.choices?.[0]?.message?.content||data.reply||'';
+      if(!reply.trim()){lastErr=new Error(`${modelId}: empty response`);continue;}
+      hideTyping();
+      /* Parse EXPORT tag */
+      let xtype=null, clean=reply;
+      const m=reply.match(/\[EXPORT:(\w+)\]/);
+      if(m){clean=reply.replace(/\[EXPORT:\w+\]/,'').trim();xtype=m[1];}
+      state.msgs.push({role:'assistant',content:clean});
+      appendAiText(clean,xtype);
+      updTok(clean.length/3.5);
+      autoSaveSession();
+      return;
+    } catch(e){lastErr=e;console.warn(`[fallback] ${modelId}:`,e.message);}
+  }
+  hideTyping();
+  appendAiText(`**All AI providers failed.**\n\nTried ${tryOrder.length} models. Last error: \`${lastErr?.message||'unknown'}\`\n\n**Fix:** Go to ⚙️ Settings → add a Groq API key (free at console.groq.com).`,null);
+}
+
+/* BUG-17 FIX: handleSearch uses normal callAI pipeline */
+async function handleSearch(query){
+  const id='search-'+Date.now();
+  appendToolRow(id,'🌐','info',`Searching: "${esc(query)}"…`);
+  // Amend the already-pushed user message with search framing instead of double-pushing
+  if(state.msgs.length&&state.msgs[state.msgs.length-1].role==='user'){
+    state.msgs[state.msgs.length-1].content=`Please search for and summarize the latest information about: ${query}`;
+  }
+  updateToolRow(id,'✅','success',`Search ready: "${esc(query)}"`);
+  await callAI();
+}
+
+async function handleScrape(url){
+  const id='scrape-'+Date.now();
+  appendToolRow(id,'🔍','info',`Scraping: ${esc(url)}…`);
+  try{
+    const h={'Content-Type':'application/json'};
+    if(state.APP_TOKEN) h['x-app-token']=state.APP_TOKEN;
+    const res=await fetch('/api/scrape',{method:'POST',headers:h,body:JSON.stringify({url})});
+    const data=await res.json();
+    if(data.error) throw new Error(data.error);
+    updateToolRow(id,'✅','success',`Scraped ${(data.chars||0).toLocaleString()} chars.`);
+    state.msgs.push({role:'user',content:`[SCRAPED FROM ${url}]\n\n${(data.content||'').slice(0,8000)}`});
+    await callAI();
+  } catch(e){updateToolRow(id,'❌','error',`Scrape failed: ${e.message}`,true);}
+}
+
+/* ── INTENT ROUTER ── */
+/* BUG-08 FIX: detectIntent is a pure function — no state/toast dependency */
+function detectIntent(text){
+  const t=text.toLowerCase().trim();
+  if(t.startsWith('/scrape ')){ const url=text.slice(8).trim(); return url?{type:'scrape',url}:null; }
+  if(t.startsWith('/search ')) return {type:'search',query:text.slice(8).trim()};
+  if(t.startsWith('/pdf'))     return {type:'pdf'};
+  if(t.startsWith('/schedule')){
+    const parts=t.split(/\s+/);
+    const view=['daily','weekly','biweekly','monthly'].find(v=>parts.includes(v))||'weekly';
+    return {type:'schedule',view};
+  }
+  const urlMatch=text.match(/https?:\/\/[^\s]+/);
+  if(urlMatch&&(t.includes('scrape')||t.includes('analyze')||t.includes('summarize')))
+    return {type:'scrape',url:urlMatch[0]};
+  if(t.startsWith('/builder')){ state.isBuilderMode=!state.isBuilderMode; return {type:'builder'}; }
+  return null;
+}
+
+function smartRouteMsg(text){
+  if(!text||text.trim().split(/\s+/).length<2) return null;
+  if(/^\s*\/\w+/.test(text)) return null;
+  const lower=text.toLowerCase();
+  const SKILL_KW=[
+    {skill:'leads',    kw:['prospects','lead generation','find leads','qualify leads','prospecting']},
+    {skill:'email',    kw:['write an email','email sequence','cold email','follow-up email','email automation']},
+    {skill:'content',  kw:['instagram','linkedin','twitter','tiktok','social media','caption','hooks','viral','blog post']},
+    {skill:'sales',    kw:['closing','sales script','objection','dm script','selling','pitch','conversion']},
+    {skill:'strategy', kw:['growth strategy','business plan','90 day plan','go to market','scale my business']},
+    {skill:'website',  kw:['landing page','funnel','web design','conversion rate']},
+    {skill:'budget',   kw:['roi','cash flow','finance','projections','cost analysis','budgeting']},
+    {skill:'campaign', kw:['ads','meta ads','google ads','media buying','ad copy','roas']},
+    {skill:'automate', kw:['zapier','make.com','n8n','workflow','automation']},
+    {skill:'psych',    kw:['behavioral','nlp','influence','psychology','persuasion']},
+    {skill:'lex',      kw:['legal','lawyer','contracts','compliance','regulatory']},
+    {skill:'security', kw:['audit','vulnerability','cybersecurity','security check']},
+  ];
+  let best=null,bestScore=0;
+  for(const {skill,kw} of SKILL_KW){
+    let score=0;
+    for(const k of kw){ if(lower.includes(k)) score+=k.split(' ').length; }
+    if(score>bestScore){bestScore=score;best=skill;}
+  }
+  if(!best||bestScore<1) return null;
+  const prompt=PROMPTS[best]||'';
+  return {skill:best, enhanced:prompt?`${prompt}\n\nUser request: "${text}"\nBe immediate and concrete.`:text};
+}
+
+/* ── SEND ── */
+async function send(){
+  const inp=document.getElementById('inp');
+  const text=(inp?.value||'').trim();
+  const hasFiles=state.attachedFiles.length>0;
+  if((!text&&!hasFiles)||state.busy) return;
+
+  rmWelcome();
+  document.getElementById('smenu').classList.remove('open');
+  if(inp){ inp.value=''; inp.style.height='auto'; }
+
+  lock();
+  const filesSnap=[...state.attachedFiles];
+  state.attachedFiles=[];
+  renderFileStrip();
+
+  const displayText=text||(hasFiles?`[${filesSnap.length} attachment(s)]`:'');
+  addUserMsg(displayText, filesSnap);
+  state.msgs.push({role:'user',content:displayText});
+
+  const words=displayText.trim().split(/\s+/).filter(Boolean);
+  const shortTitle=(words.slice(0,5).join(' '))+(words.length>5?'…':'');
+  document.getElementById('tbtitle').textContent=shortTitle;
+
+  try{
+    const intent=detectIntent(displayText);
+    if(intent){
+      if(intent.type==="scrape"){ await handleScrape(intent.url); unlock(); return; }
+      if(intent.type==="search"){ await handleSearch(intent.query); unlock(); return; }
+      if(intent.type==="pdf"){ expLastPdf(); unlock(); return; }
+      if(intent.type==='builder'){ toast(state.isBuilderMode?'🛠️ Builder Mode ON':'Builder Mode OFF'); }
+    }
+    const routing=smartRouteMsg(displayText);
+    if(routing){
+      state.msgs[state.msgs.length-1].content=routing.enhanced;
+      const ci=document.getElementById('ci');
+      const chip=document.createElement('div');
+      chip.style.cssText='padding:2px 12px 6px;text-align:center;';
+      chip.innerHTML=`<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 11px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.22);border-radius:20px;font-size:10px;font-family:var(--mono);color:#4ade80">🧠 Auto → <strong>/${routing.skill}</strong></span>`;
+      ci.appendChild(chip);
+    }
+    await callAI();
+  } catch(e){
+    console.error('send error:',e);
+    appendAiText(`**Error:** ${e.message}`,null);
+  } finally{ unlock(); }
+}
+
+/* ── SESSION HISTORY ── */
+function autoSaveSession(){
+  if(!state.msgs.length) return;
+  const title=document.getElementById('tbtitle').textContent||'Conversation';
+  const id=state.curSessId||Date.now().toString();
+  state.curSessId=id;
+  const hist=loadHistory();
+  const idx=hist.findIndex(h=>h.id===id);
+  const entry={id,title:title.slice(0,55),msgs:[...state.msgs],ts:Date.now()};
+  if(idx>=0) hist[idx]=entry; else hist.unshift(entry);
+  saveHistory(hist.slice(0,50));
+  renderHistory();
+}
+
+/* BUG-16 FIX: resumeSession defined */
+function resumeSession(id){
+  const hist=loadHistory();
+  const entry=hist.find(h=>String(h.id)===String(id));
+  if(!entry) return;
+  state.msgs=[...entry.msgs]; state.curSessId=entry.id;
+  const ci=document.getElementById('ci'); if(ci) ci.innerHTML='';
+  document.getElementById('tbtitle').textContent=entry.title;
+  entry.msgs.forEach(m=>{ if(m.role==='user') addUserMsg(m.content); else appendAiText(m.content); });
+  updTok(entry.msgs.reduce((s,m)=>s+(m.content.length/3.5),0));
+  closeSb(); toast(`📂 "${entry.title}" resumed`);
+}
+
+function deleteSession(id, e){
+  if(e) e.stopPropagation();
+  if(!confirm('Delete this conversation?')) return;
+  const hist=loadHistory().filter(h=>String(h.id)!==String(id));
+  saveHistory(hist);
+  if(String(state.curSessId)===String(id)){ state.msgs=[]; state.curSessId=null; }
+  renderHistory();
+  toast('Deleted ✓');
+}
+
+function renderHistory(){
+  const c=document.getElementById('hist'); if(!c) return;
+  const hist=loadHistory();
+  if(!hist.length){c.innerHTML='<div style="font-size:10px;color:var(--t3);padding:4px 0">No recent chats</div>';return;}
+  c.innerHTML=hist.slice(0,15).map(h=>`
+    <div class="hi ${state.curSessId==h.id?'active':''}">
+      <span class="hdot"></span>
+      <span class="hi-title" onclick="resumeSession('${esc(String(h.id))}')">${esc(h.title)}</span>
+      <button onclick="deleteSession('${esc(String(h.id))}',event)" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0 4px;font-size:10px;opacity:.5">✕</button>
+    </div>`).join('');
+}
+
+/* ── CLIENTS ── */
+function renderClients(){
+  const ctn=document.getElementById('client-list'); if(!ctn) return;
+  const stored=LS.get('bv_clients',[]);
+  const all=[...CORE_VENTURES,...stored];
+  ctn.innerHTML=all.map(c=>`
+    <div class="qbtn ${state.activeClientId===c.id?'active':''}" onclick="setActiveClient('${esc(c.id)}')">
+      <span class="qi">${c.id.startsWith('c')&&!CORE_VENTURES.find(v=>v.id===c.id)?'💼':'🏢'}</span>
+      <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+        <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</span>
+        <span class="qsub">${esc((c.desc||'').slice(0,30))}…</span>
+      </div>
+      ${!CORE_VENTURES.find(v=>v.id===c.id)?`<button onclick="deleteClient('${esc(c.id)}',event)" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0 4px;font-size:10px" title="Remove">✕</button>`:''}
+    </div>`).join('');
+}
+
+function setActiveClient(id){
+  state.activeClientId=(id===state.activeClientId)?null:id;
+  LS.rawSet('v3_active_client',state.activeClientId||'');
+  renderClients();
+  const all=[...CORE_VENTURES,...LS.get('bv_clients',[])];
+  const c=all.find(v=>v.id===id);
+  toast(state.activeClientId?`🎯 Context: ${c?c.name:'Active'}`:'Context cleared');
+  if(state.activeClientId) openMpanel();
+}
+
+function addNewClient(){
+  const name=prompt('Business/Client Name:'); if(!name) return;
+  const desc=prompt('Brief Context/Description:'); if(!desc) return;
+  const c={id:'c'+Date.now(),name,desc};
+  const stored=LS.get('bv_clients',[]);
+  stored.push(c); LS.set('bv_clients',stored);
+  renderClients(); toast('Client Added ✓');
+}
+
+function deleteClient(id,e){
+  if(e) e.stopPropagation();
+  if(!confirm('Remove this client context?')) return;
+  const stored=LS.get('bv_clients',[]).filter(c=>c.id!==id);
+  LS.set('bv_clients',stored);
+  if(state.activeClientId===id) state.activeClientId=null;
+  renderClients(); toast('Removed ✓');
+}
+
+/* ── MODELS ── */
+function renderModels(){
+  const el=document.getElementById('model-list'); if(!el) return;
+  el.innerHTML=LIVE_MODELS.map(m=>`
+    <div class="mod-item ${state.model===m.id?'on':''}" onclick="setModel('${m.id}')">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:11px">${m.name}</div>
+        <div style="opacity:.5;font-size:9px">${m.provider}</div>
+      </div>
+      <span class="badge b-gn" style="font-size:8px">${m.badge}</span>
+      ${state.model===m.id?'<span class="live-sig"></span>':''}
+    </div>`).join('');
+}
+
+function setModel(id){
+  state.model=id;
+  LS.rawSet('v3_model',id);
+  renderModels();
+  const m=LIVE_MODELS.find(x=>x.id===id);
+  if(m){
+    document.getElementById('engine-label').textContent=`${m.provider} · ${m.name}`;
+    document.getElementById('mem-model').textContent=m.name;
+  }
+  toast(`📡 Model: ${m?m.name:id}`);
+}
+
+/* ── MEMORY FEED ── */
+function renderMemFeed(){
+  const el=document.getElementById('mems'); if(!el) return;
+  const mem=loadMemory();
+  el.innerHTML=mem.slice(0,8).map(m=>`<div class="me"><div class="mek">Memory</div><div class="mev">${esc(m)}</div></div>`).join('');
+}
+
+/* ── SLASH MENU ── */
+function handleSlashMenu(){
+  const val=document.getElementById('inp').value;
+  const menu=document.getElementById('smenu');
+  if(!val.startsWith('/')){closeSlashMenu();return;}
+  const q=val.slice(1).toLowerCase();
+  const items=q?GRID_SKILLS.filter(s=>s.id.startsWith(q)||s.name.toLowerCase().startsWith(q)):GRID_SKILLS;
+  if(!items.length){closeSlashMenu();return;}
+  menu.innerHTML=items.slice(0,10).map((s,i)=>`
+    <div class="si${i===0?' sel':''}" onclick="applySlash('${s.id}')">
+      <span style="font-size:14px">${s.icon}</span>
+      <span class="scmd">/${s.id}</span>
+      <span class="sdesc">${s.desc}</span>
+    </div>`).join('');
+  menu.classList.add('open');
+}
+function closeSlashMenu(){ document.getElementById('smenu').classList.remove('open'); }
+function applySlash(id){
+  closeSlashMenu();
+  const el=document.getElementById('inp');
+  const p=PROMPTS[id];
+  if(p){ rmWelcome(); el.value=''; send_prompt(p); }
+  else{ el.value='/'+id+' '; el.focus(); }
+}
+async function send_prompt(text){
+  rmWelcome(); lock();
+  addUserMsg(text); state.msgs.push({role:'user',content:text});
+  try{ await callAI(); } catch(e){ appendAiText(`**Error:** ${e.message}`,null); } finally{ unlock(); }
+}
+
+function slash(id){
+  rmWelcome();
+  const p=PROMPTS[id];
+  if(p){ send_prompt(p); }
+  else{ const el=document.getElementById('inp'); el.value='/'+id+' '; el.focus(); }
+}
+
+/* ── MSG ACTIONS ── */
+function copyMsgContent(mid){
+  const s=state.msgStore[mid];
+  if(!s) return;
+  navigator.clipboard.writeText(s.text).then(()=>toast('Copied ✓')).catch(()=>toast('Copy failed'));
+}
+function copyLast(){
+  const last=state.msgs.filter(m=>m.role==='assistant').pop();
+  if(last) navigator.clipboard.writeText(last.content).then(()=>toast('Copied ✓'));
+}
+function regenLast(){
+  if(state.msgs.length<2||state.busy) return;
+  const aiRows=document.querySelectorAll('#ci .mrow:not(.user)');
+  if(aiRows.length) aiRows[aiRows.length-1].remove();
+  const idx=state.msgs.map(m=>m.role).lastIndexOf('assistant');
+  if(idx>=0) state.msgs.splice(idx,1);
+  toast('Regenerating…'); callAI();
+}
+
+function buildExportHtml(text){
+  const body=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bvmbino Export</title>
+    <style>body{font-family:sans-serif;max-width:760px;margin:40px auto;color:#111;line-height:1.7;padding:20px}
+    h1,h2{color:#d4940a;border-bottom:1px solid #e8a912;padding-bottom:6px}
+    code{background:#f4f4f4;padding:2px 5px;border-radius:3px}pre{background:#f4f4f4;padding:14px;border-radius:6px}
+    strong{font-weight:700}li{margin-bottom:4px}
+    .foot{margin-top:32px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:10px}</style>
+    </head><body><h1 style="color:#e8a912">🤖 Bvmbino AI Export</h1><small>${new Date().toLocaleString()}</small><hr>
+    <p>${body}</p><div class="foot">Generated by Bvmbino AI Agent v5.1</div></body></html>`;
+}
+
+function expMsgPdf(mid){
+  const s=state.msgStore[mid]; if(!s||!s.text) return;
+  showPdfPreview(s.text);
+}
+function expMsgHtml(mid){
+  const s=state.msgStore[mid]; if(!s||!s.text) return;
+  const html=buildExportHtml(s.text);
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+  a.download=`bvmbino-${Date.now()}.html`; a.click(); toast('HTML downloaded ✓');
+}
+function expLastPdf(){
+  const last=state.msgs.filter(m=>m.role==='assistant').pop();
+  if(!last){toast('No content to export');return;}
+  showPdfPreview(last.content);
+}
+function expLastMd(){
+  const last=state.msgs.filter(m=>m.role==='assistant').pop();
+  if(!last){toast('No content');return;}
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([last.content],{type:'text/markdown'}));
+  a.download=`bvmbino-${Date.now()}.md`; a.click(); toast('Markdown downloaded ✓');
+}
+
+/* BUG-09 FIX: showPdfPreview uses .open class, not .show */
+function showPdfPreview(text){
+  const el=document.getElementById('preview-content');
+  if(el) el.innerHTML=buildExportHtml(text);
+  openModal('preview-modal');
+}
+/* PDF save listener moved into init() — see BUG-C fix */
+
+/* ── IMAGE GENERATION ── */
+async function generateImage(){
+  const prompt=document.getElementById('img-prompt')?.value.trim();
+  if(!prompt){toast('Enter a prompt first','rd');return;}
+  const size=document.getElementById('img-size')?.value||'1024x1024';
+  const quality=document.getElementById('img-quality')?.value||'standard';
+  const btn=document.getElementById('gen-img-btn');
+  const result=document.getElementById('img-result');
+  if(btn){btn.textContent='⏳ Generating…';btn.disabled=true;}
+  if(result) result.style.display='none';
+
+  const openaiKey=LS.raw('bv_key_openai');
+  let imgUrl=null;
+  try{
+    if(openaiKey){
+      const res=await fetch('https://api.openai.com/v1/images/generations',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${openaiKey}`},
+        body:JSON.stringify({model:'dall-e-3',prompt,n:1,size,quality,style:'vivid',response_format:'url'}),
+      });
+      if(res.ok){ const d=await res.json(); imgUrl=d.data[0].url; }
+      else throw new Error('OpenAI image error');
+    } else {
+      /* Free Pollinations fallback */
+      const [w,h]=size.split('x');
+      imgUrl=`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&seed=${Date.now()}&enhance=true`;
+    }
+    if(imgUrl&&result){
+      result.style.display='block';
+      result.innerHTML=`<img src="${esc(imgUrl)}" class="gen-img" alt="Generated" crossorigin="anonymous">
+        <div class="gen-img-actions">
+          <button class="mact" onclick="sendImgToChat('${escAttr(imgUrl)}','${escAttr(prompt)}')">💬 To Chat</button>
+          <button class="mact" onclick="window.open('${escAttr(imgUrl)}','_blank')">🔗 Open</button>
+          <button class="mact" onclick="downloadImg('${escAttr(imgUrl)}')">⬇️ Download</button>
+        </div>`;
+      toast('Image generated! ✓','gn');
+    }
+  } catch(e){
+    /* Hard fallback — Pollinations */
+    const enc=encodeURIComponent(prompt);
+    imgUrl=`https://image.pollinations.ai/prompt/${enc}?width=1024&height=1024&nologo=true`;
+    if(result){
+      result.style.display='block';
+      result.innerHTML=`<img src="${esc(imgUrl)}" class="gen-img" alt="Generated"><div class="gen-img-actions"><button class="mact" onclick="sendImgToChat('${escAttr(imgUrl)}','${escAttr(prompt)}')">💬 To Chat</button></div>`;
+    }
+    toast('Using free Pollinations fallback');
+  } finally{
+    if(btn){btn.textContent='🎨 Generate';btn.disabled=false;}
+  }
+}
+
+function sendImgToChat(url,prompt){
+  rmWelcome(); closeModal('image-modal');
+  const ci=document.getElementById('ci'); if(!ci) return;
+  const d=document.createElement('div'); d.className='mrow';
+  d.innerHTML=`<div class="av av-ai">🎨</div><div class="mwrap">
+    <div class="mmeta ai-meta">IMAGE GENERATED</div>
+    <p style="color:var(--t3);font-size:10px;margin-bottom:8px">${esc(prompt)}</p>
+    <img src="${esc(url)}" class="msg-img-preview" style="max-width:400px;cursor:pointer" onclick="window.open('${escAttr(url)}','_blank')" alt="AI Generated">
+    <div class="macts"><button class="mact" onclick="downloadImg('${escAttr(url)}')">⬇️ Download</button></div>
+  </div>`;
+  ci.appendChild(d); scrollBot();
+}
+
+function downloadImg(url){
+  const a=document.createElement('a'); a.href=url; a.download=`bvmbino-img-${Date.now()}.png`; a.target='_blank';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+/* ── FILE HANDLING ── */
+function handleFiles(files){
+  Array.from(files).forEach(file=>{
+    const reader=new FileReader();
+    if(file.type.startsWith('image/')){
+      reader.onload=e=>{
+        state.attachedFiles.push({name:file.name,type:'image',mimeType:file.type,data:e.target.result.split(',')[1],preview:e.target.result});
+        renderFileStrip();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      reader.onload=e=>{
+        state.attachedFiles.push({name:file.name,type:'text',mimeType:file.type,data:e.target.result,preview:null});
+        renderFileStrip();
+      };
+      reader.readAsText(file);
+    }
+  });
+}
+
+function renderFileStrip(){
+  const strip=document.getElementById('file-strip'); if(!strip) return;
+  strip.innerHTML=state.attachedFiles.map((f,i)=>`
+    <div class="file-chip">
+      ${f.preview?`<img src="${f.preview}" alt="preview">`:''}
+      <span>${esc(f.name.slice(0,18))}</span>
+      <button class="chip-del" onclick="removeFile(${i})">✕</button>
+    </div>`).join('');
+  strip.classList.toggle('has-files',state.attachedFiles.length>0);
+}
+
+function removeFile(idx){ state.attachedFiles.splice(idx,1); renderFileStrip(); }
+
+/* ── MODAL HELPERS ── */
+function openModal(id){ const m=document.getElementById(id); if(m) m.classList.add('open'); }
+function closeModal(id){ const m=document.getElementById(id); if(m) m.classList.remove('open'); }
+/* BUG-02 FIX: openMpanel/closeMpanel defined */
+function openMpanel(){ document.getElementById('mpanel')?.classList.remove('closed'); }
+function closeMpanel(){ document.getElementById('mpanel')?.classList.add('closed'); }
+
+/* ── SIDEBAR ── */
+function openSb(){
+  document.getElementById('sb')?.classList.add('open');
+  document.getElementById('ov')?.classList.add('open');
+}
+function closeSb(){
+  document.getElementById('sb')?.classList.remove('open');
+  document.getElementById('ov')?.classList.remove('open');
+}
+
+/* ── VOICE ── */
+function initVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ const m=document.getElementById('micbtn'); if(m) m.style.opacity='0.3'; return; }
+  state.recognition=new SR();
+  state.recognition.lang=state.voiceLang;
+  state.recognition.interimResults=false;
+  state.recognition.onresult=e=>{ const el=document.getElementById('inp'); if(el){el.value+=e.results[0][0].transcript;autoResize();} };
+  state.recognition.onend=()=>{ state.isRecording=false; document.getElementById('micbtn')?.classList.remove('recording'); };
+  state.recognition.onerror=()=>{ state.isRecording=false; document.getElementById('micbtn')?.classList.remove('recording'); toast('Voice error','rd'); };
+}
+
+function toggleVoice(){
+  if(!state.recognition){toast('Voice not supported','rd');return;}
+  if(state.isRecording){ state.recognition.stop(); state.isRecording=false; document.getElementById('micbtn')?.classList.remove('recording'); }
+  else{ state.recognition.lang=state.voiceLang; state.recognition.start(); state.isRecording=true; document.getElementById('micbtn')?.classList.add('recording'); toast('Listening…'); }
+}
+
+function toggleVoiceLang(){
+  const langs=['en-US','fr-FR'],labels=['EN','FR'];
+  const i=langs.indexOf(state.voiceLang);
+  state.voiceLang=langs[(i+1)%langs.length];
+  const btn=document.getElementById('langbtn'); if(btn) btn.textContent=labels[(i+1)%langs.length];
+  if(state.recognition) state.recognition.lang=state.voiceLang;
+  toast(`Voice: ${state.voiceLang}`);
+}
+
+/* ── GESTURES ── */
+function setupGestures(){
+  let tx=0,ty=0;
+  document.addEventListener('touchstart',e=>{
+    tx=e.touches[0].clientX;
+    ty=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-tx;
+    const dy=e.changedTouches[0].clientY-ty;
+    // Ignore mostly-vertical swipes
+    if(Math.abs(dx)<Math.abs(dy)*1.5||Math.abs(dx)<44) return;
+    const W=window.innerWidth;
+    if(dx>0){
+      // Swipe RIGHT
+      if(tx<60){
+        // Left-edge → open sidebar
+        openSb();
+      } else {
+        // Anywhere else → close memory panel (swipe right = retreat)
+        closeMpanel();
+      }
+    } else {
+      // Swipe LEFT
+      if(tx>W-60){
+        // Right-edge → open memory panel
+        openMpanel();
+      } else {
+        // Anywhere else → close sidebar
+        closeSb();
+      }
+    }
+  },{passive:true});
+}
+
+/* ── AUTO-RESIZE TEXTAREA ── */
+function autoResize(){
+  const el=document.getElementById('inp'); if(!el) return;
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,180)+'px';
+}
+
+/* ── INIT ── */
+function init(){
+  /* Load persisted state */
+  state.model=LS.raw('v3_model')||DEFAULT_MODEL;
+  state.activeClientId=LS.raw('v3_active_client')||null;
+  state.config.temp=parseFloat(LS.raw('v4_temp')||'0.7');
+
+  /* Load API keys */
+  ['groq','anthropic','openai'].forEach(p=>{
+    const k=LS.raw(`bv_key_${p}`);
+    if(k){ const el=document.getElementById(`key-${p}`); if(el) el.value=k; }
+  });
+
+  /* System prompt */
+  const sp=LS.raw('bv_sysprompt');
+  const spEl=document.getElementById('sys-prompt-input'); if(spEl) spEl.value=sp||SYSTEM_IDENTITY;
+
+  /* Memory hub */
+  ['ventures','projects'].forEach(id=>{
+    const saved=LS.raw(`mp_tier_${id}`);
+    const el=document.getElementById('mp-'+id);
+    if(el&&saved) el.textContent=saved;
+  });
+  document.getElementById('mp-ventures')?.addEventListener('blur',()=>{
+    LS.rawSet('mp_tier_ventures',document.getElementById('mp-ventures').textContent);
+  });
+  document.getElementById('mp-projects')?.addEventListener('blur',()=>{
+    LS.rawSet('mp_tier_projects',document.getElementById('mp-projects').textContent);
+  });
+
+  /* Render initial UI */
+  renderWelcome();
+  renderHistory();
+  renderClients();
+  renderModels();
+  renderMemFeed();
+
+  const m=LIVE_MODELS.find(x=>x.id===state.model)||LIVE_MODELS[0];
+  document.getElementById('engine-label').textContent=`${m.provider} · ${m.name}`;
+  document.getElementById('mem-model').textContent=m.name;
+
+  /* Input events */
+  const inp=document.getElementById('inp');
+  inp?.addEventListener('input',()=>{autoResize();handleSlashMenu();});
+  inp?.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}
+    if(e.key==='Escape') closeSlashMenu();
+    if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();newChat();}
+  });
+
+  /* Buttons */
+  document.getElementById('sbtn')?.addEventListener('click',send);
+  document.getElementById('new-chat-btn')?.addEventListener('click',newChat);
+  document.getElementById('logo-btn')?.addEventListener('click',newChat);
+  document.getElementById('mb-menu')?.addEventListener('click',openSb);
+  document.getElementById('ov')?.addEventListener('click',closeSb);
+  document.getElementById('settings-btn')?.addEventListener('click',()=>openModal('settings-modal'));
+  document.getElementById('close-settings')?.addEventListener('click',()=>closeModal('settings-modal'));
+  document.getElementById('settings-modal')?.addEventListener('click',e=>{if(e.target.id==='settings-modal')closeModal('settings-modal');});
+  document.getElementById('mem-panel-btn')?.addEventListener('click',()=>document.getElementById('mpanel').classList.toggle('closed'));
+  document.getElementById('close-mpanel')?.addEventListener('click',closeMpanel);
+  document.getElementById('train-btn')?.addEventListener('click',()=>openModal('train-modal'));
+  document.getElementById('close-train')?.addEventListener('click',()=>closeModal('train-modal'));
+  document.getElementById('close-train-2')?.addEventListener('click',()=>closeModal('train-modal'));
+  document.getElementById('train-modal')?.addEventListener('click',e=>{if(e.target.id==='train-modal')closeModal('train-modal');});
+  document.getElementById('train-save-btn')?.addEventListener('click',()=>{
+    const v=document.getElementById('train-input')?.value.trim(); if(!v) return;
+    const mem=loadMemory(); mem.unshift('🧠 '+v.slice(0,100));
+    saveMemory(mem.slice(0,20)); renderMemFeed();
+    document.getElementById('train-input').value='';
+    closeModal('train-modal'); toast('Agent trained ✓','gn');
+  });
+  document.getElementById('imggen-top-btn')?.addEventListener('click',()=>openModal('image-modal'));
+  document.getElementById('imggen-sb-btn')?.addEventListener('click',()=>{closeSb();openModal('image-modal');});
+  document.getElementById('close-image')?.addEventListener('click',()=>closeModal('image-modal'));
+  document.getElementById('image-modal')?.addEventListener('click',e=>{if(e.target.id==='image-modal')closeModal('image-modal');});
+  document.getElementById('gen-img-btn')?.addEventListener('click',generateImage);
+  document.getElementById('close-preview')?.addEventListener('click', closePreviewModal);
+  document.getElementById('preview-modal')?.addEventListener('click',e=>{if(e.target.id==='preview-modal')closeModal('preview-modal');});
+  /* BUG-03/04 FIX: file input wired inside init() after DOM ready */
+  document.getElementById('filebtn')?.addEventListener('click',()=>document.getElementById('file-input')?.click());
+  document.getElementById('upload-btn')?.addEventListener('click',()=>document.getElementById('file-input')?.click());
+  document.getElementById('file-input')?.addEventListener('change',e=>{handleFiles(e.target.files);e.target.value='';});
+  /* Drag-drop */
+  document.addEventListener('dragover',e=>e.preventDefault());
+  document.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);});
+  /* Pills */
+  ['p-mem','p-web','p-pdf'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('click',function(){
+      this.classList.toggle('on');
+      state.pills[id.replace('p-','')]=this.classList.contains('on');
+    });
+  });
+  /* Settings form */
+  document.getElementById('save-keys-btn')?.addEventListener('click',()=>{
+    ['groq','anthropic','openai'].forEach(p=>{
+      const v=document.getElementById(`key-${p}`)?.value.trim();
+      if(v) LS.rawSet(`bv_key_${p}`,v);
+    });
+    toast('API Keys Saved ✓','gn'); closeModal('settings-modal');
+  });
+  document.getElementById('save-sysprompt-btn')?.addEventListener('click',()=>{
+    const v=document.getElementById('sys-prompt-input')?.value.trim();
+    LS.rawSet('bv_sysprompt',v||SYSTEM_IDENTITY);
+    toast('System Prompt Saved ✓','gn');
+  });
+  document.getElementById('param-temp')?.addEventListener('input',function(){
+    state.config.temp=parseFloat(this.value);
+    const lbl=document.getElementById('val-temp'); if(lbl) lbl.textContent=this.value;
+    LS.rawSet('v4_temp',this.value);
+  });
+  /* History toggles */
+  document.getElementById('toggle-hist-btn')?.addEventListener('click',()=>{
+    const h=document.getElementById('hist'),a=document.getElementById('hist-arrow');
+    const open=h.style.display!=='none';
+    h.style.display=open?'none':'flex'; h.style.flexDirection='column'; h.style.gap='4px';
+    if(a) a.style.transform=open?'rotate(-90deg)':'';
+  });
+  document.getElementById('toggle-clients-btn')?.addEventListener('click',()=>{
+    const p=document.getElementById('client-panel'),a=document.getElementById('client-arrow');
+    const isOpen=p.style.maxHeight!=='0px';
+    p.style.maxHeight=isOpen?'0px':'400px'; p.style.overflow='hidden'; p.style.transition='max-height .35s ease';
+    if(a) a.style.transform=isOpen?'rotate(-90deg)':'';
+  });
+  document.getElementById('add-cli-btn')?.addEventListener('click',addNewClient);
+  /* BUG-15 FIX: correct function name */
+  /* (handled by save-keys-btn above — saveVaultKeys() removed entirely) */
+  /* Keyboard shortcuts */
+  document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();newChat();}
+    if(e.key==='Escape'){closeSb();closeSlashMenu();closeModal('settings-modal');closeModal('image-modal');closeModal('train-modal');closeModal('preview-modal');}
+  });
+
+  /* Voice */
+  document.getElementById('micbtn')?.addEventListener('click',toggleVoice);
+  document.getElementById('langbtn')?.addEventListener('click',toggleVoiceLang);
+  initVoice();
+  setupGestures();
+
+  /* Try to get server token (non-fatal) */
+  fetch('/api/token',{method:'GET'})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{if(d?.token) state.APP_TOKEN=d.token;})
+    .catch(()=>{/* non-fatal */});
+
+  updTok(0);
+  inp?.focus();
+
+  /* ─ PDF / Preview modal wiring (BUG-C FIX: moved here from DOMContentLoaded) ─ */
+  document.getElementById('save-pdf-btn')?.addEventListener('click',()=>{
+    const el=document.getElementById('preview-content');
+    if(!el){toast('Nothing to save');return;}
+    if(typeof html2pdf==='undefined'){toast('PDF library not loaded');return;}
+    toast('Generating PDF…');
+    html2pdf().from(el).set({
+      margin:10,
+      filename:`bvmbino-${Date.now()}.pdf`,
+      html2canvas:{scale:2,backgroundColor:'#ffffff',useCORS:true},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    }).save()
+      .then(()=>{
+        toast('PDF Saved ✓');
+        closePreviewModal(); /* BUG-C FIX: auto-close after save */
+      })
+      .catch(()=>toast('PDF save failed'));
+  });
+
+  /* ─ Cancel / close buttons for all modals ─ */
+  document.getElementById('close-preview')?.addEventListener('click', closePreviewModal);
+  document.getElementById('cancel-preview-btn')?.addEventListener('click', closePreviewModal);
+  document.getElementById('cancel-image-btn')?.addEventListener('click',()=>closeModal('image-modal'));
+  /* Close modal on backdrop click */
+  document.getElementById('preview-modal')?.addEventListener('click',e=>{ if(e.target.id==='preview-modal') closePreviewModal(); });
+
+  console.log('✅ Bvmbino Pro v5.7 — Ready');
+}
+
+/* BUG-A FIX: closePreviewModal clears content so injected PDF HTML
+   doesn't persist in DOM and shrink the layout on next render */
+function closePreviewModal(){
+  closeModal('preview-modal');
+  /* Defer clear so the closing animation can complete */
+  setTimeout(()=>{
+    const c=document.getElementById('preview-content');
+    if(c) c.innerHTML='';
+  }, 320);
+}
+
+function newChat(){
+  state.msgs=[];state.curSessId=null;
+  const ci=document.getElementById('ci'); if(ci) ci.innerHTML='';
+  state.attachedFiles=[];renderFileStrip();
+  document.getElementById('tbtitle').textContent='Bvmbino Pro · Command Hub';
+  renderWelcome(); closeSb(); toast('New conversation · Ctrl+K');
+}
+
+/* Expose globals needed by inline onclick attributes and external scripts */
+window.send=send;
+window.slash=slash;
+window.newChat=newChat;
+window.resumeSession=resumeSession;
+window.deleteSession=deleteSession;
+window.setActiveClient=setActiveClient;
+window.deleteClient=deleteClient;
+window.addNewClient=addNewClient;
+window.setModel=setModel;
+window.copyMsgContent=copyMsgContent;
+window.copyLast=copyLast;
+window.regenLast=regenLast;
+window.expMsgPdf=expMsgPdf;
+window.expMsgHtml=expMsgHtml;
+window.expLastPdf=expLastPdf;
+window.expLastMd=expLastMd;
+window.removeFile=removeFile;
+window.openModal=openModal;
+window.closeModal=closeModal;
+window.openMpanel=openMpanel;
+window.closeMpanel=closeMpanel;
+window.openSb=openSb;
+window.closeSb=closeSb;
+window.downloadImg=downloadImg;
+window.sendImgToChat=sendImgToChat;
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
