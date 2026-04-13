@@ -1,0 +1,8 @@
+.env.local
+.env
+node_modules/
+.vercel/
+.vercel
+
+# Local Secret Audit
+AUTEUR_SYSTEM_AUDIT.html
