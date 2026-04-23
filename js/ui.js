@@ -148,11 +148,13 @@ export async function renderClients() {
     </div>`).join('');
 }
 
-export function setActiveClient(id) {
+export async function setActiveClient(id) {
   state.activeClientId = id === state.activeClientId ? null : id;
-  renderClients();
-  const client = CORE_VENTURES.concat(loadClientsCached || []).find(v => v.id === id);
-  toast(state.activeClientId ? `🎯 Strategy Focus: ${client.name}` : 'Main Engine Restored');
+  const freshClients = await loadClients();
+  loadClientsCached = freshClients;
+  await renderClients();
+  const client = [...CORE_VENTURES, ...freshClients].find(v => v.id === id);
+  toast(state.activeClientId ? `Strategy Focus: ${client?.name || id}` : 'Main Engine Restored');
 }
 
 let loadClientsCached = [];
@@ -290,9 +292,10 @@ export function setupGestures() {
 }
 
 // Global UI Bridges
-// Internal Global state check
 if (typeof window !== 'undefined') {
   window.setActiveClient = setActiveClient;
   window.setModel = setModel;
   window.slash = slash;
+  window.addNewClient = addNewClient;
+  window.editMemoryTier = editMemoryTier;
 }

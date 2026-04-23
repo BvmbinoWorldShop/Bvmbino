@@ -15,10 +15,9 @@ export const MODELS = {
 };
 
 export const MODEL_ALIASES = {
-  claude: 'google/gemini-2.0-flash-exp:free',
-  gpt4: 'google/gemini-2.0-flash-exp:free',
   gemini: 'google/gemini-2.0-flash-exp:free',
   llama: 'meta-llama/llama-3.3-70b-instruct:free',
+  deepseek: 'deepseek/deepseek-chat-v3-0324:free',
 };
 
 export function resolveModelId(id) {
@@ -125,6 +124,7 @@ export const state = {
   curSessId: null,
   clients: [],
   APP_TOKEN: null,
+  abortCtrl: null,
   config: {
     temp: 0.7,
     stream: true

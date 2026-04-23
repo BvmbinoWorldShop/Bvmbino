@@ -4,7 +4,7 @@
  */
 
 import { state, initializeToken, lock, unlock, toast } from './core.js';
-import { initDB, loadSession, deleteSession } from './store.js';
+import { initDB, loadSession, deleteSession, initializePIN, purgeAll } from './store.js';
 import { send } from './api.js';
 import { BillyLive } from './voice.js';
 import {
@@ -13,7 +13,6 @@ import {
   newChat, resumeSession, setupGestures, openTrain, toggleModal, slash,
   setActiveClient, setModel, addNewClient, deleteClient, editMemoryTier
 } from './ui.js';
-import { initializePIN, purgeAll, deleteSession } from './store.js';
 import { showPdfModal, saveAsPdf, buildExportHtml } from './export.js';
 
 /* --- CORE INITIALIZATION --- */
@@ -182,7 +181,15 @@ const App = {
 
     // Input Handling
     _on('sbtn', 'click', () => send());
-    _on('cancel-btn', 'click', () => { /* Abort logic if implemented */ });
+    _on('cancel-btn', 'click', () => {
+      if (state.abortCtrl) {
+        state.abortCtrl.abort();
+        state.abortCtrl = null;
+      }
+      unlock();
+      const { hideTyping } = window.__render || {};
+      document.getElementById('type-row')?.remove();
+    });
     
     this.dom.inp?.addEventListener('input', () => {
       this.dom.inp.style.height = 'auto';
@@ -255,8 +262,8 @@ if (typeof window !== 'undefined') {
   window.send = send;
   window.App = App;
   window.BillyLive = BillyLive;
-  window.resumeSession = (id) => { loadSession(id).then(renderSkills); };
-  window.deleteSession = (id, e) => { e.stopPropagation(); if (confirm('Purge this memory?')) deleteSession(id).then(renderHistory); };
+  window.resumeSession = (id) => { loadSession(id).then(renderHistory); };
+  window.deleteSession = (id, e) => { if (e) e.stopPropagation(); if (confirm('Purge this memory?')) deleteSession(id).then(renderHistory); };
 }
 
 // Start Engine

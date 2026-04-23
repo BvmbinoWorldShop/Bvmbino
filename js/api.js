@@ -5,7 +5,7 @@
 
 import {
   state, scrollBot, LEVELS, DEFAULT_MODEL,
-  resolveModelId, lock, unlock, updTok, buildSys, toast
+  resolveModelId, lock, unlock, updTok, buildSys, toast, PROMPTS
 } from './core.js';
 import { saveSession } from './store.js';
 import {
@@ -37,6 +37,13 @@ export async function send() {
     if (intent) {
       if (intent.type === 'scrape') return await handleScrape(intent.url);
       if (intent.type === 'search') return await handleSearch(intent.query);
+      if (intent.type === 'builder') return; // toggle already applied in detectIntent
+      // Skill-type intents (/ads, /performance, /art, /ops, /pdf)
+      const skillPrompt = PROMPTS[intent.type];
+      if (skillPrompt) {
+        state.msgs[state.msgs.length - 1].content = `${skillPrompt}\n\nUser request: "${raw}"`;
+        state.msgs[state.msgs.length - 1].skill = intent.type;
+      }
     }
 
     const routing = smartRouteMsg(raw);
@@ -62,6 +69,9 @@ export async function callAI(skipLock = false) {
 
   for (const modelId of tryOrder) {
     try {
+      const ctrl = new AbortController();
+      state.abortCtrl = ctrl;
+
       const headers = { 'Content-Type': 'application/json' };
       const keys = ['groq', 'openai', 'anthropic', 'openrouter', 'mistral', 'cerebras', 'gemini'];
       keys.forEach(k => {
@@ -72,6 +82,7 @@ export async function callAI(skipLock = false) {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers,
+        signal: ctrl.signal,
         body: JSON.stringify({
           system: sys,
           messages: state.msgs.slice(-20),
@@ -96,7 +107,10 @@ export async function callAI(skipLock = false) {
 
       processAiResponse(reply, data.model || modelId);
       return;
-    } catch (err) { continue; }
+    } catch (err) {
+      if (err.name === 'AbortError') { hideTyping(); return; }
+      continue;
+    }
   }
 
   hideTyping();
@@ -141,13 +155,20 @@ async function streamResponse(res, modelId) {
           const chunk = p.choices?.[0]?.delta?.content || (p.type === 'content_block_delta' ? p.delta?.text : '') || '';
           if (chunk) {
             full += chunk;
-            streamEl.textContent += chunk; 
+            streamEl.textContent += chunk;
             if (full.length % 30 === 0) scrollBot();
           }
         } catch {}
       }
     }
-  } catch (err) {}
+  } catch (err) {
+    if (err.name === 'AbortError' && full.trim()) {
+      // Stream was cancelled mid-way — finalize what we have
+    } else if (err.name === 'AbortError') {
+      row.remove();
+      return false;
+    }
+  }
 
   if (!full.trim()) { row.remove(); return false; }
 

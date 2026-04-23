@@ -11,17 +11,23 @@ export function esc(s) {
   })[m]);
 }
 
-/**
- * safeRender — Sanitizes AI-generated HTML to prevent RCE/XSS 
- * while preserving safe markdown-derived structures.
- */
+const BLOCKED_TAGS = new Set(['script', 'iframe', 'object', 'embed', 'form', 'base', 'link', 'meta', 'style']);
+
 export function safeRender(html) {
   if (!html) return '';
-  return html
-    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '')
-    .replace(/on\w+="[^"]*"/gim, '')
-    .replace(/javascript:/gim, '')
-    .replace(/<iframe\b[^>]*>([\s\S]*?)<\/iframe>/gim, '');
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  el.querySelectorAll('*').forEach(node => {
+    if (BLOCKED_TAGS.has(node.tagName.toLowerCase())) { node.remove(); return; }
+    [...node.attributes].forEach(attr => {
+      const name = attr.name.toLowerCase();
+      const val = attr.value.toLowerCase().replace(/\s/g, '');
+      if (/^on/.test(name) || val.startsWith('javascript:') || name === 'formaction' || name === 'srcdoc') {
+        node.removeAttribute(attr.name);
+      }
+    });
+  });
+  return el.innerHTML;
 }
 
 export function inl(t) {
@@ -133,8 +139,10 @@ export function appendToolRow(id, icon, type, msg) {
 }
 
 export function updateToolRow(id, icon, type, msg, isErr) {
-  const el = document.getElementById(id + '-msg');
-  if (el) el.innerHTML = msg;
+  const msgEl = document.getElementById(id + '-msg');
+  if (msgEl) msgEl.textContent = (isErr ? '⚠ ' : '') + msg;
+  const banner = document.getElementById(id + '-banner');
+  if (banner) banner.className = `tool-banner tb-${isErr ? 'error' : type}`;
 }
 
 let typeInterval = null;

@@ -21,12 +21,18 @@ async function getMasterKey() {
   const p = sessionStorage.getItem('v_key');
   if (!p) return null;
   const enc = new TextEncoder();
-  // PBKDF2 or similar would be better, but for browser-local UX with a PIN, 
-  // we pad/slice to 32 bytes for the AES key.
-  return crypto.subtle.importKey(
-    'raw',
-    enc.encode(p.padEnd(32).slice(0, 32)),
-    { name: 'AES-GCM' },
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(p), { name: 'PBKDF2' }, false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: enc.encode('bvmbino-sovereign-vault-v2'),
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
     false,
     ['encrypt', 'decrypt']
   );
