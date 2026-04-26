@@ -540,6 +540,18 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
   border-radius:3px;padding:2px 6px;
   letter-spacing:.5px;color:rgba(240,232,208,.55);
 }
+.wcard.agent-hidden{display:none !important;}
+.wcard.agent-hidden.agent-hidden-show{display:flex !important;}
+#see-more-wrap{margin-top:14px;text-align:center;}
+#see-more-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 18px;background:none;
+  border:1px dashed var(--bd2);border-radius:6px;
+  color:var(--pu2);font-family:var(--head);font-weight:700;
+  font-size:11px;letter-spacing:1.5px;cursor:pointer;
+  transition:all .2s;
+}
+#see-more-btn:hover{background:var(--pu3);border-color:var(--pu2);}
 
 /* ══ /CMD STRIP — all agents ══ */
 .cmd-strip{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;max-width:860px;margin:12px auto 0;padding:0 8px;}
@@ -704,6 +716,15 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
     <div class="mp-tier">
       <div class="mp-tier-head"><span class="mp-tier-label">PROJECTS Goals</span><button class="icobtn" id="edit-projects-btn" style="width:20px;height:20px;font-size:9px">✎</button></div>
       <div class="editable-zone" id="mp-projects" contenteditable="false">Current Objectives: Scaling FormationPro sales in Abidjan.</div>
+    </div>
+    <div class="mp-tier">
+      <div class="mp-tier-head">
+        <span class="mp-tier-label">⚡ LIVE FEED</span>
+        <button class="icobtn" onclick="window.clearMemoryFeed && window.clearMemoryFeed()" style="width:20px;height:20px;font-size:9px" title="Clear">🗑</button>
+      </div>
+      <div id="mp-feed" style="max-height:260px;overflow-y:auto;font-size:10px;line-height:1.5;color:var(--t2);padding:8px 10px;background:rgba(0,0,0,.3);border-radius:6px;border:1px solid var(--bd);font-family:var(--mono)">
+        <div style="color:var(--t3);font-style:italic">Awaiting orders, Boss…</div>
+      </div>
     </div>
   </div>
   <div class="mpf">
@@ -1631,6 +1652,7 @@ async function saveToKnowledge(key, val) {
     const encrypted = await encrypt({ key, val, date: Date.now() });
     const tx = db.transaction(STORE_KNOW, 'readwrite');
     tx.objectStore(STORE_KNOW).add(encrypted);
+    window.logFeed && window.logFeed('🧠', 'Memory saved: ' + key);
     toast(`🧠 Learned: ${key}`);
     const mems = document.getElementById('mems');
     if (mems) {
@@ -1908,65 +1930,70 @@ const GRID_SKILLS = [
 ];
 
 function renderWelcome() {
-  // Populate the static #welcome-grid from index.html
-  // Falls back to rewriting #ci if the new HTML structure isn't present
-  const grid = document.getElementById('welcome-grid');
-  if (grid) {
-    // Only render skills that have real portrait images
-    const withPhoto = GRID_SKILLS.filter(s => s.iconType === 'img');
-    grid.innerHTML = withPhoto.map(s => `
-      <div class="wcard card-${s.cat}" id="skill-btn-${s.id}" onclick="window.slash('${s.id}')">
-        <img class="wcard-bg-img" src="${s.icon}" alt="${s.name}" loading="lazy">
-        <div class="wcard-overlay"></div>
-        <div class="wcard-body">
-          <div class="wcard-cat-dot" style="background:${s.accent};color:${s.accent}"></div>
-          <div class="wcard-name">${s.name}</div>
-          <div class="wcard-persona" style="color:${s.accent}">${s.persona}</div>
-          <div class="wcd">${s.use}</div>
-          <div class="wcard-cmd">${s.cmd}</div>
-        </div>
-      </div>`).join('');
-    // Populate /cmd strip — ALL 29 agents
-    const strip = document.getElementById('cmd-strip');
-    if (strip) {
-      strip.innerHTML = GRID_SKILLS.map(s =>
-        `<div class="cmd-pill" onclick="window.slash && window.slash('${s.id}')" title="${s.use}">
-          <span class="cp-dot" style="background:${s.accent}"></span>
-          <span>${s.name}</span>
-          <span class="cp-cmd">${s.cmd}</span>
-        </div>`
-      ).join('');
-    }
-    // Expose skills for slash menu
-    window.__SKILLS__ = GRID_SKILLS;
-    return;
-  }
-  // Legacy fallback: rewrite #ci (standalone build)
   const ci = document.getElementById('ci');
   if (!ci) return;
-  ci.innerHTML = `
-    <div class="welcome" id="welcome">
-      <div class="w3d-scene">
-        <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-        <div class="w3d-core">🤖</div>
-      </div>
-      <h1 class="wt">BVMBINO Pro</h1>
-      <div class="wsubtitle">AI Agents v5.7</div>
-      <p class="ws">Your autonomous AI powerhouse — 24 skills ready. Type <strong style="color:var(--pu2)">/</strong> or click any skill to activate.</p>
-      <div class="skills-grid-wrap">
-        <div class="skills-grid-label">— 24 Activated Skills —</div>
-        <div class="matrix-grid">
-          ${GRID_SKILLS.map(s => `
-            <div class="wcard card-${s.cat}" id="skill-btn-${s.id}" onclick="window.slash('${s.id}')">
-              <div class="wci">${s.icon}</div>
-              <div class="wct">/${s.id}</div>
-              <div class="wcd">${s.desc}</div>
-              <div class="wcuse">${s.use}</div>
-            </div>`).join('')}
+  // Always rebuild the welcome shell if grid is missing (after slash() or send() removed it)
+  if (!document.getElementById('welcome-grid')) {
+    ci.innerHTML = `
+      <div class="welcome" id="welcome">
+        <div class="w3d-scene">
+          <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
+          <div class="w3d-core">🤖</div>
         </div>
+        <h1 class="wt">BVMBINO PRO</h1>
+        <div class="wsubtitle">AI AGENTS V.6.1</div>
+        <p class="ws">I am Billy, your Sovereign Chief of Staff. I run the show and deploy the right specialists for your missions.</p>
+        <div class="skills-grid-wrap">
+          <div class="skills-grid-label">Sovereign Expert Matrix</div>
+          <div class="matrix-grid" id="welcome-grid"></div>
+          <div id="see-more-wrap"><button id="see-more-btn">+ SEE MORE AGENTS</button></div>
+        </div>
+        <p class="shint">Pick a specialist above or use any agent below</p>
+        <div class="cmd-strip" id="cmd-strip"></div>
+      </div>`;
+  }
+  const grid = document.getElementById('welcome-grid');
+  if (!grid) return;
+  const portraitOnes = GRID_SKILLS.filter(s => s.iconType === 'img');
+  const cardTpl = (s, hidden) => `
+    <div class="wcard card-${s.cat}${hidden ? ' agent-hidden' : ''}" id="skill-btn-${s.id}" onclick="window.slash('${s.id}')">
+      <img class="wcard-bg-img" src="${s.icon}" alt="${s.name}" loading="lazy" onerror="this.style.display='none'">
+      <div class="wcard-overlay"></div>
+      <div class="wcard-body">
+        <div class="wcard-cat-dot" style="background:${s.accent};color:${s.accent}"></div>
+        <div class="wcard-name">${s.name}</div>
+        <div class="wcard-persona" style="color:${s.accent}">${s.persona}</div>
+        <div class="wcd">${s.use}</div>
+        <div class="wcard-cmd">${s.cmd}</div>
       </div>
-      <div class="shint">Type <code>/</code> for all skills · <code>/leads</code> · <code>/email</code> · <code>/aimas</code></div>
     </div>`;
+  grid.innerHTML = portraitOnes.map((s, i) => cardTpl(s, i >= 12)).join('');
+  // Wire See More toggle
+  const btn = document.getElementById('see-more-btn');
+  const wrap = document.getElementById('see-more-wrap');
+  if (btn && portraitOnes.length > 12) {
+    let expanded = false;
+    btn.onclick = () => {
+      expanded = !expanded;
+      document.querySelectorAll('#welcome-grid .agent-hidden').forEach(el => {
+        el.classList.toggle('agent-hidden-show', expanded);
+      });
+      btn.textContent = expanded ? '— SHOW LESS' : '+ SEE MORE AGENTS';
+    };
+  } else if (wrap) {
+    wrap.style.display = 'none';
+  }
+  // Populate /cmd strip
+  const strip = document.getElementById('cmd-strip');
+  if (strip) {
+    strip.innerHTML = GRID_SKILLS.map(s =>
+      `<div class="cmd-pill" onclick="window.slash && window.slash('${s.id}')" title="${s.use}">
+        <span class="cp-dot" style="background:${s.accent}"></span>
+        <span>${s.name}</span>
+        <span class="cp-cmd">${s.cmd}</span>
+      </div>`
+    ).join('');
+  }
   window.__SKILLS__ = GRID_SKILLS;
 }
 
@@ -1982,10 +2009,29 @@ async function renderHistory() {
   c.innerHTML = sessions.slice(0, 15).map(s => `
     <div class="hi ${state.curSessId === s.id ? 'active' : ''}">
       <span class="hdot"></span>
-      <span class="hi-title" onclick="window.resumeSession('${esc(String(s.id))}')">${esc(s.title || 'Untitled')}</span>
-      <button onclick="window.deleteSession('${esc(String(s.id))}', event)" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0 4px;font-size:10px;opacity:.5">✕</button>
+      <span class="hi-title" onclick="window.resumeSession('${esc(String(s.id))}')" ondblclick="event.stopPropagation();window.renameSession('${esc(String(s.id))}')" title="Click to open · Double-click to rename">${esc(s.title || 'Untitled')}</span>
+      <button onclick="event.stopPropagation();window.deleteSession('${esc(String(s.id))}', event)" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0 4px;font-size:10px;opacity:.5" title="Delete">✕</button>
     </div>`).join('');
 }
+
+window.renameSession = async function(id) {
+  const sessions = await loadSessions();
+  const s = sessions.find(x => String(x.id) === String(id));
+  if (!s) return;
+  const newTitle = prompt('Rename conversation:', s.title || '');
+  if (!newTitle || newTitle === s.title) return;
+  // Save with new title under same id
+  const tmpSessId = state.curSessId;
+  const tmpMsgs = state.msgs;
+  state.curSessId = s.id;
+  state.msgs = s.msgs || [];
+  await saveSession(newTitle);
+  state.curSessId = tmpSessId;
+  state.msgs = tmpMsgs;
+  renderHistory();
+  window.logFeed && window.logFeed('📝', `Chat renamed: ${newTitle}`);
+  toast('✓ Renamed');
+};
 
 // FIX: resumeSession defined and exported
 function resumeSession(id) {
@@ -2015,18 +2061,84 @@ function resumeSession(id) {
 async function renderClients() {
   const ctn = document.getElementById('venture-list') || document.getElementById('client-list');
   if (!ctn) return;
+  // Apply localStorage overrides + hidden filters for CORE_VENTURES
+  try {
+    const overrides = JSON.parse(localStorage.getItem('venture_overrides') || '{}');
+    const hidden = JSON.parse(localStorage.getItem('venture_hidden') || '[]');
+    for (let i = CORE_VENTURES.length - 1; i >= 0; i--) {
+      if (hidden.includes(CORE_VENTURES[i].id)) { CORE_VENTURES.splice(i, 1); continue; }
+      const ov = overrides[CORE_VENTURES[i].id];
+      if (ov) Object.assign(CORE_VENTURES[i], ov);
+    }
+  } catch(e) {}
   const stored = await loadClients();
   const all = [...CORE_VENTURES, ...stored];
-  ctn.innerHTML = all.map(c => `
-    <div class="qbtn ${state.activeClientId === c.id ? 'active' : ''}" onclick="window.setActiveClient('${esc(c.id)}')">
-      <span class="qi">${!CORE_VENTURES.find(v => v.id === c.id) ? '💼' : '🏢'}</span>
-      <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
-        <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</span>
-        <span class="qsub">${esc((c.desc || '').slice(0, 30))}…</span>
+  ctn.innerHTML = all.map(c => {
+    const isCustom = !CORE_VENTURES.find(v => v.id === c.id);
+    const active = state.activeClientId === c.id;
+    return `
+    <div class="qbtn cli ${active ? 'active' : ''}" data-id="${esc(c.id)}" style="position:relative">
+      <span class="qi">${isCustom ? '💼' : '🏢'}</span>
+      <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;text-align:left">
+        <span class="cli-name" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text" title="Double-click to rename" ondblclick="event.stopPropagation();window.editPillar('${esc(c.id)}','name')">${esc(c.name)}</span>
+        <span class="cli-desc qsub" style="cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Double-click to edit" ondblclick="event.stopPropagation();window.editPillar('${esc(c.id)}','desc')">${esc((c.desc || '').slice(0, 30))}…</span>
       </div>
-      ${!CORE_VENTURES.find(v => v.id === c.id) ? `<button onclick="window.deleteClient('${esc(c.id)}',event)" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0 4px;font-size:10px" title="Remove">✕</button>` : ''}
-    </div>`).join('');
+      <button onclick="event.stopPropagation();window.deletePillar('${esc(c.id)}')" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0 4px;font-size:11px;opacity:.5" title="Delete">✕</button>
+    </div>`;
+  }).join('');
+  // Wire activate-on-row-click (but not on name/desc/button)
+  ctn.querySelectorAll('.cli').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.closest('.cli-name, .cli-desc, button')) return;
+      window.setActiveClient && window.setActiveClient(el.dataset.id);
+    });
+  });
 }
+
+window.editPillar = async function(id, field) {
+  const isCore = CORE_VENTURES.find(v => v.id === id);
+  if (isCore) {
+    const newVal = prompt(`Edit ${field}:`, field === 'name' ? isCore.name : isCore.desc);
+    if (!newVal) return;
+    const overrides = JSON.parse(localStorage.getItem('venture_overrides') || '{}');
+    overrides[id] = overrides[id] || {};
+    overrides[id][field] = newVal;
+    localStorage.setItem('venture_overrides', JSON.stringify(overrides));
+    if (field === 'name') isCore.name = newVal; else isCore.desc = newVal;
+    renderClients();
+    window.logFeed && window.logFeed('✏️', `Pillar updated: ${isCore.name}`);
+    toast('✓ Pillar updated');
+    return;
+  }
+  const all = await loadClients();
+  const c = all.find(x => x.id === id);
+  if (!c) return;
+  const newVal = prompt(`Edit ${field}:`, c[field]);
+  if (!newVal) return;
+  c[field] = newVal;
+  await saveClient(c);
+  renderClients();
+  window.logFeed && window.logFeed('✏️', `Updated: ${c.name}`);
+  toast('✓ Updated');
+};
+
+window.deletePillar = async function(id) {
+  if (!confirm('Remove this pillar from the sidebar?')) return;
+  const isCore = CORE_VENTURES.find(v => v.id === id);
+  if (isCore) {
+    const hidden = JSON.parse(localStorage.getItem('venture_hidden') || '[]');
+    if (!hidden.includes(id)) hidden.push(id);
+    localStorage.setItem('venture_hidden', JSON.stringify(hidden));
+    const idx = CORE_VENTURES.findIndex(v => v.id === id);
+    if (idx >= 0) CORE_VENTURES.splice(idx, 1);
+  } else {
+    await removeClient(id);
+  }
+  if (state.activeClientId === id) state.activeClientId = null;
+  renderClients();
+  window.logFeed && window.logFeed('🗑', 'Pillar removed');
+  toast('✓ Removed');
+};
 
 function setActiveClient(id) {
   state.activeClientId = (id === state.activeClientId) ? null : id;
@@ -2037,11 +2149,13 @@ function setActiveClient(id) {
       loadClients().then(stored => {
         const all = [...CORE_VENTURES, ...stored];
         const c = all.find(v => v.id === id);
-        toast(`🎯 Context: ${c ? c.name : 'Active'}`);
+        const name = c ? c.name : 'Active';
+        window.logFeed && window.logFeed('🎯', 'Focus → ' + name);
+        toast(`🎯 Context: ${name}`);
       });
     });
-    // Don't auto-open memory panel on client select — user controls that
   } else {
+    window.logFeed && window.logFeed('🎯', 'Focus cleared');
     toast('Context cleared');
   }
 }
@@ -2145,18 +2259,14 @@ function newChat() {
   state.msgs = [];
   state.curSessId = null;
   state.attachedFiles = [];
-  // For modular build: show the static welcome section
-  const welcome = document.getElementById('welcome');
-  if (welcome) { welcome.style.display = ''; }
-  // For standalone build: rebuild #ci
-  else {
-    const ci = document.getElementById('ci');
-    if (ci) ci.innerHTML = '';
-    renderWelcome();
-  }
+  // Always rebuild from scratch — renderWelcome handles missing welcome
+  const ci = document.getElementById('ci');
+  if (ci) ci.innerHTML = '';
+  renderWelcome();
   const tb = document.getElementById('tbtitle');
   if (tb) tb.textContent = 'Bvmbino Pro · Command Hub';
   closeSb();
+  window.logFeed && window.logFeed('🆕', 'New conversation started');
   toast('New Workspace · Ctrl+K');
 }
 
@@ -2166,9 +2276,11 @@ function slash(key) {
   const el = document.getElementById('inp');
   const welcome = document.getElementById('welcome');
   const p = PROMPTS[key];
+  window.logFeed && window.logFeed('⚡', 'Activated /' + key);
   if (p) {
     // Direct execute — skip input, send immediately
-    if (welcome) welcome.remove();
+    // Hide welcome (don't remove — newChat needs to restore it)
+    if (welcome) welcome.style.display = 'none';
     Promise.resolve({ send }).then(({ send }) => {
       if (el) el.value = '';
       // Push the prompt directly
@@ -2512,6 +2624,7 @@ async function send() {
   // Hide welcome
   const _w = document.getElementById('welcome');
   if (_w) _w.style.display = 'none';
+  window.logFeed && window.logFeed('💬', 'Boss: ' + raw.slice(0, 60) + (raw.length > 60 ? '…' : ''));
   lock();
 
   try {
@@ -3668,7 +3781,7 @@ const App = {
 
   sendImgToChat(url, prompt) {
     const ci = document.getElementById('ci'); if (!ci) return;
-    document.getElementById('welcome')?.remove();
+    const _w2 = document.getElementById('welcome'); if (_w2) _w2.style.display = 'none';
     const d = document.createElement('div'); d.className = 'mrow';
     d.innerHTML = `
       <div class="av av-ai">🎨</div>
@@ -3916,6 +4029,26 @@ window.editMemoryTier = editMemoryTier;
 window.openSb         = openSb;
 window.send           = send;
 window.expLastPdf     = () => App.exportLastPdf();
+
+// ─────────────────────────────────────────────────────────────────
+//  LIVE MEMORY FEED
+// ─────────────────────────────────────────────────────────────────
+window.__feedEvents = [];
+window.logFeed = function(icon, text) {
+  const feed = document.getElementById('mp-feed');
+  if (!feed) return;
+  const ts = new Date().toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  window.__feedEvents.unshift({icon, text, ts});
+  if (window.__feedEvents.length > 50) window.__feedEvents.length = 50;
+  feed.innerHTML = window.__feedEvents.map(e =>
+    `<div style="margin-bottom:5px;display:flex;gap:6px;align-items:flex-start"><span style="opacity:.45;flex-shrink:0;font-size:9px;padding-top:1px">${e.ts}</span><span style="flex-shrink:0">${e.icon}</span><span style="flex:1;word-break:break-word">${e.text}</span></div>`
+  ).join('');
+};
+window.clearMemoryFeed = function() {
+  window.__feedEvents = [];
+  const feed = document.getElementById('mp-feed');
+  if (feed) feed.innerHTML = '<div style="color:var(--t3);font-style:italic">Feed cleared.</div>';
+};
 
 // ─────────────────────────────────────────────────────────────────
 //  BOOT
