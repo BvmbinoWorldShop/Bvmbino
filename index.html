@@ -676,7 +676,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="file-strip" id="file-strip"></div>
       <div class="smenu" id="smenu"></div>
       <div class="intop">
-        <textarea id="inp" placeholder="Order strategic offensive..." rows="1"></textarea>
+        <textarea id="inp" placeholder="TELL ME WHAT'S NEXT, BOSS..." rows="1"></textarea>
         <input type="file" id="file-input" style="display:none" multiple accept="image/*,.pdf,.txt,.csv,.json,.md,.js,.py,.html,.css,.ts,.jsx">
         <button class="langbtn" id="lang-btn">EN</button>
         <button class="micbtn" id="mic-btn">🎙️</button>
@@ -960,38 +960,46 @@ const CORE_VENTURES = [
   { id:'entai',   name:'Entreprise AI',  desc:'Strategic Council Engine & Automation Hub' },
 ];
 
-const SYSTEM_IDENTITY = `YOU ARE BILLY — BVMBINO APEX STRATEGIC PARTNER v6.1.
-Primary human: TIEGBE BAMBA (The Boss, the Patron).
+const SYSTEM_IDENTITY = `YOU ARE BILLY — BVMBINO APEX CHIEF OF STAFF v6.1.
+Primary human: TIEGBE BAMBA — call him "Boss" or "Bvmbino". Never use his real name.
 
 CORE IDENTITY:
-- Sovereign Digital Chief of Staff for the Bvmbino empire.
-- You are a REAL PARTNER, not a chatbot. Speak like a trusted co-founder.
+- You are BILLY, the Sovereign Chief of Staff. You ALWAYS speak first and answer directly.
+- You are a real partner — sharp, loyal, real. Street energy when casual, precision when it's business.
 - Markets: Côte d'Ivoire, West Africa, France.
 - Ventures: FormationPro, Strong Wave, Purgo Clean, Keo Jus, Entreprise AI.
 
-TEAM (Specialist Council):
-- Mami: Director, Customer Dept (legal, client relations, contracts)
-- Poupex: Intel Director (automation, ops intelligence, workflows)
-- Daphne: Head of Brand & Market (brand image, market analysis, influence)
-- Papou: Sales Director (closing, DM scripts, revenue strategy)
-- Zeur: Security Chief (system audits, cybersecurity, vulnerability)
-- Lilly: Lead Intelligence (scraping, qualifying, scoring prospects)
-- Yuki: Web Architect (funnels, landing pages, UX)
-- Sarah: Elite Copywriter (copy, reports, proposals)
-- Malik: Content King (social hooks, viral loops, reels)
-- Chloé: Media Buyer (Meta, Google, TikTok ads)
-- Coach: Performance Director (deep work, sport, mental performance)
-- Dante: Art & Pitch Director (decks, visual narrative, AI prompts)
-- Lukas: Empire Strategist (GTM, 90-day plans, scaling)
+HOW YOU OPERATE:
+1. ANSWER DIRECTLY for 90% of requests (questions, advice, quick takes, ideas, drafts, decisions, casual chat).
+2. ONLY route to a specialist when the task is genuinely complex and matches their domain:
+   - Mami → contract review, legal risk audit, customer escalation strategy
+   - Poupex → multi-step automation workflow design (n8n/Zapier JSON)
+   - Daphne → deep market research, brand positioning audit
+   - Papou → full sales playbook, objection matrix, multi-touch closing sequence
+   - Zeur → security audit, vulnerability assessment
+   - Lilly → live lead scraping or list-building from a real URL
+   - Yuki → full landing page or funnel architecture
+   - Sarah → long-form copy (proposal, report, sales letter)
+   - Malik → multi-piece content campaign with hooks
+   - Chloé → full ad campaign setup (Meta/Google/TikTok with budgets, targeting, creatives)
+   - Coach → full performance protocol (training schedule, recovery, mental)
+   - Brody → cinematic deck or art direction prompt set
+   - Lukas → full GTM plan or 90-day strategy
+3. When you DO route, announce it: "I'm pulling in [Name] for this — [reason]." Then the specialist responds in their voice.
+4. LIVE COUNCIL: When the Boss says "council" or the task crosses domains, you can convene 2-3 specialists who debate briefly then converge on the play.
+5. Always end with ONE concrete next move.
 
-CONVERSATION STYLE:
-1. SPEAK LIKE A PARTNER. Short, punchy, direct. No corporate speak.
-2. USE street-level energy when the Boss is casual, switch to precision when it's business.
-3. ALWAYS end with ONE concrete next move.
-4. NO WALLS OF TEXT for casual questions — match the Boss's message length.
-5. For voice: respond in 2-3 sentences max, conversational, zero markdown.
-6. When a specialist is active, STAY IN CHARACTER as that specialist.
-7. Inject personality: "Patron, let me tell you something...", "Okay here's the play...", "Straight talk:..."`;
+VOICE / PERSONALITY:
+- Short, punchy, direct. No corporate filler.
+- Match the Boss's message length. Casual question → casual answer.
+- Inject yourself: "Boss, here's the play…", "Straight talk, Bvmbino:…", "Okay, I see what you're thinking…"
+- Specialists each have their own voice (Papou is a closer, Mami is sharp & protective, Daphne is intuitive, Zeur is tactical, etc.) — stay in character.
+- For voice mode: 2-3 sentences max, conversational, zero markdown.
+
+PERSISTENT MEMORY:
+- The Boss's vault holds VENTURES context, PROJECTS goals, and KNOWLEDGE entries — all encrypted client-side.
+- Reference what you remember when relevant ("Last time we talked about scaling FormationPro…").
+- When the Boss tells you something new about a venture or project, save it (the system handles it).`;
 
 // ── APPLICATION STATE ──
 const state = {
@@ -1868,19 +1876,19 @@ function toggleClients() { togglePortfolio(); }
 // ── WELCOME (3×8 SKILL GRID) ──
 // Skill data shared between renderWelcome and the slash menu
 const GRID_SKILLS = [
-  {id:'lex',      cat:'strategy', name:'Mami',      persona:'Director, Customer Dept.', cmd:'/lex',      desc:'Customer & Legal',   use:'Legal risk, contracts & client relations.',    iconType:'img', accent:'#63b3ed', icon:'assets/specialists/mami.png'},
-  {id:'automate', cat:'tech',     name:'Poupex',    persona:'Intel Director',           cmd:'/automate', desc:'Intel Ops',          use:'Automation, ops intelligence & workflows.',    iconType:'img', accent:'#22c55e', icon:'assets/specialists/poupex.jpg'},
-  {id:'psych',    cat:'strategy', name:'Daphne',    persona:'Head of Brand & Market',   cmd:'/psych',    desc:'Brand & Market',     use:'Brand image, market analysis & influence.',    iconType:'img', accent:'#a78bfa', icon:'assets/specialists/daphne.png'},
-  {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales Director',           cmd:'/sales',    desc:'Sales HQ',           use:'Closing, DM scripts & revenue strategy.',      iconType:'img', accent:'#e8a912', icon:'assets/specialists/papou.png'},
-  {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'assets/specialists/zeur.png'},
-  {id:'leads',    cat:'revenue',  name:'Lilly',     persona:'Lead Intelligence',        cmd:'/leads',    desc:'Lead Intel',         use:'Scraping, qualifying & scoring prospects.',    iconType:'img', accent:'#e8a912', icon:'assets/specialists/lilly.png'},
-  {id:'website',  cat:'creative', name:'Yuki',      persona:'Web Architect',            cmd:'/website',  desc:'Web Architecture',   use:'Funnels, landing pages & UX design.',          iconType:'img', accent:'#63b3ed', icon:'assets/specialists/yuki.png'},
-  {id:'writer',   cat:'creative', name:'Sarah',     persona:'Elite Copywriter',         cmd:'/writer',   desc:'Elite Copy',         use:'Copy, reports & high-converting proposals.',   iconType:'img', accent:'#f472b6', icon:'assets/specialists/sarah.png'},
-  {id:'content',  cat:'creative', name:'Malik',     persona:'Content King',             cmd:'/content',  desc:'Content King',       use:'Social hooks, viral loops & reels.',           iconType:'img', accent:'#fb923c', icon:'assets/specialists/malik.png'},
-  {id:'campaign', cat:'revenue',  name:'Chloé',     persona:'Media Buyer',              cmd:'/campaign', desc:'Media Buying',       use:'Meta, Google & TikTok ad campaigns.',          iconType:'img', accent:'#e8a912', icon:'assets/specialists/chloe.png'},
-  {id:'coach',    cat:'strategy', name:'Coach',     persona:'Performance Director',     cmd:'/coach',    desc:'Performance',        use:'Deep work, sport & mental performance.',        iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png'},
-  {id:'present',  cat:'creative', name:'Dante',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'assets/specialists/dante.png'},
-  {id:'strategy', cat:'strategy', name:'Lukas',     persona:'Empire Strategist',        cmd:'/strategy', desc:'GTM Dominance',      use:'GTM, 90-day plans & scaling.',                iconType:'img', accent:'#22c55e', icon:'assets/specialists/lukas.png'},
+  {id:'lex',      cat:'strategy', name:'Mami',      persona:'Director, Customer Dept.', cmd:'/lex',      desc:'Customer & Legal',   use:'Legal risk, contracts & client relations.',    iconType:'img', accent:'#63b3ed', icon:'/assets/specialists/mami.png'},
+  {id:'automate', cat:'tech',     name:'Poupex',    persona:'Intel Director',           cmd:'/automate', desc:'Intel Ops',          use:'Automation, ops intelligence & workflows.',    iconType:'img', accent:'#22c55e', icon:'/assets/specialists/poupex.jpg'},
+  {id:'psych',    cat:'strategy', name:'Daphne',    persona:'Head of Brand & Market',   cmd:'/psych',    desc:'Brand & Market',     use:'Brand image, market analysis & influence.',    iconType:'img', accent:'#a78bfa', icon:'/assets/specialists/daphne.png'},
+  {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales Director',           cmd:'/sales',    desc:'Sales HQ',           use:'Closing, DM scripts & revenue strategy.',      iconType:'img', accent:'#e8a912', icon:'/assets/specialists/papou.png'},
+  {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'/assets/specialists/zeur.png'},
+  {id:'leads',    cat:'revenue',  name:'Lilly',     persona:'Lead Intelligence',        cmd:'/leads',    desc:'Lead Intel',         use:'Scraping, qualifying & scoring prospects.',    iconType:'img', accent:'#e8a912', icon:'/assets/specialists/lilly.png'},
+  {id:'website',  cat:'creative', name:'Yuki',      persona:'Web Architect',            cmd:'/website',  desc:'Web Architecture',   use:'Funnels, landing pages & UX design.',          iconType:'img', accent:'#63b3ed', icon:'/assets/specialists/yuki.png'},
+  {id:'writer',   cat:'creative', name:'Sarah',     persona:'Elite Copywriter',         cmd:'/writer',   desc:'Elite Copy',         use:'Copy, reports & high-converting proposals.',   iconType:'img', accent:'#f472b6', icon:'/assets/specialists/sarah.png'},
+  {id:'content',  cat:'creative', name:'Malik',     persona:'Content King',             cmd:'/content',  desc:'Content King',       use:'Social hooks, viral loops & reels.',           iconType:'img', accent:'#fb923c', icon:'/assets/specialists/malik.png'},
+  {id:'campaign', cat:'revenue',  name:'Chloé',     persona:'Media Buyer',              cmd:'/campaign', desc:'Media Buying',       use:'Meta, Google & TikTok ad campaigns.',          iconType:'img', accent:'#e8a912', icon:'/assets/specialists/chloe.png'},
+  {id:'coach',    cat:'strategy', name:'Coach',     persona:'Performance Director',     cmd:'/coach',    desc:'Performance',        use:'Deep work, sport & mental performance.',        iconType:'img', accent:'#22c55e', icon:'/assets/specialists/coach.png'},
+  {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'/assets/specialists/dante.png'},
+  {id:'strategy', cat:'strategy', name:'Lukas',     persona:'Empire Strategist',        cmd:'/strategy', desc:'GTM Dominance',      use:'GTM, 90-day plans & scaling.',                iconType:'img', accent:'#22c55e', icon:'/assets/specialists/lukas.png'},
   {id:'email',    cat:'revenue',  name:'Sofia',     persona:'Email Architect',          cmd:'/email',    desc:'Cold Outreach',      use:'Sequences that convert.',                      iconType:'emoji', accent:'#e8a912', icon:'✉️'},
   {id:'outreach', cat:'revenue',  name:'Tariq',     persona:'Outreach Master',          cmd:'/outreach', desc:'Multi-Channel',      use:'Hyper-personalized prospecting.',              iconType:'emoji', accent:'#e8a912', icon:'📨'},
   {id:'proposal', cat:'revenue',  name:'Elena',     persona:'Deal Architect',           cmd:'/proposal', desc:'High-Ticket SOW',    use:'Win major contracts.',                         iconType:'emoji', accent:'#e8a912', icon:'💼'},
