@@ -541,6 +541,28 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
   letter-spacing:.5px;color:rgba(240,232,208,.55);
 }
 .wcard.agent-hidden{display:none !important;}
+/* ── LIVE FEED ── */
+.feed-live-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;flex-shrink:0;animation:feed-blink 1.4s ease-in-out infinite;}
+@keyframes feed-blink{0%,100%{opacity:1;box-shadow:0 0 4px #22c55e}50%{opacity:.3;box-shadow:none}}
+.feed-empty{padding:10px 12px;color:var(--t4);font-style:italic;font-size:10px;}
+.feed-row{display:flex;gap:0;align-items:stretch;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;}
+.feed-row:hover{background:rgba(255,255,255,.03);}
+.feed-row:last-child{border-bottom:none;}
+.feed-bar{width:3px;flex-shrink:0;border-radius:0;}
+.feed-bar.c-user{background:#e8a912;}
+.feed-bar.c-billy{background:#22c55e;}
+.feed-bar.c-system{background:#63b3ed;}
+.feed-bar.c-warn{background:#ef4444;}
+.feed-bar.c-memory{background:#a78bfa;}
+.feed-inner{padding:5px 8px;flex:1;min-width:0;}
+.feed-who{font-size:9px;font-weight:700;letter-spacing:.8px;opacity:.7;margin-bottom:1px;}
+.feed-who.c-user{color:#e8a912;}
+.feed-who.c-billy{color:#22c55e;}
+.feed-who.c-system{color:#63b3ed;}
+.feed-who.c-warn{color:#ef4444;}
+.feed-who.c-memory{color:#a78bfa;}
+.feed-msg{color:var(--t2);word-break:break-word;line-height:1.45;}
+.feed-ts{font-size:8.5px;opacity:.35;margin-top:2px;}
 .wcard.agent-hidden.agent-hidden-show{display:flex !important;}
 #see-more-wrap{margin-top:14px;text-align:center;}
 #see-more-btn{
@@ -719,11 +741,13 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
     </div>
     <div class="mp-tier">
       <div class="mp-tier-head">
-        <span class="mp-tier-label">⚡ LIVE FEED</span>
+        <span class="mp-tier-label" style="display:flex;align-items:center;gap:5px">
+          <span class="feed-live-dot"></span>LIVE FEED
+        </span>
         <button class="icobtn" onclick="window.clearMemoryFeed && window.clearMemoryFeed()" style="width:20px;height:20px;font-size:9px" title="Clear">🗑</button>
       </div>
-      <div id="mp-feed" style="max-height:260px;overflow-y:auto;font-size:10px;line-height:1.5;color:var(--t2);padding:8px 10px;background:rgba(0,0,0,.3);border-radius:6px;border:1px solid var(--bd);font-family:var(--mono)">
-        <div style="color:var(--t3);font-style:italic">Awaiting orders, Boss…</div>
+      <div id="mp-feed" style="max-height:280px;overflow-y:auto;font-size:10px;line-height:1.6;color:var(--t2);background:rgba(0,0,0,.4);border-radius:6px;border:1px solid var(--bd);font-family:var(--mono)">
+        <div class="feed-empty">System online. Awaiting orders, Boss…</div>
       </div>
     </div>
   </div>
@@ -1652,7 +1676,7 @@ async function saveToKnowledge(key, val) {
     const encrypted = await encrypt({ key, val, date: Date.now() });
     const tx = db.transaction(STORE_KNOW, 'readwrite');
     tx.objectStore(STORE_KNOW).add(encrypted);
-    window.logFeed && window.logFeed('🧠', 'Memory saved: ' + key);
+    window.logFeed && window.logFeed('memory', 'Learned: ' + key);
     toast(`🧠 Learned: ${key}`);
     const mems = document.getElementById('mems');
     if (mems) {
@@ -1898,29 +1922,29 @@ function toggleClients() { togglePortfolio(); }
 // ── WELCOME (3×8 SKILL GRID) ──
 // Skill data shared between renderWelcome and the slash menu
 const GRID_SKILLS = [
-  {id:'lex',      cat:'strategy', name:'Mami',      persona:'Director, Customer Dept.', cmd:'/lex',      desc:'Customer & Legal',   use:'Legal risk, contracts & client relations.',    iconType:'img', accent:'#63b3ed', icon:'/assets/specialists/mami.png'},
-  {id:'automate', cat:'tech',     name:'Poupex',    persona:'Intel Director',           cmd:'/automate', desc:'Intel Ops',          use:'Automation, ops intelligence & workflows.',    iconType:'img', accent:'#22c55e', icon:'/assets/specialists/poupex.jpg'},
-  {id:'psych',    cat:'strategy', name:'Daphne',    persona:'Head of Brand & Market',   cmd:'/psych',    desc:'Brand & Market',     use:'Brand image, market analysis & influence.',    iconType:'img', accent:'#a78bfa', icon:'/assets/specialists/daphne.png'},
-  {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales Director',           cmd:'/sales',    desc:'Sales HQ',           use:'Closing, DM scripts & revenue strategy.',      iconType:'img', accent:'#e8a912', icon:'/assets/specialists/papou.png'},
-  {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'/assets/specialists/zeur.png'},
-  {id:'leads',    cat:'revenue',  name:'Lilly',     persona:'Lead Intelligence',        cmd:'/leads',    desc:'Lead Intel',         use:'Scraping, qualifying & scoring prospects.',    iconType:'img', accent:'#e8a912', icon:'/assets/specialists/lilly.png'},
-  {id:'website',  cat:'creative', name:'Yuki',      persona:'Web Architect',            cmd:'/website',  desc:'Web Architecture',   use:'Funnels, landing pages & UX design.',          iconType:'img', accent:'#63b3ed', icon:'/assets/specialists/yuki.png'},
-  {id:'writer',   cat:'creative', name:'Sarah',     persona:'Elite Copywriter',         cmd:'/writer',   desc:'Elite Copy',         use:'Copy, reports & high-converting proposals.',   iconType:'img', accent:'#f472b6', icon:'/assets/specialists/sarah.png'},
-  {id:'content',  cat:'creative', name:'Malik',     persona:'Content King',             cmd:'/content',  desc:'Content King',       use:'Social hooks, viral loops & reels.',           iconType:'img', accent:'#fb923c', icon:'/assets/specialists/malik.png'},
-  {id:'campaign', cat:'revenue',  name:'Chloé',     persona:'Media Buyer',              cmd:'/campaign', desc:'Media Buying',       use:'Meta, Google & TikTok ad campaigns.',          iconType:'img', accent:'#e8a912', icon:'/assets/specialists/chloe.png'},
-  {id:'coach',    cat:'strategy', name:'Coach',     persona:'Performance Director',     cmd:'/coach',    desc:'Performance',        use:'Deep work, sport & mental performance.',        iconType:'img', accent:'#22c55e', icon:'/assets/specialists/coach.png'},
-  {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'/assets/specialists/brody.png'},
-  {id:'strategy', cat:'strategy', name:'Lukas',     persona:'Empire Strategist',        cmd:'/strategy', desc:'GTM Dominance',      use:'GTM, 90-day plans & scaling.',                iconType:'img', accent:'#22c55e', icon:'/assets/specialists/lukas.png'},
-  {id:'email',    cat:'revenue',  name:'Sofia',     persona:'Email Architect',          cmd:'/email',    desc:'Cold Outreach',      use:'Sequences that convert.',                      iconType:'img', accent:'#e8a912', icon:'/assets/specialists/sofia.png'},
-  {id:'outreach', cat:'revenue',  name:'Tariq',     persona:'Outreach Master',          cmd:'/outreach', desc:'Multi-Channel',      use:'Hyper-personalized prospecting.',              iconType:'img', accent:'#e8a912', icon:'/assets/specialists/tariq.png'},
-  {id:'proposal', cat:'revenue',  name:'Elena',     persona:'Deal Architect',           cmd:'/proposal', desc:'High-Ticket SOW',    use:'Win major contracts.',                         iconType:'img', accent:'#e8a912', icon:'/assets/specialists/elena.png'},
-  {id:'budget',   cat:'revenue',  name:'Kenzo',     persona:'Financial Analyst',        cmd:'/budget',   desc:'ROI & Cash Flow',    use:'Capital efficiency & projections.',            iconType:'img', accent:'#e8a912', icon:'/assets/specialists/kenzo.png'},
-  {id:'aimas',    cat:'revenue',  name:'AIMAS',     persona:'11-Agent Swarm',           cmd:'/aimas',    desc:'Full Takeover',      use:'Omnichannel orchestration.',                   iconType:'img', accent:'#e8a912', icon:'/assets/specialists/aimas.png'},
-  {id:'aros',     cat:'revenue',  name:'AROS',      persona:'Revenue OS',               cmd:'/aros',     desc:'Autonomous Revenue', use:'Self-driving commerce engine.',                iconType:'img', accent:'#e8a912', icon:'/assets/specialists/aros.png'},
-  {id:'qualify',  cat:'strategy', name:'Marcus',    persona:'Lead Qualifier',           cmd:'/qualify',  desc:'Score & Rank',       use:'Firmographic prospect scoring.',               iconType:'img', accent:'#22c55e', icon:'/assets/specialists/marcus.png'},
-  {id:'analytics',cat:'strategy', name:'Bjorn',     persona:'Data Auditor',             cmd:'/analytics',desc:'KPI Audit',           use:'Metrics, ROAS & optimization pivots.',         iconType:'img', accent:'#22c55e', icon:'/assets/specialists/bjorn.png'},
-  {id:'course',   cat:'creative', name:'Sasha',     persona:'Curriculum Pro',           cmd:'/course',   desc:'Course Design',      use:'Outcome-driven online courses.',               iconType:'img', accent:'#a78bfa', icon:'/assets/specialists/sasha.png'},
-  {id:'resume',   cat:'creative', name:'Xandria',   persona:'Career Architect',         cmd:'/resume',   desc:'ATS Mastery',        use:'Elite executive CVs.',                         iconType:'img', accent:'#a78bfa', icon:'/assets/specialists/xandria.png'},
+  {id:'lex',      cat:'strategy', name:'Mami',      persona:'Director, Customer Dept.', cmd:'/lex',      desc:'Customer & Legal',   use:'Legal risk, contracts & client relations.',    iconType:'img', accent:'#63b3ed', icon:'assets/specialists/mami.png'},
+  {id:'automate', cat:'tech',     name:'Poupex',    persona:'Intel Director',           cmd:'/automate', desc:'Intel Ops',          use:'Automation, ops intelligence & workflows.',    iconType:'img', accent:'#22c55e', icon:'assets/specialists/poupex.jpg'},
+  {id:'psych',    cat:'strategy', name:'Daphne',    persona:'Head of Brand & Market',   cmd:'/psych',    desc:'Brand & Market',     use:'Brand image, market analysis & influence.',    iconType:'img', accent:'#a78bfa', icon:'assets/specialists/daphne.png'},
+  {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales Director',           cmd:'/sales',    desc:'Sales HQ',           use:'Closing, DM scripts & revenue strategy.',      iconType:'img', accent:'#e8a912', icon:'assets/specialists/papou.png'},
+  {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'assets/specialists/zeur.png'},
+  {id:'leads',    cat:'revenue',  name:'Lilly',     persona:'Lead Intelligence',        cmd:'/leads',    desc:'Lead Intel',         use:'Scraping, qualifying & scoring prospects.',    iconType:'img', accent:'#e8a912', icon:'assets/specialists/lilly.png'},
+  {id:'website',  cat:'creative', name:'Yuki',      persona:'Web Architect',            cmd:'/website',  desc:'Web Architecture',   use:'Funnels, landing pages & UX design.',          iconType:'img', accent:'#63b3ed', icon:'assets/specialists/yuki.png'},
+  {id:'writer',   cat:'creative', name:'Sarah',     persona:'Elite Copywriter',         cmd:'/writer',   desc:'Elite Copy',         use:'Copy, reports & high-converting proposals.',   iconType:'img', accent:'#f472b6', icon:'assets/specialists/sarah.png'},
+  {id:'content',  cat:'creative', name:'Malik',     persona:'Content King',             cmd:'/content',  desc:'Content King',       use:'Social hooks, viral loops & reels.',           iconType:'img', accent:'#fb923c', icon:'assets/specialists/malik.png'},
+  {id:'campaign', cat:'revenue',  name:'Chloé',     persona:'Media Buyer',              cmd:'/campaign', desc:'Media Buying',       use:'Meta, Google & TikTok ad campaigns.',          iconType:'img', accent:'#e8a912', icon:'assets/specialists/chloe.png'},
+  {id:'coach',    cat:'strategy', name:'Coach',     persona:'Performance Director',     cmd:'/coach',    desc:'Performance',        use:'Deep work, sport & mental performance.',        iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png'},
+  {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'assets/specialists/brody.png'},
+  {id:'strategy', cat:'strategy', name:'Lukas',     persona:'Empire Strategist',        cmd:'/strategy', desc:'GTM Dominance',      use:'GTM, 90-day plans & scaling.',                iconType:'img', accent:'#22c55e', icon:'assets/specialists/lukas.png'},
+  {id:'email',    cat:'revenue',  name:'Sofia',     persona:'Email Architect',          cmd:'/email',    desc:'Cold Outreach',      use:'Sequences that convert.',                      iconType:'img', accent:'#e8a912', icon:'assets/specialists/sofia.png'},
+  {id:'outreach', cat:'revenue',  name:'Tariq',     persona:'Outreach Master',          cmd:'/outreach', desc:'Multi-Channel',      use:'Hyper-personalized prospecting.',              iconType:'img', accent:'#e8a912', icon:'assets/specialists/tariq.png'},
+  {id:'proposal', cat:'revenue',  name:'Elena',     persona:'Deal Architect',           cmd:'/proposal', desc:'High-Ticket SOW',    use:'Win major contracts.',                         iconType:'img', accent:'#e8a912', icon:'assets/specialists/elena.png'},
+  {id:'budget',   cat:'revenue',  name:'Kenzo',     persona:'Financial Analyst',        cmd:'/budget',   desc:'ROI & Cash Flow',    use:'Capital efficiency & projections.',            iconType:'img', accent:'#e8a912', icon:'assets/specialists/kenzo.png'},
+  {id:'aimas',    cat:'revenue',  name:'AIMAS',     persona:'11-Agent Swarm',           cmd:'/aimas',    desc:'Full Takeover',      use:'Omnichannel orchestration.',                   iconType:'img', accent:'#e8a912', icon:'assets/specialists/aimas.png'},
+  {id:'aros',     cat:'revenue',  name:'AROS',      persona:'Revenue OS',               cmd:'/aros',     desc:'Autonomous Revenue', use:'Self-driving commerce engine.',                iconType:'img', accent:'#e8a912', icon:'assets/specialists/aros.png'},
+  {id:'qualify',  cat:'strategy', name:'Marcus',    persona:'Lead Qualifier',           cmd:'/qualify',  desc:'Score & Rank',       use:'Firmographic prospect scoring.',               iconType:'img', accent:'#22c55e', icon:'assets/specialists/marcus.png'},
+  {id:'analytics',cat:'strategy', name:'Bjorn',     persona:'Data Auditor',             cmd:'/analytics',desc:'KPI Audit',           use:'Metrics, ROAS & optimization pivots.',         iconType:'img', accent:'#22c55e', icon:'assets/specialists/bjorn.png'},
+  {id:'course',   cat:'creative', name:'Sasha',     persona:'Curriculum Pro',           cmd:'/course',   desc:'Course Design',      use:'Outcome-driven online courses.',               iconType:'img', accent:'#a78bfa', icon:'assets/specialists/sasha.png'},
+  {id:'resume',   cat:'creative', name:'Xandria',   persona:'Career Architect',         cmd:'/resume',   desc:'ATS Mastery',        use:'Elite executive CVs.',                         iconType:'img', accent:'#a78bfa', icon:'assets/specialists/xandria.png'},
   {id:'schedule', cat:'strategy', name:'COACH',     persona:'Daily Architect',          cmd:'/schedule', desc:'Time Mastery',       use:'Deep work & peak-state scheduling.',           iconType:'emoji', accent:'#22c55e', icon:'📅'},
   {id:'imgprompt',cat:'creative', name:'Visionary', persona:'Art Director',             cmd:'/imgprompt',desc:'AI Art Prompts',      use:'Midjourney & DALL·E prompts.',                 iconType:'emoji', accent:'#a78bfa', icon:'🖼️'},
   {id:'builder',  cat:'tech',     name:'Architect', persona:'System Builder',           cmd:'/builder',  desc:'App Building',       use:'Build, debug & expand systems.',               iconType:'emoji', accent:'#22c55e', icon:'🛠️'},
@@ -2029,7 +2053,7 @@ window.renameSession = async function(id) {
   state.curSessId = tmpSessId;
   state.msgs = tmpMsgs;
   renderHistory();
-  window.logFeed && window.logFeed('📝', `Chat renamed: ${newTitle}`);
+  window.logFeed && window.logFeed('system', 'Chat renamed → ' + newTitle);
   toast('✓ Renamed');
 };
 
@@ -2052,6 +2076,7 @@ function resumeSession(id) {
         });
       });
       closeSb();
+      window.logFeed && window.logFeed('system', 'Session resumed: ' + (entry.title || 'Untitled') + ' (' + (entry.msgs?.length || 0) + ' msgs)');
       toast(`📂 "${entry.title}" resumed`);
     });
   });
@@ -2106,7 +2131,7 @@ window.editPillar = async function(id, field) {
     localStorage.setItem('venture_overrides', JSON.stringify(overrides));
     if (field === 'name') isCore.name = newVal; else isCore.desc = newVal;
     renderClients();
-    window.logFeed && window.logFeed('✏️', `Pillar updated: ${isCore.name}`);
+    window.logFeed && window.logFeed('system', 'Pillar updated: ' + isCore.name);
     toast('✓ Pillar updated');
     return;
   }
@@ -2118,7 +2143,7 @@ window.editPillar = async function(id, field) {
   c[field] = newVal;
   await saveClient(c);
   renderClients();
-  window.logFeed && window.logFeed('✏️', `Updated: ${c.name}`);
+  window.logFeed && window.logFeed('system', 'Client updated: ' + c.name);
   toast('✓ Updated');
 };
 
@@ -2136,7 +2161,7 @@ window.deletePillar = async function(id) {
   }
   if (state.activeClientId === id) state.activeClientId = null;
   renderClients();
-  window.logFeed && window.logFeed('🗑', 'Pillar removed');
+  window.logFeed && window.logFeed('warn', 'Pillar deleted');
   toast('✓ Removed');
 };
 
@@ -2150,12 +2175,12 @@ function setActiveClient(id) {
         const all = [...CORE_VENTURES, ...stored];
         const c = all.find(v => v.id === id);
         const name = c ? c.name : 'Active';
-        window.logFeed && window.logFeed('🎯', 'Focus → ' + name);
+        window.logFeed && window.logFeed('system', 'Context → ' + name);
         toast(`🎯 Context: ${name}`);
       });
     });
   } else {
-    window.logFeed && window.logFeed('🎯', 'Focus cleared');
+    window.logFeed && window.logFeed('system', 'Context cleared');
     toast('Context cleared');
   }
 }
@@ -2166,6 +2191,7 @@ async function addNewClient() {
   const c = { id: 'c' + Date.now(), name, desc };
   await saveClient(c);
   renderClients();
+  window.logFeed && window.logFeed('system', 'Client added: ' + name);
   toast('Client Added ✓');
 }
 
@@ -2209,7 +2235,9 @@ function setModel(id) {
   renderModels();
   updateModelBadge(id);
   const m = LIVE_MODELS.find(x => x.id === id);
-  toast(`📡 Model: ${m ? m.name : id}`);
+  const mName = m ? m.name : id.split('/').pop();
+  window.logFeed && window.logFeed('system', 'Engine switched → ' + mName);
+  toast(`📡 Model: ${mName}`);
 }
 
 function updateModelBadge(modelId) {
@@ -2266,7 +2294,7 @@ function newChat() {
   const tb = document.getElementById('tbtitle');
   if (tb) tb.textContent = 'Bvmbino Pro · Command Hub';
   closeSb();
-  window.logFeed && window.logFeed('🆕', 'New conversation started');
+  window.logFeed && window.logFeed('system', 'New conversation started');
   toast('New Workspace · Ctrl+K');
 }
 
@@ -2276,7 +2304,7 @@ function slash(key) {
   const el = document.getElementById('inp');
   const welcome = document.getElementById('welcome');
   const p = PROMPTS[key];
-  window.logFeed && window.logFeed('⚡', 'Activated /' + key);
+  window.logFeed && window.logFeed('system', 'Agent activated: /' + key);
   if (p) {
     // Direct execute — skip input, send immediately
     // Hide welcome (don't remove — newChat needs to restore it)
@@ -2624,7 +2652,7 @@ async function send() {
   // Hide welcome
   const _w = document.getElementById('welcome');
   if (_w) _w.style.display = 'none';
-  window.logFeed && window.logFeed('💬', 'Boss: ' + raw.slice(0, 60) + (raw.length > 60 ? '…' : ''));
+  window.logFeed && window.logFeed('user', raw.slice(0, 80) + (raw.length > 80 ? '…' : ''));
   lock();
 
   try {
@@ -2850,6 +2878,7 @@ async function callAI() {
       if (mx) { clean = reply.replace(/\[EXPORT:\w+\]/, '').trim(); xtype = mx[1]; }
       state.msgs.push({ role: 'assistant', content: clean });
       appendAiText(clean, xtype);
+      window.logFeed && window.logFeed('billy', clean.replace(/[#*_`]/g,'').slice(0, 90) + (clean.length > 90 ? '…' : ''));
       updTok(clean.length / 3.5);
       state.abortController = null;
       window.__unlockUI?.();
@@ -3220,7 +3249,11 @@ window.expLastPdf     = () => App.exportLastPdf();
 //  BOOT — one-time startup, then delegates everything to App.init()
 // ─────────────────────────────────────────────────────────────────
 async function boot() {
-  console.log('BVMBINO Pro v5.7 · Booting…');
+  console.log('BVMBINO Pro v6.1 · Booting…');
+  setTimeout(() => {
+    window.logFeed && window.logFeed('system', 'BVMBINO Pro v6.1 — System online');
+    window.logFeed && window.logFeed('billy', 'Locked and loaded. Ready for your orders, Boss.');
+  }, 600);
 
   // Rehydrate persisted config first — never fails
   try {
@@ -3331,8 +3364,8 @@ const App = {
     this._on('tb-mem-hub-btn',     'click', () => openMpanel());
     this._on('tb-settings-btn',    'click', () => { this._reloadKeyFields(); this.toggleModal('settings-modal', true); });
     this._on('close-mpanel-btn',   'click', () => closeMpanel());
-    this._on('close-voice-btn',    'click', () => window.BillyLive && BillyLive.close());
-    this._on('end-voice-btn',      'click', () => window.BillyLive && BillyLive.close());
+    this._on('close-voice-btn',    'click', () => { window.BillyLive && BillyLive.close(); window.logFeed && window.logFeed('system', 'Voice session ended'); });
+    this._on('end-voice-btn',      'click', () => { window.BillyLive && BillyLive.close(); window.logFeed && window.logFeed('system', 'Voice session ended'); });
     this._on('pdf-export-pill',    'click', () => App.exportLastPdf());
     this._on('edit-ventures-btn',  'click', () => editMemoryTier('ventures'));
     this._on('edit-projects-btn',  'click', () => editMemoryTier('projects'));
@@ -3388,6 +3421,8 @@ const App = {
           localStorage.setItem(`bvmbino_key_${p}`, val); // legacy key compat
         }
       });
+      const saved = ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini'].filter(p => document.getElementById(`key-${p}`)?.value.trim());
+      window.logFeed && window.logFeed('system', 'API keys saved: ' + (saved.length ? saved.join(', ') : 'none'));
       toast('API Keys Saved ✓');
       this.toggleModal('settings-modal', false);
     });
@@ -3646,7 +3681,11 @@ const App = {
 
   // ── Voice input ───────────────────────────────────────────────
   toggleVoice() {
-    if (typeof BillyLive !== 'undefined') { BillyLive.open(); return; }
+    if (typeof BillyLive !== 'undefined') {
+      BillyLive.open();
+      window.logFeed && window.logFeed('system', 'Voice mode activated');
+      return;
+    }
     toast('Voice engine not available');
   },
 
@@ -3913,6 +3952,7 @@ const App = {
     const el = document.getElementById(`key-${provider}`);
     if (el) el.value = '';
     this._updateKeySig(provider, false);
+    window.logFeed && window.logFeed('warn', provider + ' API key removed');
     toast(`${provider} key cleared`);
   },
 
@@ -4034,20 +4074,32 @@ window.expLastPdf     = () => App.exportLastPdf();
 //  LIVE MEMORY FEED
 // ─────────────────────────────────────────────────────────────────
 window.__feedEvents = [];
-window.logFeed = function(icon, text) {
+
+// who: 'user' | 'billy' | 'system' | 'warn' | 'memory'
+window.logFeed = function(who, msg) {
   const feed = document.getElementById('mp-feed');
   if (!feed) return;
   const ts = new Date().toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
-  window.__feedEvents.unshift({icon, text, ts});
-  if (window.__feedEvents.length > 50) window.__feedEvents.length = 50;
-  feed.innerHTML = window.__feedEvents.map(e =>
-    `<div style="margin-bottom:5px;display:flex;gap:6px;align-items:flex-start"><span style="opacity:.45;flex-shrink:0;font-size:9px;padding-top:1px">${e.ts}</span><span style="flex-shrink:0">${e.icon}</span><span style="flex:1;word-break:break-word">${e.text}</span></div>`
-  ).join('');
+  const labels = {user:'TIEGBE', billy:'BILLY', system:'SYSTEM', warn:'ALERT', memory:'MEMORY'};
+  const label = labels[who] || who.toUpperCase();
+  window.__feedEvents.unshift({who, label, msg, ts});
+  if (window.__feedEvents.length > 80) window.__feedEvents.length = 80;
+  feed.innerHTML = window.__feedEvents.map(e => `
+    <div class="feed-row">
+      <div class="feed-bar c-${e.who}"></div>
+      <div class="feed-inner">
+        <div class="feed-who c-${e.who}">${e.label}</div>
+        <div class="feed-msg">${e.msg}</div>
+        <div class="feed-ts">${e.ts}</div>
+      </div>
+    </div>`).join('');
+  feed.scrollTop = 0;
 };
+
 window.clearMemoryFeed = function() {
   window.__feedEvents = [];
   const feed = document.getElementById('mp-feed');
-  if (feed) feed.innerHTML = '<div style="color:var(--t3);font-style:italic">Feed cleared.</div>';
+  if (feed) feed.innerHTML = '<div class="feed-empty">Feed cleared.</div>';
 };
 
 // ─────────────────────────────────────────────────────────────────
