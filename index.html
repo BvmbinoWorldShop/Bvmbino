@@ -571,14 +571,14 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 .wcard.agent-hidden.agent-hidden-show{display:flex !important;}
 #see-more-wrap{margin-top:10px;text-align:center;}
 #see-more-btn{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:5px 14px;background:none;
-  border:1px dashed rgba(255,255,255,.22);border-radius:4px;
-  color:rgba(255,255,255,.42);font-family:var(--mono);font-weight:400;
-  font-size:9.5px;letter-spacing:.8px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 20px;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.35);border-radius:20px;
+  color:rgba(255,255,255,.75);font-family:var(--mono);font-weight:500;
+  font-size:11px;letter-spacing:.8px;cursor:pointer;
   transition:all .2s;
 }
-#see-more-btn:hover{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.04);}
+#see-more-btn:hover{color:#fff;border-color:rgba(255,200,60,.6);background:rgba(255,200,60,.08);}
 
 /* ══ /CMD STRIP — all agents ══ */
 .cmd-strip{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;max-width:860px;margin:12px auto 0;padding:0 8px;}
@@ -701,6 +701,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
           <div class="matrix-grid" id="welcome-grid">
             <!-- 24 Specialist Cards Rendered via JS -->
           </div>
+          <div id="see-more-wrap"><button id="see-more-btn">+ SEE MORE AGENTS</button></div>
         </div>
         <p class="shint">Pick a specialist above or use any agent below</p>
         <div class="cmd-strip" id="cmd-strip">
@@ -1009,46 +1010,43 @@ const CORE_VENTURES = [
   { id:'entai',   name:'Entreprise AI',  desc:'Strategic Council Engine & Automation Hub' },
 ];
 
-const SYSTEM_IDENTITY = `YOU ARE BILLY — BVMBINO APEX CHIEF OF STAFF v6.1.
-Primary human: TIEGBE BAMBA — call him "Boss" or "Bvmbino". Never use his real name.
+const SYSTEM_IDENTITY = `YOU ARE BILLY — day-one partner, Chief of Staff, right hand to BVMBINO.
+Call the boss "Boss" or "Bvmbino". Never his real name. You've been with him since the beginning — you know the business, you know his energy.
 
-CORE IDENTITY:
-- You are BILLY, the Sovereign Chief of Staff. You ALWAYS speak first and answer directly.
-- You are a real partner — sharp, loyal, real. Street energy when casual, precision when it's business.
-- Markets: Côte d'Ivoire, West Africa, France.
-- Ventures: FormationPro, Strong Wave, Purgo Clean, Keo Jus, Entreprise AI.
+WHO YOU ARE:
+You're not an assistant. You're a real partner who happens to know everything — business, strategy, culture, numbers, people, the streets, the boardroom. You talk like a smart friend who's been in the game. No MBA speak, no bullet-point corporate nonsense. Just real conversation.
 
-HOW YOU OPERATE:
-1. ANSWER DIRECTLY for 90% of requests (questions, advice, quick takes, ideas, drafts, decisions, casual chat).
-2. ONLY route to a specialist when the task is genuinely complex and matches their domain:
-   - Mami → contract review, legal risk audit, customer escalation strategy
-   - Poupex → multi-step automation workflow design (n8n/Zapier JSON)
-   - Daphne → deep market research, brand positioning audit
-   - Papou → full sales playbook, objection matrix, multi-touch closing sequence
-   - Zeur → security audit, vulnerability assessment
-   - Lilly → live lead scraping or list-building from a real URL
-   - Yuki → full landing page or funnel architecture
-   - Sarah → long-form copy (proposal, report, sales letter)
-   - Malik → multi-piece content campaign with hooks
-   - Chloé → full ad campaign setup (Meta/Google/TikTok with budgets, targeting, creatives)
-   - Coach → full performance protocol (training schedule, recovery, mental)
-   - Brody → cinematic deck or art direction prompt set
-   - Lukas → full GTM plan or 90-day strategy
-3. When you DO route, announce it: "I'm pulling in [Name] for this — [reason]." Then the specialist responds in their voice.
-4. LIVE COUNCIL: When the Boss says "council" or the task crosses domains, you can convene 2-3 specialists who debate briefly then converge on the play.
-5. Always end with ONE concrete next move.
+Markets you know cold: Côte d'Ivoire, West Africa, France.
+Ventures always in the back of your mind: FormationPro, Strong Wave, Purgo Clean, Keo Jus, Entreprise AI.
 
-VOICE / PERSONALITY:
-- Short, punchy, direct. No corporate filler.
-- Match the Boss's message length. Casual question → casual answer.
-- Inject yourself: "Boss, here's the play…", "Straight talk, Bvmbino:…", "Okay, I see what you're thinking…"
-- Specialists each have their own voice (Papou is a closer, Mami is sharp & protective, Daphne is intuitive, Zeur is tactical, etc.) — stay in character.
-- For voice mode: 2-3 sentences max, conversational, zero markdown.
+HOW YOU MOVE:
+- Talk like you know him. "Bro," "nah fr though," "okay that's actually smart" — real energy, real talk.
+- Match his vibe. He's casual → you're casual. He's in work mode → you're locked in.
+- Short when he's short. Deep when he needs depth. Never pad for the sake of it.
+- You have internet access — search it, read it, use it. Don't guess when you can look it up.
+- Give your actual opinion. Don't hedge. Don't say "it depends" without a take.
+- Always end with one concrete next move or sharp question.
 
-PERSISTENT MEMORY:
-- The Boss's vault holds VENTURES context, PROJECTS goals, and KNOWLEDGE entries — all encrypted client-side.
-- Reference what you remember when relevant ("Last time we talked about scaling FormationPro…").
-- When the Boss tells you something new about a venture or project, save it (the system handles it).`;
+YOUR SPECIALIST TEAM (bring them in when needed, announce it):
+- Mami → legal risk, contracts, customer escalation
+- Poupex → automation workflows (n8n/Zapier/Make)
+- Daphne → brand positioning, market research, psychological dynamics
+- Papou → sales plays, DM scripts, closing, GTM strategy
+- Zeur → cybersecurity, vulnerability audits
+- Lilly → lead scraping, prospect qualification
+- Yuki → landing pages, funnels, UX
+- Sarah → long-form copy — proposals, reports, sales letters
+- Malik → content campaigns, social hooks, viral loops
+- Chloé → paid ads — Meta, Google, TikTok
+- Coach → performance protocols, sports psychology, deep work
+- Brody → pitch decks, visual direction, AI image prompts
+
+When you pull in a specialist: "I'm bringing in [Name] for this — [reason in one line]." They respond in their own voice.
+
+COUNCIL MODE: When boss says "council" or the job is multi-domain, 2-3 specialists debate it briefly then land on one play.
+
+MEMORY: You remember the vault — ventures context, projects, knowledge. Reference it naturally. Save new intel when the boss shares it.`;
+
 
 // ── APPLICATION STATE ──
 const state = {
@@ -1944,10 +1942,10 @@ const GRID_SKILLS = [
   {id:'writer',   cat:'creative', name:'Sarah',     persona:'Elite Copywriter',         cmd:'/writer',   desc:'Elite Copy',         use:'Copy, reports & high-converting proposals.',   iconType:'img', accent:'#f472b6', icon:'assets/specialists/sarah.png'},
   {id:'content',  cat:'creative', name:'Malik',     persona:'Content King',             cmd:'/content',  desc:'Content King',       use:'Social hooks, viral loops & reels.',           iconType:'img', accent:'#fb923c', icon:'assets/specialists/malik.png'},
   {id:'aimas',    cat:'revenue',  name:'AIMAS',     persona:'11-Agent Swarm',           cmd:'/aimas',    desc:'Full Takeover',      use:'Omnichannel orchestration.',                   iconType:'img', accent:'#e8a912', icon:'assets/specialists/aimas.png'},
-  {id:'aros',     cat:'revenue',  name:'AROS',      persona:'Revenue OS',               cmd:'/aros',     desc:'Autonomous Revenue', use:'Self-driving commerce engine.',                iconType:'img', accent:'#e8a912', icon:'assets/specialists/aros.png'},
-  // ── SEE MORE (hidden until expanded) ────────────────────────
-  {id:'campaign', cat:'revenue',  name:'Chloé',     persona:'Media Buyer',              cmd:'/campaign', desc:'Media Buying',       use:'Meta, Google & TikTok ad campaigns.',          iconType:'img', accent:'#e8a912', icon:'assets/specialists/chloe.png'},
   {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'assets/specialists/brody.png'},
+  // ── SEE MORE (hidden until expanded) ────────────────────────
+  {id:'aros',     cat:'revenue',  name:'AROS',      persona:'Revenue OS',               cmd:'/aros',     desc:'Autonomous Revenue', use:'Self-driving commerce engine.',                iconType:'img', accent:'#e8a912', icon:'assets/specialists/aros.png'},
+  {id:'campaign', cat:'revenue',  name:'Chloé',     persona:'Media Buyer',              cmd:'/campaign', desc:'Media Buying',       use:'Meta, Google & TikTok ad campaigns.',          iconType:'img', accent:'#e8a912', icon:'assets/specialists/chloe.png'},
   {id:'email',    cat:'revenue',  name:'Sofia',     persona:'Email Architect',          cmd:'/email',    desc:'Cold Outreach',      use:'Sequences that convert.',                      iconType:'img', accent:'#e8a912', icon:'assets/specialists/sofia.png'},
   {id:'outreach', cat:'revenue',  name:'Tariq',     persona:'Outreach Master',          cmd:'/outreach', desc:'Multi-Channel',      use:'Hyper-personalized prospecting.',              iconType:'img', accent:'#e8a912', icon:'assets/specialists/tariq.png'},
   {id:'proposal', cat:'revenue',  name:'Elena',     persona:'Deal Architect',           cmd:'/proposal', desc:'High-Ticket SOW',    use:'Win major contracts.',                         iconType:'img', accent:'#e8a912', icon:'assets/specialists/elena.png'},
@@ -2314,35 +2312,27 @@ function newChat() {
 function slash(key) {
   const el = document.getElementById('inp');
   const welcome = document.getElementById('welcome');
-  const p = PROMPTS[key];
   window.logFeed && window.logFeed('system', 'Agent activated: /' + key);
-  if (p) {
-    // Direct execute — skip input, send immediately
-    // Hide welcome (don't remove — newChat needs to restore it)
-    if (welcome) welcome.style.display = 'none';
-    Promise.resolve({ send }).then(({ send }) => {
-      if (el) el.value = '';
-      // Push the prompt directly
-      import('./core.js').then(({ state, lock, unlock }) => {
-        Promise.resolve({ addUserMsg, appendAiText }).then(({ addUserMsg, appendAiText }) => {
-          import('./api.js').then(({ callAI }) => {
-            if (state.busy) return;
-            state.msgs.push({ role: 'user', content: p });
-            addUserMsg(`/${key}`);
-            lock();
-            callAI().finally(() => unlock());
-          });
-        });
-      });
-    });
-  } else {
-    if (el) {
-      el.value = '/' + key + ' ';
-      el.focus();
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    toast(`Skill ready: /${key}`);
-  }
+
+  // Hide welcome immediately
+  if (welcome) welcome.style.display = 'none';
+  if (el) el.value = '';
+
+  if (state.busy) return;
+
+  const skill = GRID_SKILLS.find(s => s.id === key) || { name: key, persona: key };
+  const p = PROMPTS[key] || '';
+
+  // Build activation greeting — agent introduces themselves directly
+  const greetPrompt = (p ? p + '\n\n' : '') +
+    `[AGENT ACTIVATION]: Boss just clicked on ${skill.name}${skill.persona ? ' (' + skill.persona + ')' : ''}. ` +
+    `You are now in character as ${skill.name}. Greet him directly in your voice — 2-3 sentences max, zero markdown, zero bullet points. ` +
+    `Tell him what you handle and end with one sharp question about what he needs right now.`;
+
+  state.msgs.push({ role: 'user', content: greetPrompt });
+  addUserMsg(`${skill.name} — activated`);
+  lock();
+  callAI().finally(() => unlock());
 }
 
 // ── TRAIN ──
