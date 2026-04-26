@@ -564,16 +564,16 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 .feed-msg{color:var(--t2);word-break:break-word;line-height:1.45;}
 .feed-ts{font-size:8.5px;opacity:.35;margin-top:2px;}
 .wcard.agent-hidden.agent-hidden-show{display:flex !important;}
-#see-more-wrap{margin-top:14px;text-align:center;}
+#see-more-wrap{margin-top:10px;text-align:center;}
 #see-more-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:8px 18px;background:none;
-  border:1px dashed var(--bd2);border-radius:6px;
-  color:var(--pu2);font-family:var(--head);font-weight:700;
-  font-size:11px;letter-spacing:1.5px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 12px;background:none;
+  border:1px dashed rgba(255,255,255,.12);border-radius:4px;
+  color:rgba(255,255,255,.25);font-family:var(--mono);font-weight:400;
+  font-size:9px;letter-spacing:.8px;cursor:pointer;
   transition:all .2s;
 }
-#see-more-btn:hover{background:var(--pu3);border-color:var(--pu2);}
+#see-more-btn:hover{color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.25);}
 
 /* ══ /CMD STRIP — all agents ══ */
 .cmd-strip{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;max-width:860px;margin:12px auto 0;padding:0 8px;}
@@ -940,8 +940,7 @@ const CMDS = [
   { cmd:'/leads',    icon:'🔍', name:'Lead Intelligence',    desc:'Scrape, qualify & score leads' },
   { cmd:'/email',    icon:'✉️', name:'Email Sequences',       desc:'Cold, follow-up, nurture flows' },
   { cmd:'/content',  icon:'🎬', name:'Content Generation',    desc:'Social, blog, hooks, scripts' },
-  { cmd:'/sales',    icon:'💰', name:'Sales HQ',              desc:'DM scripts, closing, objections' },
-  { cmd:'/strategy', icon:'📈', name:'Growth Strategy',       desc:'Full GTM & 90-day plans' },
+  { cmd:'/sales',    icon:'💰', name:'Papou · Sales & Strategy', desc:'DM scripts, closers, GTM & 90-day plans' },
   { cmd:'/qualify',  icon:'🧠', name:'Lead Qualification',    desc:'Score & prioritize prospects' },
   { cmd:'/website',  icon:'🌐', name:'Website & Funnel',      desc:'Landing pages & funnels' },
   { cmd:'/analytics',icon:'📊', name:'Performance Analytics', desc:'KPIs, metrics, optimization' },
@@ -968,8 +967,8 @@ const PROMPTS = {
   leads:    'Act as an elite Lead Intelligence Agent. Help find and qualify high-intent prospects.',
   email:    'Act as an Email Sequence Agent. Generate a full cold + nurture email sequence.',
   content:  'Act as a Content Generation Agent. Create high-converting social hooks and scripts.',
-  sales:    'Act as a Conversational Sales Agent. Craft DM scripts, closers, and objection displacers.',
-  strategy: 'Act as an elite Growth Strategist. Build a complete GTM strategy and 90-day plan. [EXPORT:strategy]',
+  sales:    'Act as Papou, Sales & Strategy Director. Craft DM scripts, closers, objection displacers, GTM plans and revenue strategy.',
+  strategy: 'Act as Papou, Sales & Strategy Director. Build a complete GTM strategy and 90-day scaling plan for the business. [EXPORT:strategy]',
   qualify:  'Act as a Lead Qualification Agent. Score prospects by intent and firmographic fit.',
   website:  'Act as a Website Builder Agent. Design high-converting landing page structures.',
   analytics:'Act as a Performance Analytics Agent. Analyze metrics and suggest optimization pivots.',
@@ -1922,25 +1921,26 @@ function toggleClients() { togglePortfolio(); }
 // ── WELCOME (3×8 SKILL GRID) ──
 // Skill data shared between renderWelcome and the slash menu
 const GRID_SKILLS = [
+  // ── FIRST 12 (always visible) ────────────────────────────────
   {id:'lex',      cat:'strategy', name:'Mami',      persona:'Director, Customer Dept.', cmd:'/lex',      desc:'Customer & Legal',   use:'Legal risk, contracts & client relations.',    iconType:'img', accent:'#63b3ed', icon:'assets/specialists/mami.png'},
   {id:'automate', cat:'tech',     name:'Poupex',    persona:'Intel Director',           cmd:'/automate', desc:'Intel Ops',          use:'Automation, ops intelligence & workflows.',    iconType:'img', accent:'#22c55e', icon:'assets/specialists/poupex.jpg'},
   {id:'psych',    cat:'strategy', name:'Daphne',    persona:'Head of Brand & Market',   cmd:'/psych',    desc:'Brand & Market',     use:'Brand image, market analysis & influence.',    iconType:'img', accent:'#a78bfa', icon:'assets/specialists/daphne.png'},
-  {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales Director',           cmd:'/sales',    desc:'Sales HQ',           use:'Closing, DM scripts & revenue strategy.',      iconType:'img', accent:'#e8a912', icon:'assets/specialists/papou.png'},
+  {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales & Strategy Director',cmd:'/sales',    desc:'Sales & Strategy',   use:'Closing, DM scripts, GTM & revenue strategy.', iconType:'img', accent:'#e8a912', icon:'assets/specialists/papou.png'},
   {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'assets/specialists/zeur.png'},
+  {id:'coach',    cat:'strategy', name:'Coach',     persona:'Performance Director',     cmd:'/coach',    desc:'Performance',        use:'Deep work, sport & mental performance.',        iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png', zoom:true},
   {id:'leads',    cat:'revenue',  name:'Lilly',     persona:'Lead Intelligence',        cmd:'/leads',    desc:'Lead Intel',         use:'Scraping, qualifying & scoring prospects.',    iconType:'img', accent:'#e8a912', icon:'assets/specialists/lilly.png'},
   {id:'website',  cat:'creative', name:'Yuki',      persona:'Web Architect',            cmd:'/website',  desc:'Web Architecture',   use:'Funnels, landing pages & UX design.',          iconType:'img', accent:'#63b3ed', icon:'assets/specialists/yuki.png'},
   {id:'writer',   cat:'creative', name:'Sarah',     persona:'Elite Copywriter',         cmd:'/writer',   desc:'Elite Copy',         use:'Copy, reports & high-converting proposals.',   iconType:'img', accent:'#f472b6', icon:'assets/specialists/sarah.png'},
   {id:'content',  cat:'creative', name:'Malik',     persona:'Content King',             cmd:'/content',  desc:'Content King',       use:'Social hooks, viral loops & reels.',           iconType:'img', accent:'#fb923c', icon:'assets/specialists/malik.png'},
+  {id:'aimas',    cat:'revenue',  name:'AIMAS',     persona:'11-Agent Swarm',           cmd:'/aimas',    desc:'Full Takeover',      use:'Omnichannel orchestration.',                   iconType:'img', accent:'#e8a912', icon:'assets/specialists/aimas.png'},
+  {id:'aros',     cat:'revenue',  name:'AROS',      persona:'Revenue OS',               cmd:'/aros',     desc:'Autonomous Revenue', use:'Self-driving commerce engine.',                iconType:'img', accent:'#e8a912', icon:'assets/specialists/aros.png'},
+  // ── SEE MORE (hidden until expanded) ────────────────────────
   {id:'campaign', cat:'revenue',  name:'Chloé',     persona:'Media Buyer',              cmd:'/campaign', desc:'Media Buying',       use:'Meta, Google & TikTok ad campaigns.',          iconType:'img', accent:'#e8a912', icon:'assets/specialists/chloe.png'},
-  {id:'coach',    cat:'strategy', name:'Coach',     persona:'Performance Director',     cmd:'/coach',    desc:'Performance',        use:'Deep work, sport & mental performance.',        iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png'},
   {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'assets/specialists/brody.png'},
-  {id:'strategy', cat:'strategy', name:'Lukas',     persona:'Empire Strategist',        cmd:'/strategy', desc:'GTM Dominance',      use:'GTM, 90-day plans & scaling.',                iconType:'img', accent:'#22c55e', icon:'assets/specialists/lukas.png'},
   {id:'email',    cat:'revenue',  name:'Sofia',     persona:'Email Architect',          cmd:'/email',    desc:'Cold Outreach',      use:'Sequences that convert.',                      iconType:'img', accent:'#e8a912', icon:'assets/specialists/sofia.png'},
   {id:'outreach', cat:'revenue',  name:'Tariq',     persona:'Outreach Master',          cmd:'/outreach', desc:'Multi-Channel',      use:'Hyper-personalized prospecting.',              iconType:'img', accent:'#e8a912', icon:'assets/specialists/tariq.png'},
   {id:'proposal', cat:'revenue',  name:'Elena',     persona:'Deal Architect',           cmd:'/proposal', desc:'High-Ticket SOW',    use:'Win major contracts.',                         iconType:'img', accent:'#e8a912', icon:'assets/specialists/elena.png'},
   {id:'budget',   cat:'revenue',  name:'Kenzo',     persona:'Financial Analyst',        cmd:'/budget',   desc:'ROI & Cash Flow',    use:'Capital efficiency & projections.',            iconType:'img', accent:'#e8a912', icon:'assets/specialists/kenzo.png'},
-  {id:'aimas',    cat:'revenue',  name:'AIMAS',     persona:'11-Agent Swarm',           cmd:'/aimas',    desc:'Full Takeover',      use:'Omnichannel orchestration.',                   iconType:'img', accent:'#e8a912', icon:'assets/specialists/aimas.png'},
-  {id:'aros',     cat:'revenue',  name:'AROS',      persona:'Revenue OS',               cmd:'/aros',     desc:'Autonomous Revenue', use:'Self-driving commerce engine.',                iconType:'img', accent:'#e8a912', icon:'assets/specialists/aros.png'},
   {id:'qualify',  cat:'strategy', name:'Marcus',    persona:'Lead Qualifier',           cmd:'/qualify',  desc:'Score & Rank',       use:'Firmographic prospect scoring.',               iconType:'img', accent:'#22c55e', icon:'assets/specialists/marcus.png'},
   {id:'analytics',cat:'strategy', name:'Bjorn',     persona:'Data Auditor',             cmd:'/analytics',desc:'KPI Audit',           use:'Metrics, ROAS & optimization pivots.',         iconType:'img', accent:'#22c55e', icon:'assets/specialists/bjorn.png'},
   {id:'course',   cat:'creative', name:'Sasha',     persona:'Curriculum Pro',           cmd:'/course',   desc:'Course Design',      use:'Outcome-driven online courses.',               iconType:'img', accent:'#a78bfa', icon:'assets/specialists/sasha.png'},
@@ -1981,7 +1981,7 @@ function renderWelcome() {
   const portraitOnes = GRID_SKILLS.filter(s => s.iconType === 'img');
   const cardTpl = (s, hidden) => `
     <div class="wcard card-${s.cat}${hidden ? ' agent-hidden' : ''}" id="skill-btn-${s.id}" onclick="window.slash('${s.id}')">
-      <img class="wcard-bg-img" src="${s.icon}" alt="${s.name}" loading="lazy" onerror="this.style.display='none'">
+      <img class="wcard-bg-img" src="${s.icon}" alt="${s.name}" loading="lazy" onerror="this.style.display='none'"${s.zoom ? ' style="transform:scale(1.35);transform-origin:center 20%;object-position:center 15%"' : ''}>
       <div class="wcard-overlay"></div>
       <div class="wcard-body">
         <div class="wcard-cat-dot" style="background:${s.accent};color:${s.accent}"></div>
@@ -3032,7 +3032,7 @@ const BillyLive = (function() {
       const sk = v => String(v||'').replace(/[^\x00-\xFF]/g,'').trim();
       let sys = '';
       try { sys = await buildSys(); } catch(e) {}
-      sys += '\n\n[VOICE MODE ACTIVE]: Respond in 2-3 sentences max. Natural speech only — no bullet points, no markdown, no headers. Conversational tone. Be direct and warm. End with one short question or action.';
+      sys += '\n\n[VOICE MODE ACTIVE — NATURAL CONVERSATION]: You are now speaking out loud directly to the Boss. Rules: talk the way a trusted partner talks — short, real, no fluff. Max 2-3 sentences per reply. Zero markdown (no asterisks, dashes, headers, bullets — none). Zero lists. Sound human. Match the Boss\'s energy — if they\'re casual, be casual; if they\'re fired up, match it. Use "you" and "we" naturally. Never say "Certainly!" or "Of course!" — just answer. Always end with one punchy question or a clear next move to keep the conversation flowing.';
       const msgs = state.msgs.slice(-8).map(({role,content}) => ({role, content:String(content||'')}));
 
       const groqKey = sk(localStorage.getItem('bv_key_groq') || localStorage.getItem('bvmbino_key_groq') || '');
