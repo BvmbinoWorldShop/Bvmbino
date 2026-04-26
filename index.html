@@ -95,7 +95,18 @@ body::before{
 
 .chat{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;}
 
-.welcome{display:flex;flex-direction:column;align-items:center;padding:28px 20px 40px;text-align:center;width:100%;max-width:900px;margin:0 auto;animation:fadeUp .6s ease both;}
+.welcome{
+  display:flex;flex-direction:column;align-items:center;
+  padding:28px 20px 40px;text-align:center;
+  width:100%;max-width:900px;margin:0 auto;
+  animation:fadeUp .6s ease both;
+  min-height:100%;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 0%,   rgba(180,130,10,.13) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 15% 100%,  rgba(120,80,0,.10) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 60% at 85% 100%,  rgba(120,80,0,.10) 0%, transparent 65%),
+    linear-gradient(180deg, #0a0800 0%, #060400 35%, #000000 65%, #050300 100%);
+}
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 .w3d-scene{position:relative;width:150px;height:150px;margin-bottom:24px;}
 .w3d-core{
@@ -2747,8 +2758,9 @@ async function callAI() {
   if (keys.gemini)     tryOrder.push('gemini-2.0-flash');
 
   if (!tryOrder.length) {
-    // No keys at all — try OpenRouter free tier without key (rate-limited but works)
+    // No keys — OpenRouter allows anonymous calls to free models (rate-limited)
     tryOrder = ['deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free'];
+    window.logFeed && window.logFeed('warn', 'No API key found — trying free tier. Add a key in ⚙ Settings for reliable responses.');
   }
 
   // Honour chosen model first if reachable
@@ -2757,6 +2769,7 @@ async function callAI() {
     tryOrder = [chosen, ...tryOrder.filter(m => m !== chosen)];
   }
   tryOrder = [...new Set(tryOrder)];
+  window.logFeed && window.logFeed('system', 'Calling: ' + (tryOrder[0] || 'unknown'));
 
   // Clean messages — strip internal props providers reject
   const cleanMsgs = state.msgs.slice(-15).map(({ role, content }) => ({ role, content: String(content || '') }));
@@ -3026,6 +3039,9 @@ const BillyLive = (function() {
     setPulse('');
 
     state.msgs.push({role:'user', content: transcript});
+    // Write the spoken words into the chat as a user message
+    if (typeof addUserMsg === 'function') addUserMsg(transcript);
+    window.logFeed && window.logFeed('user', transcript.slice(0, 80) + (transcript.length > 80 ? '…' : ''));
 
     let reply = '';
     try {
@@ -3066,7 +3082,12 @@ const BillyLive = (function() {
       }
     } catch(e) { console.error('BillyLive error:', e); }
 
-    if (!reply) reply = 'AI channels offline. Check API keys in Settings, Boss.';
+    if (!reply) {
+      reply = 'API channels offline, Boss. Drop a key in Settings and we\'re live.';
+      window.logFeed && window.logFeed('warn', 'Voice AI call failed — no API key active');
+    } else {
+      window.logFeed && window.logFeed('billy', '[Voice] ' + reply.replace(/[#*_`]/g,'').slice(0, 80) + (reply.length > 80 ? '…' : ''));
+    }
 
     state.msgs.push({role:'assistant', content:reply});
     ui('voice-billy-reply', reply.slice(0,240) + (reply.length>240?'…':''));
