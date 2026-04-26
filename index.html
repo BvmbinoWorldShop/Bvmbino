@@ -100,12 +100,6 @@ body::before{
   padding:28px 20px 40px;text-align:center;
   width:100%;max-width:900px;margin:0 auto;
   animation:fadeUp .6s ease both;
-  min-height:100%;
-  background:
-    radial-gradient(ellipse 70% 45% at 50% 0%,   rgba(180,130,10,.13) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 60% at 15% 100%,  rgba(120,80,0,.10) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 60% at 85% 100%,  rgba(120,80,0,.10) 0%, transparent 65%),
-    linear-gradient(180deg, #0a0800 0%, #060400 35%, #000000 65%, #050300 100%);
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 .w3d-scene{position:relative;width:150px;height:150px;margin-bottom:24px;}
@@ -1136,7 +1130,13 @@ async function buildSys() {
   const custom = localStorage.getItem('bv_sysprompt') || '';
   const base = custom || SYSTEM_IDENTITY;
 
-  return `${base}${pStr}${vStr}${mStr}${bStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n\n${kStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
+  const voiceStr = state._voiceMode
+    ? '\n\n[VOICE MODE — SPEAK NATURALLY]: You are talking out loud. Max 2-3 short sentences. Zero markdown. Zero lists. Zero asterisks or symbols. Talk like a real partner — direct, warm, human. End with one punchy follow-up question or next action.'
+    : '';
+
+  const webStr = '\n\n[WEB ACCESS]: You have access to real-time web search and URL reading. When asked about companies, people, associations, groups, current events, prices, news — proactively search and provide real data. Use [SEARCH: query] or [READ: url] tags in your thinking when you need fresh information.';
+
+  return `${base}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n\n${kStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
 }
 
 // ── UTILITIES ──
@@ -1992,7 +1992,7 @@ function renderWelcome() {
   const portraitOnes = GRID_SKILLS.filter(s => s.iconType === 'img');
   const cardTpl = (s, hidden) => `
     <div class="wcard card-${s.cat}${hidden ? ' agent-hidden' : ''}" id="skill-btn-${s.id}" onclick="window.slash('${s.id}')">
-      <img class="wcard-bg-img" src="${s.icon}" alt="${s.name}" loading="lazy" onerror="this.style.display='none'"${s.zoom ? ' style="transform:scale(1.35);transform-origin:center 20%;object-position:center 15%"' : ''}>
+      <img class="wcard-bg-img" src="${s.icon}" alt="${s.name}" loading="lazy" decoding="async" onerror="this.style.display='none'"${s.zoom ? ' style="transform:scale(1.35);transform-origin:center 20%;object-position:center 15%"' : ''}>
       <div class="wcard-overlay"></div>
       <div class="wcard-body">
         <div class="wcard-cat-dot" style="background:${s.accent};color:${s.accent}"></div>
@@ -2667,12 +2667,16 @@ async function send() {
   lock();
 
   try {
+    // Store images for vision API call
+    const imageFiles = sentFiles.filter(f => f.type === 'image' && f.data);
+    state._pendingImages = imageFiles;
+
     // Build content with file data for AI
     let msgContent = raw;
     if (sentFiles.length) {
       const fileSummaries = sentFiles.map(f => {
-        if (f.type === 'image') return '[Image attached: ' + f.name + ']';
-        if (f.data) return '[File: ' + f.name + ']\n' + String(f.data).slice(0, 4000);
+        if (f.type === 'image') return `[Image: ${f.name} — attached as base64 for vision analysis]`;
+        if (f.data) return '[File: ' + f.name + ']\n' + String(f.data).slice(0, 6000);
         return '[File attached: ' + f.name + ']';
       }).join('\n\n');
       msgContent = raw ? (raw + '\n\n' + fileSummaries) : fileSummaries;
@@ -2771,8 +2775,45 @@ async function callAI() {
   tryOrder = [...new Set(tryOrder)];
   window.logFeed && window.logFeed('system', 'Calling: ' + (tryOrder[0] || 'unknown'));
 
-  // Clean messages — strip internal props providers reject
-  const cleanMsgs = state.msgs.slice(-15).map(({ role, content }) => ({ role, content: String(content || '') }));
+  // Handle pending images — build vision-compatible last user message
+  const pendingImages = state._pendingImages || [];
+  state._pendingImages = [];
+
+  // Build clean messages; if images pending, last user msg becomes multipart
+  const rawMsgs = state.msgs.slice(-15);
+  const cleanMsgs = rawMsgs.map((m, idx) => {
+    const isLast = idx === rawMsgs.length - 1;
+    if (isLast && m.role === 'user' && pendingImages.length) {
+      // Vision multipart — format set per-provider below
+      return { role: 'user', content: String(m.content || ''), _images: pendingImages };
+    }
+    return { role: m.role, content: String(m.content || '') };
+  });
+
+  // Helper: convert cleanMsgs to vision format for OpenAI-style APIs
+  function toOAIMsgs(msgs) {
+    return msgs.map(m => {
+      if (m._images && m._images.length) {
+        return { role: m.role, content: [
+          { type: 'text', text: m.content },
+          ...m._images.map(img => ({ type: 'image_url', image_url: { url: `data:${img.mimeType};base64,${img.data}` } }))
+        ]};
+      }
+      return { role: m.role, content: m.content };
+    });
+  }
+  // Helper: convert cleanMsgs to vision format for Anthropic
+  function toAnthMsgs(msgs) {
+    return msgs.map(m => {
+      if (m._images && m._images.length) {
+        return { role: m.role, content: [
+          ...m._images.map(img => ({ type: 'image', source: { type: 'base64', media_type: img.mimeType, data: img.data } })),
+          { type: 'text', text: m.content }
+        ]};
+      }
+      return { role: m.role, content: m.content };
+    });
+  }
 
   let lastErr = null;
   for (const modelId of tryOrder) {
@@ -2787,52 +2828,42 @@ async function callAI() {
       const isOpenRouter = modelId.includes('/');
 
       if (isAnthropic && keys.anthropic) {
-        // Anthropic: has native browser CORS support
         res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': keys.anthropic,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true',
-          },
-          body: JSON.stringify({ model: modelId, system: sys, messages: cleanMsgs, max_tokens: 2048, stream: false }),
+          headers: { 'Content-Type': 'application/json', 'x-api-key': keys.anthropic, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+          body: JSON.stringify({ model: modelId, system: sys, messages: toAnthMsgs(cleanMsgs), max_tokens: 2048, stream: false }),
           signal,
         });
 
       } else if (isGroq && keys.groq) {
-        // Groq: supports browser CORS
         res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.groq },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...cleanMsgs], temperature: state.config.temp, max_tokens: 2048, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048, stream: false }),
           signal,
         });
 
       } else if (isOpenAI && keys.openai) {
-        // OpenAI: supports browser CORS
         res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.openai },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...cleanMsgs], temperature: state.config.temp, max_tokens: 2048, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048, stream: false }),
           signal,
         });
 
       } else if (isOpenRouter && keys.openrouter) {
-        // OpenRouter: supports browser CORS
         res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.openrouter, 'HTTP-Referer': 'https://bvmbino.vercel.app', 'X-Title': 'Bvmbino AI' },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...cleanMsgs], temperature: state.config.temp, max_tokens: 2048 }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048 }),
           signal,
         });
 
       } else if (isOpenRouter && !keys.openrouter) {
-        // OpenRouter free tier — no key needed for free models
         res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'HTTP-Referer': 'https://bvmbino.vercel.app', 'X-Title': 'Bvmbino AI' },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...cleanMsgs], temperature: state.config.temp, max_tokens: 2048 }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048 }),
           signal,
         });
 
@@ -2840,7 +2871,7 @@ async function callAI() {
         res = await fetch('https://api.mistral.ai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.mistral },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...cleanMsgs], temperature: state.config.temp, max_tokens: 2048 }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048 }),
           signal,
         });
 
@@ -2848,7 +2879,7 @@ async function callAI() {
         res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.cerebras },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...cleanMsgs], temperature: state.config.temp, max_tokens: 2048, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048, stream: false }),
           signal,
         });
 
@@ -2922,26 +2953,70 @@ async function callAI() {
 async function handleSearch(query) {
   const id = 'search-' + Date.now();
   appendToolRow(id, '🌐', 'info', `Searching: "${query}"…`);
-  if (state.msgs.length && state.msgs[state.msgs.length - 1].role === 'user') {
-    state.msgs[state.msgs.length - 1].content = `Search for and summarize: ${query}`;
+  window.logFeed && window.logFeed('system', 'Web search: ' + query);
+  try {
+    let context = '';
+    // DuckDuckGo Instant Answer API — free, no key, CORS-enabled
+    try {
+      const ddg = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
+      if (ddg.ok) {
+        const d = await ddg.json();
+        if (d.AbstractText)  context += d.AbstractText + '\n\n';
+        if (d.Answer)        context += 'Answer: ' + d.Answer + '\n\n';
+        if (d.Definition)    context += 'Definition: ' + d.Definition + '\n\n';
+        const topics = (d.RelatedTopics || []).slice(0, 6).map(t => t.Text || t.Name || '').filter(Boolean);
+        if (topics.length)   context += 'Related: ' + topics.join(' | ') + '\n\n';
+        // If there's a top result URL, fetch it via Jina reader
+        const topUrl = d.AbstractURL || d.RelatedTopics?.[0]?.FirstURL;
+        if (topUrl && context.length < 300) {
+          try {
+            const jina = await fetch('https://r.jina.ai/' + topUrl, { headers: { 'Accept': 'text/plain' }, signal: AbortSignal.timeout(8000) });
+            if (jina.ok) context += (await jina.text()).slice(0, 4000);
+          } catch {}
+        }
+      }
+    } catch {}
+
+    if (!context.trim()) context = `No instant answer found for "${query}". Billy will answer from knowledge.`;
+
+    updateToolRow(id, '✅', 'success', `Found: "${query}"`);
+    window.logFeed && window.logFeed('system', 'Search complete — injecting into context');
+
+    const last = state.msgs[state.msgs.length - 1];
+    if (last?.role === 'user') {
+      last.content = `[WEB SEARCH RESULTS for: "${query}"]\n${context}\n\nUser asked: ${last.content}`;
+    } else {
+      state.msgs.push({ role: 'user', content: `[WEB SEARCH RESULTS for: "${query}"]\n${context}` });
+    }
+    await callAI();
+  } catch (e) {
+    updateToolRow(id, '❌', 'error', `Search error: ${e.message}`, true);
+    await callAI(); // fall back to AI knowledge
   }
-  updateToolRow(id, '✅', 'success', `Search ready: "${query}"`);
-  try { await callAI(); } catch (e) { updateToolRow(id, '❌', 'error', `Failed: ${e.message}`, true); }
 }
 
 async function handleScrape(url) {
   const id = 'scrape-' + Date.now();
-  appendToolRow(id, '🔍', 'info', `Scraping: ${url}…`);
+  appendToolRow(id, '🔍', 'info', `Reading: ${url}…`);
+  window.logFeed && window.logFeed('system', 'Reading URL: ' + url);
   try {
-    const h = { 'Content-Type': 'application/json' };
-    if (state.APP_TOKEN) h['x-app-token'] = state.APP_TOKEN;
-    const res = await fetch('/api/scrape', { method: 'POST', headers: h, body: JSON.stringify({ url }) });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    updateToolRow(id, '✅', 'success', `Scraped ${(data.chars || 0).toLocaleString()} chars.`);
-    state.msgs.push({ role: 'user', content: `[SCRAPED FROM ${url}]\n\n${(data.content || '').slice(0, 8000)}` });
+    // Jina AI reader — free, no key, converts any URL to clean markdown
+    const res = await fetch('https://r.jina.ai/' + url, {
+      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'markdown' },
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const content = await res.text();
+    const truncated = content.slice(0, 8000);
+    updateToolRow(id, '✅', 'success', `Read ${content.length.toLocaleString()} chars`);
+    window.logFeed && window.logFeed('system', `Scraped ${content.length} chars from ${url}`);
+    state.msgs.push({ role: 'user', content: `[PAGE CONTENT FROM ${url}]\n\n${truncated}` });
     await callAI();
-  } catch (e) { updateToolRow(id, '❌', 'error', `Scrape failed: ${e.message}`, true); }
+  } catch (e) {
+    updateToolRow(id, '❌', 'error', `Read failed: ${e.message}`, true);
+    state.msgs.push({ role: 'user', content: `[Could not read ${url}: ${e.message}. Answer from knowledge.]` });
+    await callAI();
+  }
 }
 
 // ── IMAGE GENERATION ──
@@ -3031,68 +3106,40 @@ const BillyLive = (function() {
     wrap.classList.toggle('v-speaking',  mode === 'speak');
   }
 
-  async function think(transcript) { // returns Promise (used by .finally in startListening)
+  async function think(transcript) {
     if (!transcript.trim()) { startListening(); return; }
     ui('voice-transcript', transcript);
     ui('voice-status', 'THINKING…');
     ui('voice-billy-reply', '');
     setPulse('');
 
-    state.msgs.push({role:'user', content: transcript});
-    // Write the spoken words into the chat as a user message
+    // Write to chat + state
     if (typeof addUserMsg === 'function') addUserMsg(transcript);
+    state.msgs.push({ role: 'user', content: transcript });
     window.logFeed && window.logFeed('user', transcript.slice(0, 80) + (transcript.length > 80 ? '…' : ''));
 
-    let reply = '';
+    // Inject voice instruction into system for this call
+    state._voiceMode = true;
+
     try {
-      const sk = v => String(v||'').replace(/[^\x00-\xFF]/g,'').trim();
-      let sys = '';
-      try { sys = await buildSys(); } catch(e) {}
-      sys += '\n\n[VOICE MODE ACTIVE — NATURAL CONVERSATION]: You are now speaking out loud directly to the Boss. Rules: talk the way a trusted partner talks — short, real, no fluff. Max 2-3 sentences per reply. Zero markdown (no asterisks, dashes, headers, bullets — none). Zero lists. Sound human. Match the Boss\'s energy — if they\'re casual, be casual; if they\'re fired up, match it. Use "you" and "we" naturally. Never say "Certainly!" or "Of course!" — just answer. Always end with one punchy question or a clear next move to keep the conversation flowing.';
-      const msgs = state.msgs.slice(-8).map(({role,content}) => ({role, content:String(content||'')}));
-
-      const groqKey = sk(localStorage.getItem('bv_key_groq') || localStorage.getItem('bvmbino_key_groq') || '');
-      const anthKey = sk(localStorage.getItem('bv_key_anthropic') || localStorage.getItem('bvmbino_key_anthropic') || '');
-      const orKey   = sk(localStorage.getItem('bv_key_openrouter') || '');
-
-      const providers = [
-        groqKey && (() => fetch('https://api.groq.com/openai/v1/chat/completions',{
-          method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},
-          body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:sys},...msgs],max_tokens:400,stream:false})
-        })),
-        anthKey && (() => fetch('https://api.anthropic.com/v1/messages',{
-          method:'POST', headers:{'Content-Type':'application/json','x-api-key':anthKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-          body:JSON.stringify({model:'claude-haiku-4-5-20251001',system:sys,messages:msgs,max_tokens:400,stream:false})
-        })),
-        () => fetch('https://openrouter.ai/api/v1/chat/completions',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','HTTP-Referer':'https://bvmbino.vercel.app','X-Title':'Bvmbino AI',...(orKey?{'Authorization':'Bearer '+orKey}:{})},
-          body:JSON.stringify({model:'deepseek/deepseek-chat-v3-0324:free',messages:[{role:'system',content:sys},...msgs],max_tokens:400})
-        }),
-      ].filter(Boolean);
-
-      for (const fn of providers) {
-        try {
-          const res = await fn();
-          if (!res||!res.ok) continue;
-          const d = await res.json();
-          reply = d.content?.[0]?.text || d.choices?.[0]?.message?.content || '';
-          if (reply.trim()) break;
-        } catch(e) { continue; }
+      // Use the main callAI() — same proven path as regular chat
+      await callAI();
+      // After callAI, last assistant message is our reply — speak it
+      const last = state.msgs[state.msgs.length - 1];
+      if (last?.role === 'assistant') {
+        const clean = last.content.replace(/[*_`#>\[\]]/g, '').replace(/\n+/g, ' ').trim();
+        ui('voice-billy-reply', clean.slice(0, 240) + (clean.length > 240 ? '…' : ''));
+        speakOut(clean);
+      } else {
+        if (active) startListening();
       }
-    } catch(e) { console.error('BillyLive error:', e); }
-
-    if (!reply) {
-      reply = 'API channels offline, Boss. Drop a key in Settings and we\'re live.';
-      window.logFeed && window.logFeed('warn', 'Voice AI call failed — no API key active');
-    } else {
-      window.logFeed && window.logFeed('billy', '[Voice] ' + reply.replace(/[#*_`]/g,'').slice(0, 80) + (reply.length > 80 ? '…' : ''));
+    } catch (e) {
+      console.error('BillyLive think error:', e);
+      window.logFeed && window.logFeed('warn', 'Voice AI error: ' + e.message);
+      speakOut('Something went wrong. Try again, Boss.');
+    } finally {
+      state._voiceMode = false;
     }
-
-    state.msgs.push({role:'assistant', content:reply});
-    ui('voice-billy-reply', reply.slice(0,240) + (reply.length>240?'…':''));
-    if (typeof appendAiText === 'function') appendAiText(reply, null);
-    speakOut(reply);
   }
 
   function speakOut(text) {
