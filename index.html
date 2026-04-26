@@ -567,13 +567,13 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 #see-more-wrap{margin-top:10px;text-align:center;}
 #see-more-btn{
   display:inline-flex;align-items:center;gap:4px;
-  padding:4px 12px;background:none;
-  border:1px dashed rgba(255,255,255,.12);border-radius:4px;
-  color:rgba(255,255,255,.25);font-family:var(--mono);font-weight:400;
-  font-size:9px;letter-spacing:.8px;cursor:pointer;
+  padding:5px 14px;background:none;
+  border:1px dashed rgba(255,255,255,.22);border-radius:4px;
+  color:rgba(255,255,255,.42);font-family:var(--mono);font-weight:400;
+  font-size:9.5px;letter-spacing:.8px;cursor:pointer;
   transition:all .2s;
 }
-#see-more-btn:hover{color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.25);}
+#see-more-btn:hover{color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.04);}
 
 /* ══ /CMD STRIP — all agents ══ */
 .cmd-strip{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;max-width:860px;margin:12px auto 0;padding:0 8px;}
@@ -3549,7 +3549,6 @@ const App = {
 
     // ─ § CLIENTS / VENTURES ──────────────────────────────────────
     this._on('add-cli-btn',          'click', () => addNewClient());
-    this._on('toggle-clients-btn',   'click', () => this._toggleCollapsible('client-panel', 'client-arrow'));
 
     document.getElementById('client-list')?.addEventListener('click', e => {
       const del  = e.target.closest('[data-delete-client]');
