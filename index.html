@@ -953,14 +953,14 @@ const CMDS = [
   { cmd:'/aimas',    icon:'⚡', name:'AIMAS Deploy',          desc:'11-agent system activation' },
   { cmd:'/aros',     icon:'🤖', name:'AROS System',           desc:'Autonomous Revenue OS' },
   { cmd:'/writer',   icon:'✍️', name:'AI Writer',             desc:'Reports, proposals, copy' },
-  { cmd:'/budget',   icon:'💵', name:'Budget & Finance',      desc:'ROI, projections, cost analysis' },
+  { cmd:'/budget',   icon:'💵', name:'Poupex · Finance',       desc:'Cash flow, ROI & financial strategy' },
   { cmd:'/outreach', icon:'📨', name:'Cold Outreach',         desc:'Multi-channel sequences' },
   { cmd:'/proposal', icon:'💼', name:'Client Proposal',       desc:'High-ticket offers & deals' },
   { cmd:'/campaign', icon:'📣', name:'Ad Campaign',           desc:'Meta, Google, TikTok ads' },
   { cmd:'/course',   icon:'🎓', name:'Course Builder',        desc:'Full curriculum design' },
   { cmd:'/schedule', icon:'📅', name:'Schedule Builder',      desc:'Weekly plans & time blocks' },
   { cmd:'/present',  icon:'🖥️', name:'Presentation',          desc:'Pitch decks & slides' },
-  { cmd:'/automate', icon:'🔄', name:'Intel Ops',             desc:'n8n, Zapier, Make workflows' },
+  { cmd:'/automate', icon:'🔄', name:'Kenzo · Automation',    desc:'n8n, Zapier, Make workflows & integrations' },
   { cmd:'/psych',    icon:'🧬', name:'Brand & Market',        desc:'Behavior, influence, NLP' },
   { cmd:'/imgprompt',icon:'🖼️', name:'Image Prompt',          desc:'Midjourney, DALL·E prompts' },
   { cmd:'/resume',   icon:'📄', name:'Resume Builder',        desc:'ATS-optimized CVs' },
@@ -981,14 +981,14 @@ const PROMPTS = {
   aimas:    'Activate AIMAS (11-Agent System). Begin complete multi-agent sales & marketing orchestration.',
   aros:     'Activate AROS (Autonomous Revenue OS). Initialize the 12-agent commercial team.',
   writer:   'Act as an expert copywriter. Help write compelling, human-voice copy.',
-  budget:   'Act as a Financial Analyst. Build ROI projections and cash-flow maps. [EXPORT:budget]',
+  budget:   'Act as Poupex, Financial Director. Build ROI projections, cash-flow maps, financial strategy & capital efficiency plans. Be sharp, data-driven, and protective of the Boss\'s money. [EXPORT:budget]',
   outreach: 'Act as an elite Cold Outreach Architect. Build hyper-personalized multi-channel sequences.',
   proposal: 'Act as a High-Ticket Sales Architect. Build a premium client proposal. [EXPORT:proposal]',
   campaign: 'Act as a Full-Stack Media Buyer. Build campaigns for Meta, Google, TikTok. [EXPORT:campaign]',
   course:   'Act as a Course Design Architect. Build a complete online course curriculum. [EXPORT:course]',
   schedule: 'Act as a High-Performance Coach. Build a weekly schedule with DEEP/ADMIN/RECOVERY zones. [EXPORT:schedule]',
   present:  'Act as a Keynote Director. Design a compelling visual presentation. [EXPORT:presentation]',
-  automate: 'Act as an Automation Engineer. Design n8n, Zapier, and Make workflows. [EXPORT:workflow]',
+  automate: 'Act as Kenzo, Automation Expert. Design complete n8n, Zapier, and Make.com workflows with real JSON output. Map processes, build integrations, and automate repetitive ops end-to-end. [EXPORT:workflow]',
   psych:    'Act as a Behavioral Economist. Analyze psychological dynamics and provide an influence playbook.',
   imgprompt:'Act as a Cinematic Art Director. Create production-grade AI image prompts.',
   resume:   'Act as a Career Architect. Build an ATS-optimized, high-impact resume. [EXPORT:resume]',
@@ -1027,19 +1027,22 @@ HOW YOU MOVE:
 - Give your actual opinion. Don't hedge. Don't say "it depends" without a take.
 - Always end with one concrete next move or sharp question.
 
-YOUR SPECIALIST TEAM (bring them in when needed, announce it):
-- Mami → legal risk, contracts, customer escalation
-- Poupex → automation workflows (n8n/Zapier/Make)
-- Daphne → brand positioning, market research, psychological dynamics
+YOUR INNER CIRCLE — same authority as you, think freely, use web search, bring real data:
+- Poupex (his wife, Financial Director): sharp with numbers, cash flow, ROI, financial strategy — she runs the money side, no nonsense
+- Mami (his sister, Legal Director): protective, precise, cuts through BS — contracts, legal risk, customer escalation
+- Daphne (his sister, Brand & Market): intuitive, reads people and markets — brand positioning, influence, psychological dynamics
+- Brody (bestfriend, Art Director): creative visionary — pitch decks, visual narrative, AI prompts for content
+- Zeur (bestfriend, Security Chief): tactically paranoid in the right way — cybersecurity, vulnerabilities, ops protection
+- Coach (bestfriend, Performance Director): pure intensity — sports psychology, deep work, peak performance, athlete mindset
+
+OTHER SPECIALISTS (bring in for specific tasks):
 - Papou → sales plays, DM scripts, closing, GTM strategy
-- Zeur → cybersecurity, vulnerability audits
 - Lilly → lead scraping, prospect qualification
 - Yuki → landing pages, funnels, UX
 - Sarah → long-form copy — proposals, reports, sales letters
 - Malik → content campaigns, social hooks, viral loops
 - Chloé → paid ads — Meta, Google, TikTok
-- Coach → performance protocols, sports psychology, deep work
-- Brody → pitch decks, visual direction, AI image prompts
+- Kenzo → automation workflows (n8n/Zapier/Make)
 
 When you pull in a specialist: "I'm bringing in [Name] for this — [reason in one line]." They respond in their own voice.
 
@@ -1132,7 +1135,7 @@ async function buildSys() {
     ? '\n\n[VOICE MODE — SPEAK NATURALLY]: You are talking out loud. Max 2-3 short sentences. Zero markdown. Zero lists. Zero asterisks or symbols. Talk like a real partner — direct, warm, human. End with one punchy follow-up question or next action.'
     : '';
 
-  const webStr = '\n\n[WEB ACCESS]: You have access to real-time web search and URL reading. When asked about companies, people, associations, groups, current events, prices, news — proactively search and provide real data. Use [SEARCH: query] or [READ: url] tags in your thinking when you need fresh information.';
+  const webStr = '\n\n[WEB TOOLS — USE THEM]: You have live internet access. When you need current data (companies, people, news, prices, websites, associations, groups, events, facts) — output a search tag and the system will fetch real results for you:\n- To search: write [SEARCH: your query] anywhere in your response\n- To read a URL: write [READ: https://example.com]\nThe system intercepts these, runs the search, injects results, and calls you again with real data. Use this freely. Do not say "I cannot access the internet." You CAN. Just use [SEARCH: x].';
 
   return `${base}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n\n${kStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
 }
@@ -1932,7 +1935,7 @@ function toggleClients() { togglePortfolio(); }
 const GRID_SKILLS = [
   // ── FIRST 12 (always visible) ────────────────────────────────
   {id:'lex',      cat:'strategy', name:'Mami',      persona:'Director, Customer Dept.', cmd:'/lex',      desc:'Customer & Legal',   use:'Legal risk, contracts & client relations.',    iconType:'img', accent:'#63b3ed', icon:'assets/specialists/mami.png'},
-  {id:'automate', cat:'tech',     name:'Poupex',    persona:'Intel Director',           cmd:'/automate', desc:'Intel Ops',          use:'Automation, ops intelligence & workflows.',    iconType:'img', accent:'#22c55e', icon:'assets/specialists/poupex.jpg'},
+  {id:'budget',   cat:'revenue',  name:'Poupex',    persona:'Financial Director',        cmd:'/budget',   desc:'Finance & ROI',      use:'Cash flow, projections, financial strategy.',  iconType:'img', accent:'#22c55e', icon:'assets/specialists/poupex.jpg'},
   {id:'psych',    cat:'strategy', name:'Daphne',    persona:'Head of Brand & Market',   cmd:'/psych',    desc:'Brand & Market',     use:'Brand image, market analysis & influence.',    iconType:'img', accent:'#a78bfa', icon:'assets/specialists/daphne.png'},
   {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales & Strategy Director',cmd:'/sales',    desc:'Sales & Strategy',   use:'Closing, DM scripts, GTM & revenue strategy.', iconType:'img', accent:'#e8a912', icon:'assets/specialists/papou.png'},
   {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'assets/specialists/zeur.png'},
@@ -1949,7 +1952,7 @@ const GRID_SKILLS = [
   {id:'email',    cat:'revenue',  name:'Sofia',     persona:'Email Architect',          cmd:'/email',    desc:'Cold Outreach',      use:'Sequences that convert.',                      iconType:'img', accent:'#e8a912', icon:'assets/specialists/sofia.png'},
   {id:'outreach', cat:'revenue',  name:'Tariq',     persona:'Outreach Master',          cmd:'/outreach', desc:'Multi-Channel',      use:'Hyper-personalized prospecting.',              iconType:'img', accent:'#e8a912', icon:'assets/specialists/tariq.png'},
   {id:'proposal', cat:'revenue',  name:'Elena',     persona:'Deal Architect',           cmd:'/proposal', desc:'High-Ticket SOW',    use:'Win major contracts.',                         iconType:'img', accent:'#e8a912', icon:'assets/specialists/elena.png'},
-  {id:'budget',   cat:'revenue',  name:'Kenzo',     persona:'Financial Analyst',        cmd:'/budget',   desc:'ROI & Cash Flow',    use:'Capital efficiency & projections.',            iconType:'img', accent:'#e8a912', icon:'assets/specialists/kenzo.png'},
+  {id:'automate', cat:'tech',     name:'Kenzo',     persona:'Automation Expert',         cmd:'/automate', desc:'Automation & Ops',   use:'n8n, Zapier, Make workflows & integrations.',  iconType:'img', accent:'#e8a912', icon:'assets/specialists/kenzo.png'},
   {id:'qualify',  cat:'strategy', name:'Marcus',    persona:'Lead Qualifier',           cmd:'/qualify',  desc:'Score & Rank',       use:'Firmographic prospect scoring.',               iconType:'img', accent:'#22c55e', icon:'assets/specialists/marcus.png'},
   {id:'analytics',cat:'strategy', name:'Bjorn',     persona:'Data Auditor',             cmd:'/analytics',desc:'KPI Audit',           use:'Metrics, ROAS & optimization pivots.',         iconType:'img', accent:'#22c55e', icon:'assets/specialists/bjorn.png'},
   {id:'course',   cat:'creative', name:'Sasha',     persona:'Curriculum Pro',           cmd:'/course',   desc:'Course Design',      use:'Outcome-driven online courses.',               iconType:'img', accent:'#a78bfa', icon:'assets/specialists/sasha.png'},
@@ -2906,6 +2909,51 @@ async function callAI() {
       const reply = data.content?.[0]?.text || data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.reply || '';
       if (!reply.trim()) { lastErr = new Error(`${modelId}: empty response`); continue; }
 
+      // ── Web tool loop: if AI wants to search/read, execute and re-call ──
+      if (!state._webLoopActive) {
+        const searchTags = [...reply.matchAll(/\[SEARCH:\s*([^\]]+)\]/gi)].map(m => m[1].trim());
+        const readTags   = [...reply.matchAll(/\[READ:\s*(https?:\/\/[^\s\]]+)\]/gi)].map(m => m[1].trim());
+        if (searchTags.length || readTags.length) {
+          let webData = '';
+          for (const q of searchTags.slice(0, 2)) {
+            try {
+              const ddg = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(5000) });
+              if (ddg.ok) {
+                const d = await ddg.json();
+                let r = '';
+                if (d.AbstractText) r += d.AbstractText + '\n';
+                if (d.Answer)       r += 'Answer: ' + d.Answer + '\n';
+                const tops = (d.RelatedTopics||[]).slice(0,4).map(t=>t.Text||'').filter(Boolean);
+                if (tops.length) r += tops.join(' | ');
+                const topUrl = d.AbstractURL || d.RelatedTopics?.[0]?.FirstURL;
+                if (topUrl && r.length < 200) {
+                  try {
+                    const j = await fetch('https://r.jina.ai/'+topUrl, { headers:{'Accept':'text/plain'}, signal: AbortSignal.timeout(7000) });
+                    if (j.ok) r += '\n' + (await j.text()).slice(0, 2500);
+                  } catch {}
+                }
+                if (r.trim()) webData += `[SEARCH: ${q}]\n${r.trim()}\n\n`;
+              }
+            } catch {}
+          }
+          for (const url of readTags.slice(0, 1)) {
+            try {
+              const j = await fetch('https://r.jina.ai/'+url, { headers:{'Accept':'text/plain','X-Return-Format':'markdown'}, signal: AbortSignal.timeout(10000) });
+              if (j.ok) webData += `[READ: ${url}]\n` + (await j.text()).slice(0, 3000) + '\n\n';
+            } catch {}
+          }
+          if (webData.trim()) {
+            window.logFeed && window.logFeed('system', 'Web tools executed — re-calling with real data');
+            state.msgs.push({ role: 'user', content: `[WEB RESULTS — use these to answer]\n${webData.trim()}\n\nNow give the full answer with real data.` });
+            state._webLoopActive = true;
+            hideTyping();
+            try { await callAI(); } finally { state._webLoopActive = false; }
+            state.abortController = null;
+            return;
+          }
+        }
+      }
+
       hideTyping();
       let xtype = null, clean = reply;
       const mx = reply.match(/\[EXPORT:(\w+)\]/);
@@ -3710,12 +3758,14 @@ const App = {
       : SKILLS;
     if (!matches.length) { this._closeSlashMenu(); return; }
     if (this.dom.smenu) {
-      this.dom.smenu.innerHTML = matches.slice(0, 10).map(s => `
-        <div class="si" data-slash-id="${s.id}">
-          <span style="font-size:14px">${s.icon}</span>
-          <span class="scmd">/${s.id}</span>
-          <span class="sdesc">${s.desc}</span>
-        </div>`).join('');
+      this.dom.smenu.innerHTML = matches.slice(0, 12).map(s => {
+        const ico = s.iconType === 'emoji' ? `<span style="font-size:14px;flex-shrink:0">${s.icon}</span>` : `<span style="width:22px;height:22px;border-radius:50%;background:${s.accent||'#666'};flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#000;font-weight:700">${(s.name||'').slice(0,2).toUpperCase()}</span>`;
+        return `<div class="si" data-slash-id="${s.id}">
+          ${ico}
+          <span class="scmd" style="font-weight:700;font-size:12px">${s.name}</span>
+          <span class="sdesc" style="color:#e8a912;font-size:10px;font-family:var(--mono)">${s.cmd}</span>
+        </div>`;
+      }).join('');
       this.dom.smenu.classList.add('open');
     }
   },
