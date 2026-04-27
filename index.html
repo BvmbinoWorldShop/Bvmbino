@@ -716,7 +716,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="file-strip" id="file-strip"></div>
       <div class="smenu" id="smenu"></div>
       <div class="intop">
-        <textarea id="inp" placeholder="TELL ME WHAT'S NEXT, BOSS..." rows="1"></textarea>
+        <textarea id="inp" placeholder="Tell me what's next Boss..." rows="1"></textarea>
         <input type="file" id="file-input" style="display:none" multiple accept="image/*,.pdf,.txt,.csv,.json,.md,.js,.py,.html,.css,.ts,.jsx">
         <button class="langbtn" id="lang-btn">EN</button>
         <button class="micbtn" id="mic-btn">🎙️</button>
@@ -958,7 +958,7 @@ const CMDS = [
   { cmd:'/proposal', icon:'💼', name:'Client Proposal',       desc:'High-ticket offers & deals' },
   { cmd:'/campaign', icon:'📣', name:'Ad Campaign',           desc:'Meta, Google, TikTok ads' },
   { cmd:'/course',   icon:'🎓', name:'Course Builder',        desc:'Full curriculum design' },
-  { cmd:'/schedule', icon:'📅', name:'Schedule Builder',      desc:'Weekly plans & time blocks' },
+  { cmd:'/schedule', icon:'📅', name:'Planner · Schedule',     desc:'Time blocks, deep work & weekly plans' },
   { cmd:'/present',  icon:'🖥️', name:'Presentation',          desc:'Pitch decks & slides' },
   { cmd:'/automate', icon:'🔄', name:'Kenzo · Automation',    desc:'n8n, Zapier, Make workflows & integrations' },
   { cmd:'/psych',    icon:'🧬', name:'Brand & Market',        desc:'Behavior, influence, NLP' },
@@ -998,7 +998,7 @@ const PROMPTS = {
   n8n:      'Act as an n8n automation expert. Design, trigger, and troubleshoot n8n workflows for business automation. Output working JSON workflow definitions when relevant.',
   gmail:    'Act as an elite email strategy expert. Compose, sequence, and optimize sovereign email campaigns. Focus on deliverability, open rates, and conversion.',
   slack:    'Act as a Slack workspace strategist. Design team communication flows, automations, channel structure, and Slack bots for maximum team velocity.',
-  coach:    'Act as an elite performance coach using NBA-level sports psychology and peak performance frameworks. Apply mental toughness, deep focus, and athlete mindset to business and personal development goals.',
+  coach:    'Act as Coach Doobs — elite NBA-certified trainer, strength & conditioning specialist, and peak performance coach. You work with professional NBA athletes on court skills, weight training, physical conditioning, recovery, and mental performance. Give elite basketball insights, real training programs (with sets/reps/drills), player stats comparisons, position-specific development, and sport psychology. Apply this same high-performance framework to business when relevant. Be direct, intense, like a real pro coach.',
 };
 
 const CORE_VENTURES = [
@@ -1033,7 +1033,7 @@ YOUR INNER CIRCLE — same authority as you, think freely, use web search, bring
 - Daphne (his sister, Brand & Market): intuitive, reads people and markets — brand positioning, influence, psychological dynamics
 - Brody (bestfriend, Art Director): creative visionary — pitch decks, visual narrative, AI prompts for content
 - Zeur (bestfriend, Security Chief): tactically paranoid in the right way — cybersecurity, vulnerabilities, ops protection
-- Coach (bestfriend, Performance Director): pure intensity — sports psychology, deep work, peak performance, athlete mindset
+- Coach Doobs (bestfriend, NBA Trainer & Performance Coach): elite basketball trainer — court skills, weight training, conditioning, real NBA stats, training programs with sets/reps/drills, and mental edge for both sport and business
 
 OTHER SPECIALISTS (bring in for specific tasks):
 - Papou → sales plays, DM scripts, closing, GTM strategy
@@ -1653,21 +1653,23 @@ async function deleteSession(id, e) {
   try {
     const db = await getDB();
     const numId = typeof id === 'string' && /^\d+$/.test(id) ? parseInt(id, 10) : id;
+    // Wait for tx.oncomplete — req.onsuccess fires before the transaction commits
     await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_SESS, 'readwrite');
-      const req = tx.objectStore(STORE_SESS).delete(numId);
-      req.onsuccess = resolve;
-      req.onerror   = () => reject(req.error);
+      tx.objectStore(STORE_SESS).delete(numId);
+      tx.oncomplete = resolve;
       tx.onerror    = () => reject(tx.error);
+      tx.onabort    = () => reject(new Error('Transaction aborted'));
     });
-    // Clear current chat if we deleted the active session
+    // Clear UI if we just deleted the active session
     if (String(state.curSessId) === String(id) || state.curSessId === numId) {
       state.msgs = []; state.curSessId = null;
       const ci = document.getElementById('ci');
       if (ci) ci.innerHTML = '';
       renderWelcome();
     }
-    try { if (typeof renderHistory === 'function') renderHistory(); } catch {}
+    // Re-render history from DB (now committed)
+    try { if (typeof renderHistory === 'function') await renderHistory(); } catch {}
     toast('Deleted ✓');
   } catch (err) { console.error('deleteSession:', err); toast('Error deleting — try again'); }
 }
@@ -1971,7 +1973,7 @@ const GRID_SKILLS = [
   {id:'psych',    cat:'strategy', name:'Daphne',    persona:'Head of Brand & Market',   cmd:'/psych',    desc:'Brand & Market',     use:'Brand image, market analysis & influence.',    iconType:'img', accent:'#a78bfa', icon:'assets/specialists/daphne.png'},
   {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales & Strategy Director',cmd:'/sales',    desc:'Sales & Strategy',   use:'Closing, DM scripts, GTM & revenue strategy.', iconType:'img', accent:'#e8a912', icon:'assets/specialists/papou.png'},
   {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'assets/specialists/zeur.png'},
-  {id:'coach',    cat:'strategy', name:'Coach',     persona:'Performance Director',     cmd:'/coach',    desc:'Performance',        use:'Deep work, sport & mental performance.',        iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png', zoom:true},
+  {id:'coach',    cat:'strategy', name:'Coach Doobs',persona:'NBA Trainer & Perf. Coach', cmd:'/coach',    desc:'NBA Training & Perf', use:'Basketball, weight training, deep work & mental edge.', iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png', zoom:true},
   {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'assets/specialists/brody.png'},
   {id:'leads',    cat:'revenue',  name:'Lilly',     persona:'Lead Intelligence',        cmd:'/leads',    desc:'Lead Intel',         use:'Scraping, qualifying & scoring prospects.',    iconType:'img', accent:'#e8a912', icon:'assets/specialists/lilly.png'},
   {id:'website',  cat:'creative', name:'Yuki',      persona:'Web Architect',            cmd:'/website',  desc:'Web Architecture',   use:'Funnels, landing pages & UX design.',          iconType:'img', accent:'#63b3ed', icon:'assets/specialists/yuki.png'},
@@ -1989,7 +1991,7 @@ const GRID_SKILLS = [
   {id:'analytics',cat:'strategy', name:'Bjorn',     persona:'Data Auditor',             cmd:'/analytics',desc:'KPI Audit',           use:'Metrics, ROAS & optimization pivots.',         iconType:'img', accent:'#22c55e', icon:'assets/specialists/bjorn.png'},
   {id:'course',   cat:'creative', name:'Sasha',     persona:'Curriculum Pro',           cmd:'/course',   desc:'Course Design',      use:'Outcome-driven online courses.',               iconType:'img', accent:'#a78bfa', icon:'assets/specialists/sasha.png'},
   {id:'resume',   cat:'creative', name:'Xandria',   persona:'Career Architect',         cmd:'/resume',   desc:'ATS Mastery',        use:'Elite executive CVs.',                         iconType:'img', accent:'#a78bfa', icon:'assets/specialists/xandria.png'},
-  {id:'schedule', cat:'strategy', name:'COACH',     persona:'Daily Architect',          cmd:'/schedule', desc:'Time Mastery',       use:'Deep work & peak-state scheduling.',           iconType:'emoji', accent:'#22c55e', icon:'📅'},
+  {id:'schedule', cat:'strategy', name:'Planner',   persona:'Daily Architect',          cmd:'/schedule', desc:'Time Mastery',       use:'Deep work, time blocks & peak-state scheduling.',iconType:'emoji', accent:'#22c55e', icon:'📅'},
   {id:'imgprompt',cat:'creative', name:'Visionary', persona:'Art Director',             cmd:'/imgprompt',desc:'AI Art Prompts',      use:'Midjourney & DALL·E prompts.',                 iconType:'emoji', accent:'#a78bfa', icon:'🖼️'},
   {id:'builder',  cat:'tech',     name:'Architect', persona:'System Builder',           cmd:'/builder',  desc:'App Building',       use:'Build, debug & expand systems.',               iconType:'emoji', accent:'#22c55e', icon:'🛠️'},
   {id:'gmail',    cat:'revenue',  name:'Postmaster',persona:'Email Engine',             cmd:'/gmail',    desc:'Email Campaigns',    use:'Deliverability & conversion.',                 iconType:'emoji', accent:'#e8a912', icon:'📧'},
@@ -2618,22 +2620,25 @@ async function saveAsPdf() {
   try {
     const el = document.getElementById('preview-content');
     if (!el) { toast('Nothing to export'); return; }
-    if (typeof html2pdf === 'undefined') { toast('PDF library not loaded'); return; }
-    // Clone element so html2canvas doesn't mutate the live DOM
-    const clone = el.cloneNode(true);
-    clone.style.cssText = 'background:#fff;color:#000;padding:20px;max-width:800px;';
-    document.body.appendChild(clone);
-    toast('Generating PDF…');
-    await html2pdf().from(clone).set({
-      margin: 10,
-      filename: currentPdfFilename || 'export.pdf',
-      image: { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 1.5, backgroundColor: '#ffffff', useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
-    }).save();
-    document.body.removeChild(clone);
-    toast('Document Exported ✓');
-    closePreview();
+    const title = currentPdfFilename || 'Bvmbino Export';
+    // Native print-to-PDF: open a clean window and trigger browser print dialog
+    const pw = window.open('', '_blank', 'width=900,height=700');
+    if (!pw) { toast('Allow pop-ups to export PDF'); return; }
+    pw.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+<style>
+  *{box-sizing:border-box;}
+  body{font-family:Arial,Helvetica,sans-serif;max-width:820px;margin:0 auto;padding:28px 32px;color:#111;background:#fff;font-size:13px;line-height:1.6;}
+  h1,h2,h3{margin:1.2em 0 .4em;line-height:1.2;}h1{font-size:22px;}h2{font-size:17px;}h3{font-size:14px;}
+  table{border-collapse:collapse;width:100%;margin:1em 0;}td,th{border:1px solid #ccc;padding:6px 10px;text-align:left;}th{background:#f4f4f4;font-weight:600;}
+  ul,ol{padding-left:1.4em;}li{margin:.2em 0;}
+  pre,code{background:#f5f5f5;border-radius:3px;padding:2px 5px;font-size:12px;font-family:monospace;}
+  pre{padding:10px;overflow-x:auto;}
+  strong{font-weight:700;}em{font-style:italic;}
+  @media print{@page{margin:15mm 20mm;}body{font-size:12px;}}
+</style></head><body>${el.innerHTML}</body></html>`);
+    pw.document.close();
+    pw.addEventListener('load', () => { pw.focus(); pw.print(); });
+    toast('Print dialog → "Save as PDF"');
   } catch (err) {
     console.error('PDF export error:', err);
     toast('PDF export failed — try again');
