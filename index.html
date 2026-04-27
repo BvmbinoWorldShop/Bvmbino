@@ -1086,9 +1086,14 @@ async function initializeToken() {
 
 // ── SYSTEM PROMPT BUILDER ──
 async function buildSys() {
+  // Live date/location context
+  const _now = new Date();
+  const _dateFmt = _now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'Europe/Paris' });
+  const _timeFmt = _now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris' });
+  const dateCtx = `\n[DATE & LOCATION]: Aujourd'hui c'est le ${_dateFmt}, ${_timeFmt} — Paris, France (fuseau Europe/Paris). Use this for any time-sensitive or location-aware answers.`;
+
   let kStr = '';
   try {
-    // loadKnowledge already global in standalone
     const knowledge = await loadKnowledge();
     kStr = knowledge.map(k => `[KNOWLEDGE: ${k.key}] ${k.val || k.value}`).join('\n');
   } catch {}
@@ -1137,7 +1142,7 @@ async function buildSys() {
 
   const webStr = '\n\n[WEB TOOLS — USE THEM]: You have live internet access. When you need current data (companies, people, news, prices, websites, associations, groups, events, facts) — output a search tag and the system will fetch real results for you:\n- To search: write [SEARCH: your query] anywhere in your response\n- To read a URL: write [READ: https://example.com]\nThe system intercepts these, runs the search, injects results, and calls you again with real data. Use this freely. Do not say "I cannot access the internet." You CAN. Just use [SEARCH: x].';
 
-  return `${base}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n\n${kStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
+  return `${base}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n\n${kStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
 }
 
 // ── UTILITIES ──
@@ -1643,32 +1648,51 @@ async function saveSession(title) {
 // FIX: deleteSession now imports renderHistory dynamically instead of relying
 // on window.renderHistory which main.js never actually assigned.
 async function deleteSession(id, e) {
-  if (e) e.stopPropagation();
+  if (e) { e.stopPropagation(); e.preventDefault(); }
   if (!confirm('Delete this conversation?')) return;
   try {
     const db = await getDB();
-    const tx = db.transaction(STORE_SESS, 'readwrite');
-    const lookupId = typeof id === 'string' && /^\d+$/.test(id) ? parseInt(id, 10) : id;
-    tx.objectStore(STORE_SESS).delete(lookupId);
-    tx.oncomplete = async () => {
-      if (state.curSessId == id) {
-        state.msgs = [];
-        state.curSessId = null;
-        const ci = document.getElementById('ci');
-        if (ci) ci.innerHTML = '';
-      }
-      try { if (typeof renderHistory === 'function') renderHistory(); } catch {}
-      toast('Deleted ✓');
-    };
-  } catch { toast('Error deleting session'); }
+    const numId = typeof id === 'string' && /^\d+$/.test(id) ? parseInt(id, 10) : id;
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_SESS, 'readwrite');
+      const req = tx.objectStore(STORE_SESS).delete(numId);
+      req.onsuccess = resolve;
+      req.onerror   = () => reject(req.error);
+      tx.onerror    = () => reject(tx.error);
+    });
+    // Clear current chat if we deleted the active session
+    if (String(state.curSessId) === String(id) || state.curSessId === numId) {
+      state.msgs = []; state.curSessId = null;
+      const ci = document.getElementById('ci');
+      if (ci) ci.innerHTML = '';
+      renderWelcome();
+    }
+    try { if (typeof renderHistory === 'function') renderHistory(); } catch {}
+    toast('Deleted ✓');
+  } catch (err) { console.error('deleteSession:', err); toast('Error deleting — try again'); }
 }
 
-// --- Knowledge ---
+// --- Knowledge --- with localStorage fallback for persistence without PIN
+const LS_KNOW_KEY = 'bv_knowledge_ls';
+
+function _lsLoadKnowledge() {
+  try { return JSON.parse(localStorage.getItem(LS_KNOW_KEY) || '[]'); } catch { return []; }
+}
+function _lsSaveKnowledge(entry) {
+  try {
+    const items = _lsLoadKnowledge();
+    items.push(entry);
+    localStorage.setItem(LS_KNOW_KEY, JSON.stringify(items.slice(-100)));
+  } catch {}
+}
+
 async function loadKnowledge() {
+  // Always include localStorage entries (no PIN needed — persists across sessions)
+  const lsItems = _lsLoadKnowledge();
   try {
     const db = await getDB();
-    if (!db) return [];
-    return new Promise(res => {
+    if (!db) return lsItems;
+    const dbItems = await new Promise(res => {
       const tx = db.transaction(STORE_KNOW, 'readonly');
       const req = tx.objectStore(STORE_KNOW).getAll();
       req.onsuccess = async () => {
@@ -1677,13 +1701,23 @@ async function loadKnowledge() {
       };
       req.onerror = () => res([]);
     });
-  } catch { return []; }
+    // Merge: deduplicate by key+val string
+    const seen = new Set(lsItems.map(k => k.key + '|' + (k.val || k.value)));
+    const combined = [...lsItems, ...dbItems.filter(k => !seen.has(k.key + '|' + (k.val || k.value)))];
+    return combined;
+  } catch { return lsItems; }
 }
 
 async function saveToKnowledge(key, val) {
+  // Always save to localStorage first (no PIN, survives page reload)
+  _lsSaveKnowledge({ key, val, date: Date.now() });
   try {
     const db = await getDB();
-    if (!db) return;
+    if (!db) {
+      window.logFeed && window.logFeed('memory', 'Learned (local): ' + key);
+      toast(`🧠 Learned: ${key}`);
+      return;
+    }
     const encrypted = await encrypt({ key, val, date: Date.now() });
     const tx = db.transaction(STORE_KNOW, 'readwrite');
     tx.objectStore(STORE_KNOW).add(encrypted);
@@ -1870,11 +1904,9 @@ function detectIntent(text) {
   if (t.startsWith('/resume'))   return { type: 'resume', input: text.slice(7).trim() };
   if (t.startsWith('/campaign')) return { type: 'campaign' };
 
-  // Natural language URL detection
-  const urlMatch = text.match(/https?:\/\/[^\s]+/);
-  if (urlMatch && (t.includes('scrape') || t.includes('analyze') || t.includes('summarize') || t.includes('extract'))) {
-    return { type: 'scrape', url: urlMatch[0] };
-  }
+  // Any message containing a URL → auto-read that page
+  const urlMatch = text.match(/https?:\/\/[^\s)>]+/);
+  if (urlMatch) return { type: 'scrape', url: urlMatch[0] };
 
   return null;
 }
@@ -1940,12 +1972,12 @@ const GRID_SKILLS = [
   {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales & Strategy Director',cmd:'/sales',    desc:'Sales & Strategy',   use:'Closing, DM scripts, GTM & revenue strategy.', iconType:'img', accent:'#e8a912', icon:'assets/specialists/papou.png'},
   {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'assets/specialists/zeur.png'},
   {id:'coach',    cat:'strategy', name:'Coach',     persona:'Performance Director',     cmd:'/coach',    desc:'Performance',        use:'Deep work, sport & mental performance.',        iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png', zoom:true},
+  {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'assets/specialists/brody.png'},
   {id:'leads',    cat:'revenue',  name:'Lilly',     persona:'Lead Intelligence',        cmd:'/leads',    desc:'Lead Intel',         use:'Scraping, qualifying & scoring prospects.',    iconType:'img', accent:'#e8a912', icon:'assets/specialists/lilly.png'},
   {id:'website',  cat:'creative', name:'Yuki',      persona:'Web Architect',            cmd:'/website',  desc:'Web Architecture',   use:'Funnels, landing pages & UX design.',          iconType:'img', accent:'#63b3ed', icon:'assets/specialists/yuki.png'},
   {id:'writer',   cat:'creative', name:'Sarah',     persona:'Elite Copywriter',         cmd:'/writer',   desc:'Elite Copy',         use:'Copy, reports & high-converting proposals.',   iconType:'img', accent:'#f472b6', icon:'assets/specialists/sarah.png'},
   {id:'content',  cat:'creative', name:'Malik',     persona:'Content King',             cmd:'/content',  desc:'Content King',       use:'Social hooks, viral loops & reels.',           iconType:'img', accent:'#fb923c', icon:'assets/specialists/malik.png'},
   {id:'aimas',    cat:'revenue',  name:'AIMAS',     persona:'11-Agent Swarm',           cmd:'/aimas',    desc:'Full Takeover',      use:'Omnichannel orchestration.',                   iconType:'img', accent:'#e8a912', icon:'assets/specialists/aimas.png'},
-  {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'assets/specialists/brody.png'},
   // ── SEE MORE (hidden until expanded) ────────────────────────
   {id:'aros',     cat:'revenue',  name:'AROS',      persona:'Revenue OS',               cmd:'/aros',     desc:'Autonomous Revenue', use:'Self-driving commerce engine.',                iconType:'img', accent:'#e8a912', icon:'assets/specialists/aros.png'},
   {id:'campaign', cat:'revenue',  name:'Chloé',     persona:'Media Buyer',              cmd:'/campaign', desc:'Media Buying',       use:'Meta, Google & TikTok ad campaigns.',          iconType:'img', accent:'#e8a912', icon:'assets/specialists/chloe.png'},
@@ -2583,23 +2615,29 @@ function closePreview() {
 }
 
 async function saveAsPdf() {
-  const el = document.getElementById('preview-content');
-  if (!el) { toast('Nothing to export'); return; }
-  if (typeof html2pdf === 'undefined') { toast('PDF library not loaded'); return; }
-  toast('Generating PDF…');
-  html2pdf().from(el).set({
-    margin: 10,
-    filename: currentPdfFilename,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: currentPdfOrientation },
-  }).save().then(() => {
+  try {
+    const el = document.getElementById('preview-content');
+    if (!el) { toast('Nothing to export'); return; }
+    if (typeof html2pdf === 'undefined') { toast('PDF library not loaded'); return; }
+    // Clone element so html2canvas doesn't mutate the live DOM
+    const clone = el.cloneNode(true);
+    clone.style.cssText = 'background:#fff;color:#000;padding:20px;max-width:800px;';
+    document.body.appendChild(clone);
+    toast('Generating PDF…');
+    await html2pdf().from(clone).set({
+      margin: 10,
+      filename: currentPdfFilename || 'export.pdf',
+      image: { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 1.5, backgroundColor: '#ffffff', useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
+    }).save();
+    document.body.removeChild(clone);
     toast('Document Exported ✓');
     closePreview();
-  }).catch(err => {
-    console.error('PDF save failed:', err);
-    toast('PDF save failed');
-  });
+  } catch (err) {
+    console.error('PDF export error:', err);
+    toast('PDF export failed — try again');
+  }
 }
 
 // ── WINDOW BRIDGES ──
@@ -2772,6 +2810,12 @@ async function callAI() {
   const pendingImages = state._pendingImages || [];
   state._pendingImages = [];
 
+  // When images attached, prefer vision-capable models first
+  if (pendingImages.length > 0) {
+    if (keys.groq) tryOrder.unshift('meta-llama/llama-4-scout-17b-16e-instruct'); // Groq vision
+    if (keys.openai && !tryOrder.includes('gpt-4o')) tryOrder.unshift('gpt-4o');
+  }
+
   // Build clean messages; if images pending, last user msg becomes multipart
   const rawMsgs = state.msgs.slice(-15);
   const cleanMsgs = rawMsgs.map((m, idx) => {
@@ -2794,6 +2838,10 @@ async function callAI() {
       }
       return { role: m.role, content: m.content };
     });
+  }
+  // Helper: strip images → text-only (for non-vision providers)
+  function toTextMsgs(msgs) {
+    return msgs.map(m => ({ role: m.role, content: String(m.content || '') }));
   }
   // Helper: convert cleanMsgs to vision format for Anthropic
   function toAnthMsgs(msgs) {
@@ -2864,7 +2912,7 @@ async function callAI() {
         res = await fetch('https://api.mistral.ai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.mistral },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048 }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toTextMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048 }),
           signal,
         });
 
@@ -2872,7 +2920,7 @@ async function callAI() {
         res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.cerebras },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toTextMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048, stream: false }),
           signal,
         });
 
@@ -2915,36 +2963,19 @@ async function callAI() {
         const readTags   = [...reply.matchAll(/\[READ:\s*(https?:\/\/[^\s\]]+)\]/gi)].map(m => m[1].trim());
         if (searchTags.length || readTags.length) {
           let webData = '';
-          for (const q of searchTags.slice(0, 2)) {
-            try {
-              const ddg = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(5000) });
-              if (ddg.ok) {
-                const d = await ddg.json();
-                let r = '';
-                if (d.AbstractText) r += d.AbstractText + '\n';
-                if (d.Answer)       r += 'Answer: ' + d.Answer + '\n';
-                const tops = (d.RelatedTopics||[]).slice(0,4).map(t=>t.Text||'').filter(Boolean);
-                if (tops.length) r += tops.join(' | ');
-                const topUrl = d.AbstractURL || d.RelatedTopics?.[0]?.FirstURL;
-                if (topUrl && r.length < 200) {
-                  try {
-                    const j = await fetch('https://r.jina.ai/'+topUrl, { headers:{'Accept':'text/plain'}, signal: AbortSignal.timeout(7000) });
-                    if (j.ok) r += '\n' + (await j.text()).slice(0, 2500);
-                  } catch {}
-                }
-                if (r.trim()) webData += `[SEARCH: ${q}]\n${r.trim()}\n\n`;
-              }
-            } catch {}
+          for (const q of searchTags.slice(0, 3)) {
+            const r = await webSearch(q);
+            if (r) webData += `[SEARCH: ${q}]\n${r}\n\n`;
           }
-          for (const url of readTags.slice(0, 1)) {
+          for (const url of readTags.slice(0, 2)) {
             try {
-              const j = await fetch('https://r.jina.ai/'+url, { headers:{'Accept':'text/plain','X-Return-Format':'markdown'}, signal: AbortSignal.timeout(10000) });
-              if (j.ok) webData += `[READ: ${url}]\n` + (await j.text()).slice(0, 3000) + '\n\n';
+              const j = await fetch('https://r.jina.ai/' + url, { headers:{'Accept':'text/plain','X-Return-Format':'markdown'}, signal: AbortSignal.timeout(12000) });
+              if (j.ok) webData += `[READ: ${url}]\n` + (await j.text()).slice(0, 4000) + '\n\n';
             } catch {}
           }
           if (webData.trim()) {
-            window.logFeed && window.logFeed('system', 'Web tools executed — re-calling with real data');
-            state.msgs.push({ role: 'user', content: `[WEB RESULTS — use these to answer]\n${webData.trim()}\n\nNow give the full answer with real data.` });
+            window.logFeed && window.logFeed('system', 'Web results ready — generating final answer');
+            state.msgs.push({ role: 'user', content: `[LIVE WEB RESULTS — answer using these]\n${webData.trim()}\n\nNow give the complete answer with this real data.` });
             state._webLoopActive = true;
             hideTyping();
             try { await callAI(); } finally { state._webLoopActive = false; }
@@ -2988,48 +3019,58 @@ async function callAI() {
 }
 
 // ── TOOLS ──
+// Real web search: Jina reads DuckDuckGo Lite search results (HTML page → clean text)
+async function webSearch(query) {
+  // Primary: read DuckDuckGo Lite search results via Jina AI reader
+  try {
+    const ddgLiteUrl = 'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(query);
+    const res = await fetch('https://r.jina.ai/' + ddgLiteUrl, {
+      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text' },
+      signal: AbortSignal.timeout(12000),
+    });
+    if (res.ok) {
+      const text = (await res.text()).slice(0, 6000).trim();
+      if (text.length > 100) return text;
+    }
+  } catch {}
+  // Fallback: DuckDuckGo Instant Answer JSON API
+  try {
+    const ddg = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(6000) });
+    if (ddg.ok) {
+      const d = await ddg.json();
+      let r = '';
+      if (d.AbstractText) r += d.AbstractText + '\n';
+      if (d.Answer)       r += 'Answer: ' + d.Answer + '\n';
+      if (d.Definition)   r += 'Definition: ' + d.Definition + '\n';
+      const tops = (d.RelatedTopics || []).slice(0, 5).map(t => t.Text || '').filter(Boolean);
+      if (tops.length) r += tops.join('\n');
+      if (r.trim().length > 50) return r.trim();
+    }
+  } catch {}
+  return '';
+}
+
 async function handleSearch(query) {
   const id = 'search-' + Date.now();
   appendToolRow(id, '🌐', 'info', `Searching: "${query}"…`);
   window.logFeed && window.logFeed('system', 'Web search: ' + query);
   try {
-    let context = '';
-    // DuckDuckGo Instant Answer API — free, no key, CORS-enabled
-    try {
-      const ddg = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
-      if (ddg.ok) {
-        const d = await ddg.json();
-        if (d.AbstractText)  context += d.AbstractText + '\n\n';
-        if (d.Answer)        context += 'Answer: ' + d.Answer + '\n\n';
-        if (d.Definition)    context += 'Definition: ' + d.Definition + '\n\n';
-        const topics = (d.RelatedTopics || []).slice(0, 6).map(t => t.Text || t.Name || '').filter(Boolean);
-        if (topics.length)   context += 'Related: ' + topics.join(' | ') + '\n\n';
-        // If there's a top result URL, fetch it via Jina reader
-        const topUrl = d.AbstractURL || d.RelatedTopics?.[0]?.FirstURL;
-        if (topUrl && context.length < 300) {
-          try {
-            const jina = await fetch('https://r.jina.ai/' + topUrl, { headers: { 'Accept': 'text/plain' }, signal: AbortSignal.timeout(8000) });
-            if (jina.ok) context += (await jina.text()).slice(0, 4000);
-          } catch {}
-        }
-      }
-    } catch {}
+    let context = await webSearch(query);
+    if (!context) context = `No live results for "${query}" — answering from training data.`;
 
-    if (!context.trim()) context = `No instant answer found for "${query}". Billy will answer from knowledge.`;
-
-    updateToolRow(id, '✅', 'success', `Found: "${query}"`);
-    window.logFeed && window.logFeed('system', 'Search complete — injecting into context');
+    updateToolRow(id, '✅', 'success', `Results for: "${query}"`);
+    window.logFeed && window.logFeed('system', 'Search complete — injecting results');
 
     const last = state.msgs[state.msgs.length - 1];
     if (last?.role === 'user') {
-      last.content = `[WEB SEARCH RESULTS for: "${query}"]\n${context}\n\nUser asked: ${last.content}`;
+      last.content = `[WEB SEARCH: "${query}"]\n${context}\n\nUser asked: ${last.content}`;
     } else {
-      state.msgs.push({ role: 'user', content: `[WEB SEARCH RESULTS for: "${query}"]\n${context}` });
+      state.msgs.push({ role: 'user', content: `[WEB SEARCH: "${query}"]\n${context}` });
     }
     await callAI();
   } catch (e) {
     updateToolRow(id, '❌', 'error', `Search error: ${e.message}`, true);
-    await callAI(); // fall back to AI knowledge
+    await callAI();
   }
 }
 
@@ -3058,19 +3099,30 @@ async function handleScrape(url) {
 }
 
 // ── IMAGE GENERATION ──
+let _imgGenActive = false;
 async function generateImage(prompt, size = '1024x1024', quality = 'standard') {
-  const openaiKey = safeKey(localStorage.getItem('bv_key_openai') || localStorage.getItem('bvmbino_key_openai') || '');
-  if (openaiKey) {
-    try {
-      const res = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openaiKey },
-        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, quality, style: 'vivid', response_format: 'url' }),
-      });
-      if (res.ok) { const d = await res.json(); return d.data[0].url; }
-    } catch (e) { console.warn('DALL-E failed, using Pollinations'); }
+  if (_imgGenActive) throw new Error('Already generating an image — please wait');
+  _imgGenActive = true;
+  try {
+    const openaiKey = safeKey(localStorage.getItem('bv_key_openai') || localStorage.getItem('bvmbino_key_openai') || '');
+    if (openaiKey) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 30000);
+      try {
+        const res = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openaiKey },
+          body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, quality, style: 'vivid', response_format: 'url' }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(timer);
+        if (res.ok) { const d = await res.json(); return d.data?.[0]?.url || ''; }
+      } catch (e) { clearTimeout(timer); console.warn('DALL-E failed, using Pollinations:', e.message); }
+    }
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${size.split('x')[0]}&height=${size.split('x')[1]}&nologo=true&seed=${Date.now()}&enhance=true&model=flux`;
+  } finally {
+    _imgGenActive = false;
   }
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${size.split('x')[0]}&height=${size.split('x')[1]}&nologo=true&seed=${Date.now()}&enhance=true`;
 }
 
 if (typeof window !== 'undefined') {
@@ -3162,10 +3214,10 @@ const BillyLive = (function() {
     try {
       // Use the main callAI() — same proven path as regular chat
       await callAI();
-      // After callAI, last assistant message is our reply — speak it
-      const last = state.msgs[state.msgs.length - 1];
-      if (last?.role === 'assistant') {
-        const clean = last.content.replace(/[*_`#>\[\]]/g, '').replace(/\n+/g, ' ').trim();
+      // After callAI (may have done web loop), find the LAST assistant message
+      const last = [...state.msgs].reverse().find(m => m.role === 'assistant');
+      if (last) {
+        const clean = last.content.replace(/[*_`#>\[\]]/g, '').replace(/\[SEARCH:[^\]]*\]/gi, '').replace(/\n+/g, ' ').trim();
         ui('voice-billy-reply', clean.slice(0, 240) + (clean.length > 240 ? '…' : ''));
         speakOut(clean);
       } else {
@@ -3535,8 +3587,13 @@ const App = {
 
     this._on('save-sysprompt-btn', 'click', () => {
       const val = document.getElementById('sys-prompt-input')?.value.trim();
-      if (val) localStorage.setItem('bv_sysprompt', val);
+      // Allow saving empty string to clear the override (fallback to SYSTEM_IDENTITY)
+      localStorage.setItem('bv_sysprompt', val || '');
       toast('System Prompt Saved ✓');
+    });
+    // Also auto-save on blur so settings never get lost
+    document.getElementById('sys-prompt-input')?.addEventListener('blur', function() {
+      if (this.value.trim()) localStorage.setItem('bv_sysprompt', this.value.trim());
     });
 
     this._on('vault-save-btn', 'click', saveVaultKey);
@@ -3909,7 +3966,7 @@ const App = {
       if (result) {
         result.style.display = 'block';
         result.innerHTML = `
-          <img src="${esc(url)}" class="gen-img" alt="Generated" crossorigin="anonymous">
+          <img src="${esc(url)}" class="gen-img" alt="Generated" crossorigin="anonymous" onerror="this.alt='Image failed to load — right-click Open to view directly';this.style.opacity='.4'">
           <div class="gen-img-actions">
             <button class="mact" data-action="to-chat"  data-url="${esc(url)}" data-prompt="${esc(prompt)}">💬 To Chat</button>
             <button class="mact" data-action="open"     data-url="${esc(url)}">🔗 Open</button>
