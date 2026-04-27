@@ -2133,19 +2133,17 @@ async function renderClients() {
   const ctn = document.getElementById('venture-list') || document.getElementById('client-list');
   if (!ctn) return;
   // Apply localStorage overrides + hidden filters for CORE_VENTURES
+  let _ventures = [...CORE_VENTURES]; // local copy — never mutate the global
   try {
     const overrides = JSON.parse(localStorage.getItem('venture_overrides') || '{}');
     const hidden = JSON.parse(localStorage.getItem('venture_hidden') || '[]');
-    for (let i = CORE_VENTURES.length - 1; i >= 0; i--) {
-      if (hidden.includes(CORE_VENTURES[i].id)) { CORE_VENTURES.splice(i, 1); continue; }
-      const ov = overrides[CORE_VENTURES[i].id];
-      if (ov) Object.assign(CORE_VENTURES[i], ov);
-    }
+    _ventures = _ventures.filter(v => !hidden.includes(v.id));
+    _ventures.forEach(v => { const ov = overrides[v.id]; if (ov) Object.assign(v, ov); });
   } catch(e) {}
   const stored = await loadClients();
-  const all = [...CORE_VENTURES, ...stored];
+  const all = [..._ventures, ...stored];
   ctn.innerHTML = all.map(c => {
-    const isCustom = !CORE_VENTURES.find(v => v.id === c.id);
+    const isCustom = !_ventures.find(v => v.id === c.id);
     const active = state.activeClientId === c.id;
     return `
     <div class="qbtn cli ${active ? 'active' : ''}" data-id="${esc(c.id)}" style="position:relative">
@@ -2200,8 +2198,8 @@ window.deletePillar = async function(id) {
     const hidden = JSON.parse(localStorage.getItem('venture_hidden') || '[]');
     if (!hidden.includes(id)) hidden.push(id);
     localStorage.setItem('venture_hidden', JSON.stringify(hidden));
-    const idx = CORE_VENTURES.findIndex(v => v.id === id);
-    if (idx >= 0) CORE_VENTURES.splice(idx, 1);
+    // Don't mutate CORE_VENTURES — hidden list in localStorage is the source of truth;
+    // renderClients() already filters using it on every render
   } else {
     await removeClient(id);
   }
@@ -2974,7 +2972,7 @@ async function callAI() {
           }
           for (const url of readTags.slice(0, 2)) {
             try {
-              const j = await fetch('https://r.jina.ai/' + url, { headers:{'Accept':'text/plain','X-Return-Format':'markdown'}, signal: AbortSignal.timeout(12000) });
+              const j = await fetch('https://r.jina.ai/' + url, { headers:{'Accept':'text/plain','X-Return-Format':'markdown'}, signal: _abortIn(12000) });
               if (j.ok) webData += `[READ: ${url}]\n` + (await j.text()).slice(0, 4000) + '\n\n';
             } catch {}
           }
@@ -3024,6 +3022,13 @@ async function callAI() {
 }
 
 // ── TOOLS ──
+// Safe AbortSignal with timeout — polyfill for browsers lacking AbortSignal.timeout()
+function _abortIn(ms) {
+  const ctrl = new AbortController();
+  setTimeout(() => ctrl.abort(), ms);
+  return ctrl.signal;
+}
+
 // Real web search: Jina reads DuckDuckGo Lite search results (HTML page → clean text)
 async function webSearch(query) {
   // Primary: read DuckDuckGo Lite search results via Jina AI reader
@@ -3031,7 +3036,7 @@ async function webSearch(query) {
     const ddgLiteUrl = 'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(query);
     const res = await fetch('https://r.jina.ai/' + ddgLiteUrl, {
       headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text' },
-      signal: AbortSignal.timeout(12000),
+      signal: _abortIn(12000),
     });
     if (res.ok) {
       const text = (await res.text()).slice(0, 6000).trim();
@@ -3040,7 +3045,7 @@ async function webSearch(query) {
   } catch {}
   // Fallback: DuckDuckGo Instant Answer JSON API
   try {
-    const ddg = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(6000) });
+    const ddg = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`, { signal: _abortIn(6000) });
     if (ddg.ok) {
       const d = await ddg.json();
       let r = '';
@@ -3087,7 +3092,7 @@ async function handleScrape(url) {
     // Jina AI reader — free, no key, converts any URL to clean markdown
     const res = await fetch('https://r.jina.ai/' + url, {
       headers: { 'Accept': 'text/plain', 'X-Return-Format': 'markdown' },
-      signal: AbortSignal.timeout(12000),
+      signal: _abortIn(12000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const content = await res.text();
@@ -4078,8 +4083,8 @@ const App = {
 
   // ── Session history ───────────────────────────────────────────
   deleteSession(id) {
-    if (!confirm('Delete this conversation?')) return;
-    storeDeleteSession(id, null).then(() => renderHistory());
+    // Delegate to the real deleteSession (store.js) — storeDeleteSession was undefined
+    deleteSession(id, null);
   },
 
   // ── Reload key fields from localStorage when settings opens ──
@@ -4183,7 +4188,7 @@ window.setActiveClient = setActiveClient;
 window.deleteClient    = (id, e) => deleteClient(id, e);
 window.addNewClient    = addNewClient;
 window.resumeSession   = resumeSession;
-window.deleteSession   = (id) => App.deleteSession(id);
+window.deleteSession   = deleteSession; // direct reference — App.deleteSession was calling undefined storeDeleteSession
 window.editMemoryTier  = editMemoryTier;
 window.saveVaultKey    = saveVaultKey;
 window.updateParam     = updateParam;
