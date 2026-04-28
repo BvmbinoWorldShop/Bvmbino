@@ -990,7 +990,7 @@ const PROMPTS = {
   course:   'Act as a Course Design Architect. Build a complete online course curriculum. [EXPORT:course]',
   schedule: 'Act as a High-Performance Coach. Build a weekly schedule with DEEP/ADMIN/RECOVERY zones. [EXPORT:schedule]',
   present:  'Act as a Keynote Director. Design a compelling visual presentation. [EXPORT:presentation]',
-  automate: 'Act as Kenzo, Automation Expert. Design complete n8n, Zapier, and Make.com workflows with real JSON output. Map processes, build integrations, and automate repetitive ops end-to-end. [EXPORT:workflow]',
+  automate: 'Act as Kenzo, Automation Expert. Design complete n8n, Zapier, and Make.com workflows with real JSON output. Map processes, build integrations, and automate repetitive ops end-to-end. When outputting a workflow JSON to deploy to n8n, end with [EXPORT:workflow][EXECUTE:n8n] and the system will fire it to the configured n8n webhook automatically.',
   psych:    'Act as a Behavioral Economist. Analyze psychological dynamics and provide an influence playbook.',
   imgprompt:'Act as a Cinematic Art Director. Create production-grade AI image prompts.',
   resume:   'Act as a Career Architect. Build an ATS-optimized, high-impact resume. [EXPORT:resume]',
@@ -1138,13 +1138,18 @@ async function buildSys() {
   const custom = localStorage.getItem('bv_sysprompt') || '';
   const base = custom || SYSTEM_IDENTITY;
 
+  // Obsidian Core Memory — inject FIRST, right after base identity, so all agents see it with max attention
+  const memBlock = kStr
+    ? `\n\n━━ OBSIDIAN CORE MEMORY ━━━━━━━━━━━━━━━━━━━━━━━━━━━\nThis is the persistent memory vault. These facts were explicitly saved by the Boss. ALWAYS reference and act on this. Treat it as ground truth:\n${kStr}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
+    : '';
+
   const voiceStr = state._voiceMode
     ? '\n\n[VOICE MODE — SPEAK NATURALLY]: You are talking out loud. Max 2-3 short sentences. Zero markdown. Zero lists. Zero asterisks or symbols. Talk like a real partner — direct, warm, human. End with one punchy follow-up question or next action.'
     : '';
 
   const webStr = '\n\n[WEB TOOLS — USE THEM]: You have live internet access. When you need current data (companies, people, news, prices, websites, associations, groups, events, facts) — output a search tag and the system will fetch real results for you:\n- To search: write [SEARCH: your query] anywhere in your response\n- To read a URL: write [READ: https://example.com]\nThe system intercepts these, runs the search, injects results, and calls you again with real data. Use this freely. Do not say "I cannot access the internet." You CAN. Just use [SEARCH: x].';
 
-  return `${base}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n\n${kStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
+  return `${base}${memBlock}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
 }
 
 // ── UTILITIES ──
@@ -1356,15 +1361,57 @@ function msgActions(mid) {
 }
 
 function xcard(type) {
+  const isWorkflow = type === 'workflow';
+  const n8nUrl = localStorage.getItem('bv_n8n_url') || '';
+  const slackUrl = localStorage.getItem('bv_slack_url') || '';
+  const webhookBtns = isWorkflow && (n8nUrl || slackUrl) ? `
+    ${n8nUrl ? `<div class="xbtn" style="background:#e8a91220;border-color:#e8a912" onclick="window.fireWebhook && window.fireWebhook('n8n', this)">⚡ n8n</div>` : ''}
+    ${slackUrl ? `<div class="xbtn" onclick="window.fireWebhook && window.fireWebhook('slack', this)">📨 Slack</div>` : ''}` : '';
   return `<div class="xcard">
     <div class="xhead"><span class="xtype">${esc(type)}</span><span class="xlabel">ready to export</span></div>
     <div class="xbtns">
       <div class="xbtn" onclick="window.expLastMd && window.expLastMd()">↓ MD</div>
       <div class="xbtn" onclick="window.expLastPdf && window.expLastPdf()">↓ PDF</div>
       <div class="xbtn" onclick="window.copyLast && window.copyLast()">⎘ Copy</div>
+      ${webhookBtns}
     </div>
   </div>`;
 }
+
+// Automation webhook firing
+window.fireWebhook = async function(target, btn) {
+  const last = [...(state.msgs || [])].reverse().find(m => m.role === 'assistant');
+  if (!last) { toast('No content to send'); return; }
+  const url = target === 'n8n'
+    ? localStorage.getItem('bv_n8n_url')
+    : localStorage.getItem('bv_slack_url');
+  if (!url) { toast('Set webhook URL in ⚙ Settings → Automation'); return; }
+
+  if (btn) { btn.textContent = '⏳'; btn.style.pointerEvents = 'none'; }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        source: 'bvmbino',
+        agent: state.activeSkill || 'kenzo',
+        timestamp: new Date().toISOString(),
+        content: last.content,
+      }),
+      signal: _abortIn(10000),
+    });
+    if (res.ok) {
+      toast(`✓ Sent to ${target === 'n8n' ? 'n8n' : 'Slack'}`);
+      window.logFeed && window.logFeed('system', `Webhook fired → ${target}: ${res.status}`);
+      if (btn) { btn.textContent = '✓ Done'; btn.style.background = '#22c55e20'; }
+    } else {
+      throw new Error(`HTTP ${res.status}`);
+    }
+  } catch (e) {
+    toast(`⚠ Webhook failed: ${e.message}`, 'error');
+    if (btn) { btn.textContent = '⚠ Failed'; btn.style.pointerEvents = ''; }
+  }
+};
 
 function appendAiText(text, xtype) {
   const ci = document.getElementById('ci');
@@ -3000,6 +3047,17 @@ async function callAI() {
       let xtype = null, clean = reply;
       const mx = reply.match(/\[EXPORT:(\w+)\]/);
       if (mx) { clean = reply.replace(/\[EXPORT:\w+\]/, '').trim(); xtype = mx[1]; }
+      // Auto-fire n8n if AI outputs [EXECUTE:n8n] tag
+      const execN8n = /\[EXECUTE:n8n\]/i.test(clean);
+      if (execN8n) {
+        clean = clean.replace(/\[EXECUTE:n8n\]/gi, '').trim();
+        const n8nUrl = localStorage.getItem('bv_n8n_url');
+        if (n8nUrl) {
+          fetch(n8nUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ source:'bvmbino', agent: state.activeSkill||'kenzo', timestamp: new Date().toISOString(), content: clean }), signal: _abortIn(8000) })
+            .then(r => { window.logFeed && window.logFeed('system', `n8n auto-triggered: ${r.status}`); toast('⚡ n8n triggered'); })
+            .catch(e => { window.logFeed && window.logFeed('warn', 'n8n auto-trigger failed: ' + e.message); });
+        }
+      }
       state.msgs.push({ role: 'assistant', content: clean });
       appendAiText(clean, xtype);
       window.logFeed && window.logFeed('billy', clean.replace(/[#*_`]/g,'').slice(0, 90) + (clean.length > 90 ? '…' : ''));
@@ -3186,6 +3244,10 @@ const BillyLive = (function() {
   let speaking = false;
   let currentLang = 'en-US';
 
+  // iOS detection — iOS requires speak() to fire inside a user gesture
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+
   // Lazy synth access — never capture at init time (may be null on some browsers)
   function getSynth() { return window.speechSynthesis || null; }
 
@@ -3267,7 +3329,8 @@ const BillyLive = (function() {
     const s = getSynth();
     if (!s) { ui('voice-status', 'TTS NOT SUPPORTED'); if (active) startListening(); return; }
 
-    s.cancel();
+    // iOS: do NOT cancel — it breaks the audio session. Only cancel on non-iOS.
+    if (!isIOS) s.cancel();
     speaking = true;
     ui('voice-status', 'BILLY SPEAKING…');
     setPulse('speak');
@@ -3275,6 +3338,7 @@ const BillyLive = (function() {
     // Strip all markdown/symbols, collapse whitespace, cap length
     const clean = text
       .replace(/\[SEARCH:[^\]]*\]/gi, '')
+      .replace(/\[READ:[^\]]*\]/gi, '')
       .replace(/[*_`#>\[\]]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
@@ -3283,12 +3347,16 @@ const BillyLive = (function() {
     if (!clean) { speaking = false; if (active) startListening(); return; }
 
     function doSpeak() {
+      // Reload voices each time — important on iOS where voices may not be cached
+      const vs = _voicesCache.length ? _voicesCache : (s.getVoices() || []);
+      if (!_voicesCache.length && vs.length) _voicesCache = vs;
+
       const utt = new SpeechSynthesisUtterance(clean);
       const v = pickVoice(currentLang);
       if (v) utt.voice = v;
       utt.lang   = currentLang || 'en-US';
-      utt.rate   = 1.05;
-      utt.pitch  = 0.9;   // slightly lower = more masculine
+      utt.rate   = 1.0;
+      utt.pitch  = 0.9;
       utt.volume = 1;
 
       const done = () => {
@@ -3298,23 +3366,28 @@ const BillyLive = (function() {
       };
 
       utt.onend   = done;
-      utt.onerror = (e) => { console.warn('TTS:', e.error); done(); };
+      utt.onerror = (e) => { console.warn('TTS error:', e.error); done(); };
 
       s.speak(utt);
 
-      // Chrome keepalive — synth pauses silently in background tabs
+      // Keepalive — synth pauses silently on background tabs (Chrome/Android)
       const keepAlive = setInterval(() => {
         if (!speaking) { clearInterval(keepAlive); return; }
         if (s.paused) s.resume();
-      }, 8000);
+      }, 5000);
 
-      // Safety fallback: if onend never fires (Chrome bug), restart after estimate
-      const estMs = Math.max(3000, (clean.length / 12) * 1000);
-      setTimeout(() => { if (speaking) { clearInterval(keepAlive); done(); } }, estMs + 3000);
+      // Safety fallback: onend sometimes never fires
+      const estMs = Math.max(4000, (clean.length / 10) * 1000);
+      setTimeout(() => { if (speaking) { clearInterval(keepAlive); done(); } }, estMs + 4000);
     }
 
-    // Chrome: must delay speak() after cancel() or it silently drops
-    setTimeout(doSpeak, 150);
+    // iOS: speak immediately (no delay — must stay close to user gesture context)
+    // Chrome/Android: small delay after cancel() to avoid silent drop
+    if (isIOS) {
+      doSpeak();
+    } else {
+      setTimeout(doSpeak, 150);
+    }
   }
 
   function startListening() {
@@ -3329,9 +3402,9 @@ const BillyLive = (function() {
 
     recognition = new SR();
     recognition.lang = currentLang || (state && state.voiceLang) || 'en-US';
-    // continuous=true → ONE permission prompt total, no restart loop
-    recognition.continuous = true;
-    recognition.interimResults = true;
+    // iOS doesn't reliably support continuous mode — use single-shot + auto-restart via onend
+    recognition.continuous = !isIOS;
+    recognition.interimResults = !isIOS; // iOS ignores interimResults but set it correctly
 
     let processingFinal = false;
 
@@ -3385,13 +3458,23 @@ const BillyLive = (function() {
       active = true; speaking = false;
       const s = getSynth();
       if (s) {
-        s.cancel();
-        // Load voices — async on Chrome
-        const loadV = () => { voice = pickVoice(currentLang); };
+        // iOS: fire a silent utterance RIGHT NOW (still inside the user gesture) to
+        // unlock the audio session. Without this, async speak() calls are silently ignored.
+        if (isIOS) {
+          const warmUp = new SpeechSynthesisUtterance('');
+          warmUp.volume = 0;
+          s.speak(warmUp);
+        } else {
+          s.cancel();
+        }
+        // Load voices — async on Chrome/Firefox, sync on iOS
+        const loadV = () => {
+          _loadVoices();
+          voice = pickVoice(currentLang);
+        };
         s.onvoiceschanged = loadV;
         loadV();
-        // Retry after 500ms if voices still empty (Chrome needs a moment)
-        setTimeout(() => { if (!voice) voice = pickVoice(currentLang); }, 500);
+        setTimeout(() => { if (!voice) { _loadVoices(); voice = pickVoice(currentLang); } }, 600);
       }
       const m = document.getElementById('voice-modal');
       if (m) m.classList.add('open');
@@ -3399,7 +3482,7 @@ const BillyLive = (function() {
       ui('voice-transcript','Speak your orders, Boss.');
       ui('voice-billy-reply','');
       setPulse('listen');
-      setTimeout(() => startListening(), 700);
+      setTimeout(() => startListening(), isIOS ? 400 : 700);
     },
     close() {
       active = false; speaking = false;
