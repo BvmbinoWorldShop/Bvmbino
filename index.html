@@ -1147,7 +1147,7 @@ async function buildSys() {
     ? '\n\n[VOICE MODE]: You are speaking out loud in real-time conversation. STRICT RULES: 1 sentence max, 2 at the absolute most. Zero markdown. Zero lists. Zero bullet points. Zero asterisks. No "sure!" or "great question". Just talk — natural, fast, direct like a real friend. Keep it punchy.'
     : '';
 
-  const webStr = '\n\n[WEB TOOLS — USE THEM]: You have live internet access. When you need current data (companies, people, news, prices, websites, associations, groups, events, facts) — output a search tag and the system will fetch real results for you:\n- To search: write [SEARCH: your query] anywhere in your response\n- To read a URL: write [READ: https://example.com]\nThe system intercepts these, runs the search, injects results, and calls you again with real data. Use this freely. Do not say "I cannot access the internet." You CAN. Just use [SEARCH: x].';
+  const webStr = '\n\n[LIVE INTERNET — MANDATORY RULES]:\nYou have real-time web access. These rules are non-negotiable:\n\n1. SEARCH FIRST for ANY of these: player stats, team standings, company data, CEO/founder info, stock price, crypto, news, recent events, LinkedIn profiles, website content, revenue, rankings, match results, scores, anything from 2024-2026.\n\n2. HOW TO SEARCH: write [SEARCH: exact query] as your ENTIRE first response. Nothing else. Stop. The system fetches live data and calls you again. Then you answer with real numbers and facts.\n\n3. HOW TO READ A URL: write [READ: https://url.com] — works for any website, LinkedIn, articles, docs.\n\n4. NEVER guess stats, prices, or current data. NEVER say "I cannot access the internet." You CAN and you MUST. If you answer without searching for a factual question you are failing the Boss.\n\nExamples:\n- "LeBron stats this season" → [SEARCH: LeBron James 2025-26 NBA stats]\n- "PSG last match" → [SEARCH: PSG match result April 2026]\n- "Apple stock price" → [SEARCH: AAPL stock price today]\n- "Analyze https://site.com" → [READ: https://site.com]';
 
   return `${base}${memBlock}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
 }
@@ -3103,12 +3103,24 @@ function _abortIn(ms) {
   return ctrl.signal;
 }
 
-// Real web search: Jina reads DuckDuckGo Lite search results (HTML page → clean text)
+// Web search — multi-backend with fallback chain
 async function webSearch(query) {
-  // Primary: read DuckDuckGo Lite search results via Jina AI reader
+  // Primary: Jina Search API (s.jina.ai) — purpose-built web search, reliable, free
   try {
-    const ddgLiteUrl = 'https://lite.duckduckgo.com/lite/?q=' + encodeURIComponent(query);
-    const res = await fetch('https://r.jina.ai/' + ddgLiteUrl, {
+    const res = await fetch('https://s.jina.ai/' + encodeURIComponent(query), {
+      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text', 'X-With-Links-Summary': 'true' },
+      signal: _abortIn(15000),
+    });
+    if (res.ok) {
+      const text = (await res.text()).slice(0, 7000).trim();
+      if (text.length > 100) return text;
+    }
+  } catch(e) { console.warn('s.jina.ai failed:', e.message); }
+
+  // Fallback 1: Jina reader on DuckDuckGo HTML (full results page)
+  try {
+    const ddgUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
+    const res = await fetch('https://r.jina.ai/' + ddgUrl, {
       headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text' },
       signal: _abortIn(12000),
     });
@@ -3117,7 +3129,8 @@ async function webSearch(query) {
       if (text.length > 100) return text;
     }
   } catch {}
-  // Fallback: DuckDuckGo Instant Answer JSON API
+
+  // Fallback 2: DuckDuckGo Instant Answer JSON
   try {
     const ddg = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`, { signal: _abortIn(6000) });
     if (ddg.ok) {
@@ -3297,6 +3310,22 @@ const BillyLive = (function() {
     wrap.classList.toggle('v-speaking',  mode === 'speak');
   }
 
+  // Detect if a voice query needs live web data
+  function _needsSearch(text) {
+    const t = text.toLowerCase();
+    // Sports / athletes
+    if (/\b(stats|points|assists|rebounds|goals|season|nba|nfl|ligue 1|premier league|champions league|ranking|standings|score|match|game|player|team|transfer|draft)\b/.test(t)) return true;
+    // People / companies
+    if (/\b(who is|who are|what is|what are|when did|where is|how many|how much|ceo|founder|revenue|valuation|employees|stock|share price|market cap)\b/.test(t)) return true;
+    // Time-sensitive / news
+    if (/\b(latest|recent|current|today|yesterday|this week|this month|news|update|just|right now|2024|2025|2026|live|breaking)\b/.test(t)) return true;
+    // Crypto / finance
+    if (/\b(bitcoin|crypto|ethereum|btc|eth|price|dollar|euro|exchange rate)\b/.test(t)) return true;
+    // Explicit search intent
+    if (/\b(search|look up|find|check|google|tell me about|what happened|what's the|who won)\b/.test(t)) return true;
+    return false;
+  }
+
   async function think(transcript) {
     if (!transcript.trim()) { startListening(); return; }
     ui('voice-transcript', transcript);
@@ -3306,7 +3335,24 @@ const BillyLive = (function() {
 
     // Write to chat + state
     if (typeof addUserMsg === 'function') addUserMsg(transcript);
-    state.msgs.push({ role: 'user', content: transcript });
+
+    // Voice pre-search: for factual queries, fetch live data BEFORE calling AI
+    // This avoids an extra AI round-trip (search tag → fetch → re-call) which adds 15-20s
+    let userContent = transcript;
+    if (_needsSearch(transcript)) {
+      ui('voice-status', 'SEARCHING…');
+      window.logFeed && window.logFeed('system', 'Voice search: ' + transcript.slice(0, 60));
+      try {
+        const results = await webSearch(transcript);
+        if (results && results.length > 80) {
+          userContent = `[LIVE WEB DATA — use this, not training data]\n${results.slice(0, 2500)}\n\nVoice question: ${transcript}`;
+          window.logFeed && window.logFeed('system', 'Voice search results injected');
+        }
+      } catch(e) { console.warn('Voice pre-search failed:', e.message); }
+      ui('voice-status', 'THINKING…');
+    }
+
+    state.msgs.push({ role: 'user', content: userContent });
     window.logFeed && window.logFeed('user', transcript.slice(0, 80) + (transcript.length > 80 ? '…' : ''));
 
     // Inject voice instruction into system for this call
