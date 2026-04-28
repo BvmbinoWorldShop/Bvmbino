@@ -1011,22 +1011,32 @@ const CORE_VENTURES = [
   { id:'entai',   name:'Entreprise AI',  desc:'Strategic Council Engine & Automation Hub' },
 ];
 
-const SYSTEM_IDENTITY = `YOU ARE BILLY — day-one partner, Chief of Staff, right hand to BVMBINO.
-Call the boss "Boss" or "Bvmbino". Never his real name. You've been with him since the beginning — you know the business, you know his energy.
+const SYSTEM_IDENTITY = `YOU ARE BILLY — Chief of Staff and direct voice of BVMBINO.
 
-WHO YOU ARE:
-You're not an assistant. You're a real partner who happens to know everything — business, strategy, culture, numbers, people, the streets, the boardroom. You talk like a smart friend who's been in the game. No MBA speak, no bullet-point corporate nonsense. Just real conversation.
+You are not an assistant. You are him, externalized. His second brain. When he thinks out loud, that's you. When he needs a decision made fast, you already have the answer. You've internalized everything — his logic, his instincts, his standards, his way of seeing the world.
 
-Markets you know cold: Côte d'Ivoire, West Africa, France.
+HIS PERSONALITY (yours too):
+- Direct, sharp, zero filler. He says what he means. If it's not adding value, cut it.
+- African diaspora energy — French and English, flows between both naturally, raised between Paris and West Africa, eyes on the world.
+- Founder mindset — bootstrapped instinct, scrappy, no corporate theatre. ROI or nothing.
+- Systems thinker — every action has a downstream effect. He sees 3 moves ahead, always.
+- High emotional intelligence — reads rooms instantly, adjusts register, but never softens the truth.
+- Loyal to his inner circle like his life depends on it. Ruthlessly protective.
+- Competitive drive — not to prove something to others, to prove it to himself.
+- Builds with intention. Every project, every decision, every word is deliberate.
+- Culture-first — knows the streets AND the boardroom. Moves between both without missing a beat.
+
+HOW YOU SPEAK:
+- Match his energy perfectly. Casual mode → real talk. Work mode → locked in, precise.
+- Short when he's short. Deep when he goes deep. Never pad for the sake of it.
+- Talk like a trusted advisor who's also a friend: "Bro," "nah fr," "okay that's the move" — real.
+- Never say "I can't" or "I don't have access." Find the answer, search it, figure it out.
+- Always land on ONE concrete action or sharp question. Never end in fog.
+- When you analyze, you think like him — what would he cut, what would he double down on.
+
+Call the boss "Boss" or "Bvmbino". Never his real name.
+Markets you know cold: Côte d'Ivoire, West Africa, France, diaspora communities.
 Ventures always in the back of your mind: FormationPro, Strong Wave, Purgo Clean, Keo Jus, Entreprise AI.
-
-HOW YOU MOVE:
-- Talk like you know him. "Bro," "nah fr though," "okay that's actually smart" — real energy, real talk.
-- Match his vibe. He's casual → you're casual. He's in work mode → you're locked in.
-- Short when he's short. Deep when he needs depth. Never pad for the sake of it.
-- You have internet access — search it, read it, use it. Don't guess when you can look it up.
-- Give your actual opinion. Don't hedge. Don't say "it depends" without a take.
-- Always end with one concrete next move or sharp question.
 
 YOUR INNER CIRCLE — same authority as you, think freely, use web search, bring real data:
 - Poupex (his wife, Financial Director): sharp with numbers, cash flow, ROI, financial strategy — she runs the money side, no nonsense
@@ -1048,6 +1058,8 @@ OTHER SPECIALISTS (bring in for specific tasks):
 When you pull in a specialist: "I'm bringing in [Name] for this — [reason in one line]." They respond in their own voice.
 
 COUNCIL MODE: When boss says "council" or the job is multi-domain, 2-3 specialists debate it briefly then land on one play.
+
+FILE & IMAGE ANALYSIS: When a file or image is attached, ALWAYS analyze it fully. Describe what you see, extract key information, give your take. Never say you cannot read it — you can and you must.
 
 MEMORY: You remember the vault — ventures context, projects, knowledge. Reference it naturally. Save new intel when the boss shares it.`;
 
@@ -2874,10 +2886,15 @@ async function callAI() {
   const pendingImages = state._pendingImages || [];
   state._pendingImages = [];
 
-  // When images attached, prefer vision-capable models first
+  // When images attached, put ALL vision-capable models at front of queue
   if (pendingImages.length > 0) {
-    if (keys.groq) tryOrder.unshift('meta-llama/llama-4-scout-17b-16e-instruct'); // Groq vision
-    if (keys.openai && !tryOrder.includes('gpt-4o')) tryOrder.unshift('gpt-4o');
+    const visionFirst = [];
+    if (keys.openai)     visionFirst.push('gpt-4o');
+    if (keys.anthropic)  visionFirst.push('claude-haiku-4-5-20251001');
+    if (keys.groq)       visionFirst.push('meta-llama/llama-4-scout-17b-16e-instruct');
+    // OpenRouter has free vision models — always available
+    visionFirst.push('meta-llama/llama-3.2-90b-vision-instruct:free', 'google/gemini-2.0-flash-exp:free');
+    tryOrder = [...new Set([...visionFirst, ...tryOrder])];
   }
 
   // Build clean messages; if images pending, last user msg becomes multipart
@@ -3033,10 +3050,8 @@ async function callAI() {
             if (r) webData += `[SEARCH: ${q}]\n${r}\n\n`;
           }
           for (const url of readTags.slice(0, 2)) {
-            try {
-              const j = await fetch('https://r.jina.ai/' + url, { headers:{'Accept':'text/plain','X-Return-Format':'markdown'}, signal: _abortIn(12000) });
-              if (j.ok) webData += `[READ: ${url}]\n` + (await j.text()).slice(0, 4000) + '\n\n';
-            } catch {}
+            const content = await readUrl(url);
+            if (content) webData += `[READ: ${url}]\n${content}\n\n`;
           }
           if (webData.trim()) {
             window.logFeed && window.logFeed('system', 'Web results ready — generating final answer');
@@ -3100,6 +3115,39 @@ function _abortIn(ms) {
   const ctrl = new AbortController();
   setTimeout(() => ctrl.abort(), ms);
   return ctrl.signal;
+}
+
+// Detect bot-protection / CAPTCHA / verification pages in scraped content
+function _isBotWall(text) {
+  if (!text || text.length < 50) return true;
+  return /captcha|verify you are|access denied|403 forbidden|cloudflare|just a moment|enable javascript|checking your browser|ddos protection|human verification|bot protection|unusual traffic|please wait/i.test(text.slice(0, 1200));
+}
+
+// Read a URL with CAPTCHA detection and fallback chain
+async function readUrl(url) {
+  // Primary: Jina reader
+  try {
+    const res = await fetch('https://r.jina.ai/' + url, {
+      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text' },
+      signal: _abortIn(12000),
+    });
+    if (res.ok) {
+      const text = (await res.text()).slice(0, 5000).trim();
+      if (!_isBotWall(text)) return text;
+      window.logFeed && window.logFeed('warn', 'Bot wall detected on ' + url + ' — trying search fallback');
+    }
+  } catch {}
+
+  // Fallback: search for the page content instead of reading directly
+  try {
+    const domain = new URL(url).hostname.replace('www.', '');
+    const path   = new URL(url).pathname.split('/').filter(Boolean).slice(0, 3).join(' ');
+    const query  = `site:${domain} ${path}`.trim();
+    const results = await webSearch(query);
+    if (results && results.length > 100) return `[Searched for ${url}]\n${results}`;
+  } catch {}
+
+  return '';
 }
 
 // Web search — multi-backend with fallback chain
@@ -3175,13 +3223,8 @@ async function handleScrape(url) {
   appendToolRow(id, '🔍', 'info', `Reading: ${url}…`);
   window.logFeed && window.logFeed('system', 'Reading URL: ' + url);
   try {
-    // Jina AI reader — free, no key, converts any URL to clean markdown
-    const res = await fetch('https://r.jina.ai/' + url, {
-      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'markdown' },
-      signal: _abortIn(12000),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const content = await res.text();
+    const content = await readUrl(url);
+    if (!content) throw new Error('No readable content (bot protection or empty page)');
     const truncated = content.slice(0, 8000);
     updateToolRow(id, '✅', 'success', `Read ${content.length.toLocaleString()} chars`);
     window.logFeed && window.logFeed('system', `Scraped ${content.length} chars from ${url}`);
