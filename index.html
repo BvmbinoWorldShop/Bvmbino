@@ -3281,20 +3281,24 @@ const BillyLive = (function() {
   function pickVoice(lang) {
     const s = getSynth();
     if (!s) return null;
-    // Use cache; if empty, try again live
     const vs = _voicesCache.length ? _voicesCache : (s.getVoices() || []);
     if (!vs.length) return null;
-    const l = (lang || currentLang || 'en-US').slice(0, 2).toLowerCase(); // 'en' or 'fr'
+    const l = (lang || currentLang || 'en-US').slice(0, 2).toLowerCase();
 
-    // Male voice names across browsers/OS
-    const maleNames = /david|thomas|alex|daniel|côme|fred|jorge|reed|luca|oliver|guy|mark|richard|paul|james|aaron|arthur|eddy|nicholas|tomas|tom\b/i;
+    // Natural/neural/enhanced voices sound much better than default system TTS
+    const isNatural = v => /google|enhanced|premium|neural|natural|siri/i.test(v.name);
+    const isMale    = v => /david|thomas|alex|daniel|côme|fred|reed|luca|oliver|guy|mark|richard|paul|james|aaron|arthur|eddy|nicholas|tom\b/i.test(v.name);
+    const isFemale  = v => /female|fem|woman|girl|zira|alice|samantha|karen|moira|fiona|serena|victoria|nora|sara|amelie/i.test(v.name);
 
-    // Priority: male + matching lang → any matching lang → male English → first available
-    return vs.find(v => v.lang.toLowerCase().startsWith(l) && maleNames.test(v.name))
-        || vs.find(v => v.lang.toLowerCase().startsWith(l) && !v.name.match(/female|fem|woman|girl|zira|alice|samantha|karen|moira|fiona|serena|victoria|nora|sara|amelie|amelié/i))
+    // Priority order: natural+male+lang → natural+lang → male+lang → any lang (non-female) → en fallback
+    return vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v) && isMale(v))
+        || vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v) && !isFemale(v))
+        || vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v))
+        || vs.find(v => v.lang.toLowerCase().startsWith(l) && isMale(v))
+        || vs.find(v => v.lang.toLowerCase().startsWith(l) && !isFemale(v))
         || vs.find(v => v.lang.toLowerCase().startsWith(l))
-        || vs.find(v => v.lang.startsWith('en') && maleNames.test(v.name))
-        || vs.find(v => v.lang.startsWith('en'))
+        || vs.find(v => v.lang.startsWith('en') && isNatural(v) && !isFemale(v))
+        || vs.find(v => v.lang.startsWith('en') && !isFemale(v))
         || vs[0] || null;
   }
 
@@ -3361,9 +3365,13 @@ const BillyLive = (function() {
       ui('voice-status', 'SEARCHING…');
       window.logFeed && window.logFeed('system', 'Voice search: ' + transcript.slice(0, 60));
       try {
-        const results = await webSearch(transcript);
+        // Hard 5s cap — voice must stay snappy, can't wait 15-30s for search
+        const results = await Promise.race([
+          webSearch(transcript),
+          new Promise(res => setTimeout(() => res(''), 5000)),
+        ]);
         if (results && results.length > 80) {
-          userContent = `[LIVE WEB DATA — use this, not training data]\n${results.slice(0, 2500)}\n\nVoice question: ${transcript}`;
+          userContent = `[LIVE WEB DATA — use this, not training data]\n${results.slice(0, 2000)}\n\nVoice question: ${transcript}`;
           window.logFeed && window.logFeed('system', 'Voice search results injected');
         }
       } catch(e) { console.warn('Voice pre-search failed:', e.message); }
@@ -3427,7 +3435,7 @@ const BillyLive = (function() {
       const v = pickVoice(currentLang);
       if (v) utt.voice = v;
       utt.lang   = currentLang || 'en-US';
-      utt.rate   = 0.95;  // slightly below default — warm, unhurried, natural
+      utt.rate   = 1.08;  // slightly above default — natural conversation pace
       utt.pitch  = 0.88;
       utt.volume = 1;
 
@@ -3475,8 +3483,10 @@ const BillyLive = (function() {
     recognition = new SR();
     recognition.lang = currentLang || (state && state.voiceLang) || 'en-US';
     // iOS doesn't reliably support continuous mode — use single-shot + auto-restart via onend
-    recognition.continuous = !isIOS;
-    recognition.interimResults = !isIOS; // iOS ignores interimResults but set it correctly
+    // continuous=false on ALL platforms — fires final result the moment you stop speaking
+    // (continuous=true makes the browser wait 5-10s of silence before firing, causing 30s delays)
+    recognition.continuous = false;
+    recognition.interimResults = true;
 
     let processingFinal = false;
 
