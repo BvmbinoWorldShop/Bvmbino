@@ -1144,7 +1144,7 @@ async function buildSys() {
     : '';
 
   const voiceStr = state._voiceMode
-    ? '\n\n[VOICE MODE]: You are talking out loud with the Boss. Speak like a real person — warm, relaxed, natural flow. 2-3 short sentences max. No markdown, no lists, no asterisks, no bullet points. No filler like "sure!" or "great question!". Sound like a friend who knows his stuff, not a voice assistant.'
+    ? '\n\n[VOICE MODE]: You are talking out loud with the Boss. Speak like a real person — warm, relaxed, natural flow. 2-3 short sentences max. No markdown, no lists, no asterisks, no bullet points. No filler like "sure!" or "great question!". Sound like a friend who knows his stuff, not a voice assistant. IMPORTANT: reply in the same language the Boss used — French if he spoke French, English if he spoke English.'
     : '';
 
   const webStr = '\n\n[LIVE INTERNET — MANDATORY RULES]:\nYou have real-time web access. These rules are non-negotiable:\n\n1. SEARCH FIRST for ANY of these: player stats, team standings, company data, CEO/founder info, stock price, crypto, news, recent events, LinkedIn profiles, website content, revenue, rankings, match results, scores, anything from 2024-2026.\n\n2. HOW TO SEARCH: write [SEARCH: exact query] as your ENTIRE first response. Nothing else. Stop. The system fetches live data and calls you again. Then you answer with real numbers and facts.\n\n3. HOW TO READ A URL: write [READ: https://url.com] — works for any website, LinkedIn, articles, docs.\n\n4. NEVER guess stats, prices, or current data. NEVER say "I cannot access the internet." You CAN and you MUST. If you answer without searching for a factual question you are failing the Boss.\n\nExamples:\n- "LeBron stats this season" → [SEARCH: LeBron James 2025-26 NBA stats]\n- "PSG last match" → [SEARCH: PSG match result April 2026]\n- "Apple stock price" → [SEARCH: AAPL stock price today]\n- "Analyze https://site.com" → [READ: https://site.com]';
@@ -3310,6 +3310,13 @@ const BillyLive = (function() {
     wrap.classList.toggle('v-speaking',  mode === 'speak');
   }
 
+  // Auto-detect spoken language (FR vs EN) from transcript
+  function _detectLang(text) {
+    const frPattern = /\b(je|tu|il|elle|nous|vous|ils|est|sont|avec|pour|dans|sur|que|qui|pas|une|les|des|du|au|mon|ton|son|très|bien|plus|mais|alors|encore|aussi|comme|quand|comment|pourquoi|merci|bonjour|oui|non|voilà|c'est|j'ai|c'est|qu'est|d'un|d'une|parle|peux|peut|faire|avoir|être|aller|veux|veut|donne|dis|montre|cherche|trouve|regarde)\b/i;
+    const matches = (text.match(frPattern) || []).length;
+    return matches >= 2 ? 'fr-FR' : 'en-US';
+  }
+
   // Detect if a voice query needs live web data
   function _needsSearch(text) {
     const t = text.toLowerCase();
@@ -3332,6 +3339,17 @@ const BillyLive = (function() {
     ui('voice-status', 'THINKING…');
     ui('voice-billy-reply', '');
     setPulse('');
+
+    // Auto-detect language from what the user said, switch voice + recognition lang
+    const detectedLang = _detectLang(transcript);
+    if (detectedLang !== currentLang) {
+      currentLang = detectedLang;
+      voice = pickVoice(currentLang);
+      if (recognition) { try { recognition.lang = currentLang; } catch(e) {} }
+      // Update the lang button label in the chat bar
+      const btn = document.getElementById('lang-btn');
+      if (btn) btn.textContent = currentLang.startsWith('fr') ? 'FR' : 'EN';
+    }
 
     // Write to chat + state
     if (typeof addUserMsg === 'function') addUserMsg(transcript);
@@ -3409,7 +3427,7 @@ const BillyLive = (function() {
       const v = pickVoice(currentLang);
       if (v) utt.voice = v;
       utt.lang   = currentLang || 'en-US';
-      utt.rate   = 0.90;  // slightly below default — warm, unhurried, natural
+      utt.rate   = 0.95;  // slightly below default — warm, unhurried, natural
       utt.pitch  = 0.88;
       utt.volume = 1;
 
