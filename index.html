@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#06080a">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; img-src * data: blob:; connect-src *; frame-src 'none'; object-src 'none'">
 <title>Bvmbino Pro — Sovereign v6.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1276,14 +1277,28 @@ function safeUrl(url) {
   catch { return '#'; }
 }
 
+// Validate external URLs — block private IPs and non-HTTPS for security-sensitive ops
+function _isSafeExternalUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'https:') return false;
+    const h = u.hostname.toLowerCase();
+    if (/^(localhost|127\.|0\.0\.0|::1$|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/.test(h)) return false;
+    return true;
+  } catch { return false; }
+}
+
 // ── INLINE MARKDOWN ──
 function inl(t) {
-  return String(t ?? '')
+  // HTML-escape FIRST — prevents XSS from AI responses or scraped content
+  // Markdown special chars (* ` [ ]) are not escaped by esc(), so patterns still work
+  return esc(String(t ?? ''))
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em>$1</em>')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, txt, url) =>
-      `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--pu2)">${txt}</a>`);
+      `<a href="${safeUrl(decodeURIComponent(url.replace(/&amp;/g,'&')))}" target="_blank" rel="noopener noreferrer" style="color:var(--pu2)">${txt}</a>`);
 }
 
 function mkTable(lines) {
@@ -1397,6 +1412,7 @@ window.fireWebhook = async function(target, btn) {
     ? localStorage.getItem('bv_n8n_url')
     : localStorage.getItem('bv_slack_url');
   if (!url) { toast('Set webhook URL in ⚙ Settings → Automation'); return; }
+  if (!_isSafeExternalUrl(url)) { toast('⚠ Invalid webhook URL — must be HTTPS'); return; }
 
   if (btn) { btn.textContent = '⏳'; btn.style.pointerEvents = 'none'; }
   try {
@@ -1789,7 +1805,7 @@ async function saveToKnowledge(key, val) {
     if (mems) {
       const d = document.createElement('div');
       d.className = 'me new';
-      d.innerHTML = `<div class="mek">Saved Knowledge</div><div class="mev">${key}</div>`;
+      d.innerHTML = `<div class="mek">Saved Knowledge</div><div class="mev">${esc(key)}</div>`;
       mems.prepend(d);
     }
   } catch (e) {
@@ -3006,11 +3022,11 @@ async function callAI() {
         });
 
       } else if (isGemini && keys.gemini) {
-        // Gemini uses query param auth, different message format
+        // Gemini — key in header (not URL) to avoid browser history/log exposure
         const geminiMsgs = cleanMsgs.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
-        res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelId + ':generateContent?key=' + keys.gemini, {
+        res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelId + ':generateContent', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keys.gemini },
           body: JSON.stringify({ contents: geminiMsgs, systemInstruction: { parts: [{ text: sys }] }, generationConfig: { temperature: state.config.temp, maxOutputTokens: maxTok } }),
           signal,
         });
