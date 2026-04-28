@@ -3284,14 +3284,22 @@ const BillyLive = (function() {
     const vs = _voicesCache.length ? _voicesCache : (s.getVoices() || []);
     if (!vs.length) return null;
     const l = (lang || currentLang || 'en-US').slice(0, 2).toLowerCase();
+    const isFR = l === 'fr';
 
-    // Natural/neural/enhanced voices sound much better than default system TTS
-    const isNatural = v => /google|enhanced|premium|neural|natural|siri/i.test(v.name);
-    const isMale    = v => /david|thomas|alex|daniel|côme|fred|reed|luca|oliver|guy|mark|richard|paul|james|aaron|arthur|eddy|nicholas|tom\b/i.test(v.name);
-    const isFemale  = v => /female|fem|woman|girl|zira|alice|samantha|karen|moira|fiona|serena|victoria|nora|sara|amelie/i.test(v.name);
+    // Specific high-quality voices by name — ordered by preference per language
+    // EN: Google US English → deep/warm American male voices → any Google EN
+    // FR: Google français → Thomas (Apple FR male) → any Google FR
+    const enPref = /google us english|microsoft guy|marcus|james online|aaron online/i;
+    const frPref = /google français|google french|thomas|google fr/i;
+    const prefMatch = v => isFR ? frPref.test(v.name) : enPref.test(v.name);
 
-    // Priority order: natural+male+lang → natural+lang → male+lang → any lang (non-female) → en fallback
-    return vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v) && isMale(v))
+    const isNatural = v => /google|enhanced|premium|neural|natural|siri|online/i.test(v.name);
+    const isMale    = v => /david|thomas|alex|daniel|côme|fred|reed|luca|oliver|guy|mark|richard|paul|james|aaron|arthur|eddy|nicholas|tom\b|marcus/i.test(v.name);
+    const isFemale  = v => /female|fem|woman|girl|zira|alice|samantha|karen|moira|fiona|serena|victoria|nora|sara|amelie|amelié|virginie/i.test(v.name);
+
+    // Priority: preferred named voice → natural+male → natural (non-female) → male → non-female → lang fallback
+    return vs.find(v => v.lang.toLowerCase().startsWith(l) && prefMatch(v))
+        || vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v) && isMale(v))
         || vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v) && !isFemale(v))
         || vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v))
         || vs.find(v => v.lang.toLowerCase().startsWith(l) && isMale(v))
@@ -3435,8 +3443,8 @@ const BillyLive = (function() {
       const v = pickVoice(currentLang);
       if (v) utt.voice = v;
       utt.lang   = currentLang || 'en-US';
-      utt.rate   = 1.08;  // slightly above default — natural conversation pace
-      utt.pitch  = 0.88;
+      utt.rate   = 1.15;
+      utt.pitch  = 0.85;  // deeper = warmer, more masculine, more natural
       utt.volume = 1;
 
       const done = () => {
