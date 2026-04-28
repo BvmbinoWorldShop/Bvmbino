@@ -1144,7 +1144,7 @@ async function buildSys() {
     : '';
 
   const voiceStr = state._voiceMode
-    ? '\n\n[VOICE MODE — SPEAK NATURALLY]: You are talking out loud. Max 2-3 short sentences. Zero markdown. Zero lists. Zero asterisks or symbols. Talk like a real partner — direct, warm, human. End with one punchy follow-up question or next action.'
+    ? '\n\n[VOICE MODE]: You are speaking out loud in real-time conversation. STRICT RULES: 1 sentence max, 2 at the absolute most. Zero markdown. Zero lists. Zero bullet points. Zero asterisks. No "sure!" or "great question". Just talk — natural, fast, direct like a real friend. Keep it punchy.'
     : '';
 
   const webStr = '\n\n[WEB TOOLS — USE THEM]: You have live internet access. When you need current data (companies, people, news, prices, websites, associations, groups, events, facts) — output a search tag and the system will fetch real results for you:\n- To search: write [SEARCH: your query] anywhere in your response\n- To read a URL: write [READ: https://example.com]\nThe system intercepts these, runs the search, injects results, and calls you again with real data. Use this freely. Do not say "I cannot access the internet." You CAN. Just use [SEARCH: x].';
@@ -2022,7 +2022,7 @@ const GRID_SKILLS = [
   {id:'psych',    cat:'strategy', name:'Daphne',    persona:'Head of Brand & Market',   cmd:'/psych',    desc:'Brand & Market',     use:'Brand image, market analysis & influence.',    iconType:'img', accent:'#a78bfa', icon:'assets/specialists/daphne.png'},
   {id:'sales',    cat:'revenue',  name:'Papou',     persona:'Sales & Strategy Director',cmd:'/sales',    desc:'Sales & Strategy',   use:'Closing, DM scripts, GTM & revenue strategy.', iconType:'img', accent:'#e8a912', icon:'assets/specialists/papou.png'},
   {id:'security', cat:'tech',     name:'Zeur',      persona:'Security Chief',           cmd:'/security', desc:'Security Ops',       use:'System audits, cybersecurity & vulnerabilities.',iconType:'img', accent:'#ef4444', icon:'assets/specialists/zeur.png'},
-  {id:'coach',    cat:'strategy', name:'Coach Doobs',persona:'NBA Trainer & Perf. Coach', cmd:'/coach',    desc:'NBA Training & Perf', use:'Basketball, weight training, deep work & mental edge.', iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png', zoom:true},
+  {id:'coach',    cat:'strategy', name:'Coach',     persona:'NBA Trainer & Perf. Coach', cmd:'/coach',    desc:'NBA Training & Perf', use:'Basketball, weight training, deep work & mental edge.', iconType:'img', accent:'#22c55e', icon:'assets/specialists/coach.png', zoom:true},
   {id:'present',  cat:'creative', name:'Brody',     persona:'Art & Pitch Director',     cmd:'/present',  desc:'Art & Pitch',        use:'Decks, visual narrative & AI prompts.',        iconType:'img', accent:'#a78bfa', icon:'assets/specialists/brody.png'},
   {id:'leads',    cat:'revenue',  name:'Lilly',     persona:'Lead Intelligence',        cmd:'/leads',    desc:'Lead Intel',         use:'Scraping, qualifying & scoring prospects.',    iconType:'img', accent:'#e8a912', icon:'assets/specialists/lilly.png'},
   {id:'website',  cat:'creative', name:'Yuki',      persona:'Web Architect',            cmd:'/website',  desc:'Web Architecture',   use:'Funnels, landing pages & UX design.',          iconType:'img', accent:'#63b3ed', icon:'assets/specialists/yuki.png'},
@@ -2841,13 +2841,18 @@ async function callAI() {
 
   // Build try order — each key only unlocks its own provider
   // All calls are DIRECT from browser (no proxy needed on GitHub Pages)
+  // In voice mode: use fastest models first (sub-second latency is critical)
+  const isVoice = !!state._voiceMode;
   let tryOrder = [];
-  if (keys.groq)       tryOrder.push('llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it');
+  if (keys.groq) {
+    if (isVoice) tryOrder.push('llama-3.1-8b-instant', 'gemma2-9b-it', 'llama-3.3-70b-versatile');
+    else         tryOrder.push('llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it');
+  }
+  if (keys.cerebras)   tryOrder.push('llama3.1-70b-versatile'); // cerebras is also very fast
   if (keys.anthropic)  tryOrder.push('claude-haiku-4-5-20251001');
   if (keys.openai)     tryOrder.push('gpt-4o-mini');
   if (keys.openrouter) tryOrder.push('deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free', 'google/gemini-2.0-flash-exp:free');
   if (keys.mistral)    tryOrder.push('mistral-small-latest');
-  if (keys.cerebras)   tryOrder.push('llama3.1-70b-versatile');
   if (keys.gemini)     tryOrder.push('gemini-2.0-flash');
 
   if (!tryOrder.length) {
@@ -2863,6 +2868,8 @@ async function callAI() {
   }
   tryOrder = [...new Set(tryOrder)];
   window.logFeed && window.logFeed('system', 'Calling: ' + (tryOrder[0] || 'unknown'));
+  // Voice mode: tight token cap for instant replies; full cap for regular chat
+  const maxTok = isVoice ? 120 : 2048;
 
   // Handle pending images — build vision-compatible last user message
   const pendingImages = state._pendingImages || [];
@@ -2930,7 +2937,7 @@ async function callAI() {
         res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-api-key': keys.anthropic, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-          body: JSON.stringify({ model: modelId, system: sys, messages: toAnthMsgs(cleanMsgs), max_tokens: 2048, stream: false }),
+          body: JSON.stringify({ model: modelId, system: sys, messages: toAnthMsgs(cleanMsgs), max_tokens: maxTok, stream: false }),
           signal,
         });
 
@@ -2938,7 +2945,7 @@ async function callAI() {
         res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.groq },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: false }),
           signal,
         });
 
@@ -2946,7 +2953,7 @@ async function callAI() {
         res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.openai },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: false }),
           signal,
         });
 
@@ -2954,7 +2961,7 @@ async function callAI() {
         res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.openrouter, 'HTTP-Referer': 'https://bvmbino.vercel.app', 'X-Title': 'Bvmbino AI' },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048 }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok }),
           signal,
         });
 
@@ -2962,7 +2969,7 @@ async function callAI() {
         res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'HTTP-Referer': 'https://bvmbino.vercel.app', 'X-Title': 'Bvmbino AI' },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048 }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok }),
           signal,
         });
 
@@ -2970,7 +2977,7 @@ async function callAI() {
         res = await fetch('https://api.mistral.ai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.mistral },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toTextMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048 }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toTextMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok }),
           signal,
         });
 
@@ -2978,7 +2985,7 @@ async function callAI() {
         res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.cerebras },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toTextMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: 2048, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toTextMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: false }),
           signal,
         });
 
@@ -2988,7 +2995,7 @@ async function callAI() {
         res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + modelId + ':generateContent?key=' + keys.gemini, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: geminiMsgs, systemInstruction: { parts: [{ text: sys }] }, generationConfig: { temperature: state.config.temp, maxOutputTokens: 2048 } }),
+          body: JSON.stringify({ contents: geminiMsgs, systemInstruction: { parts: [{ text: sys }] }, generationConfig: { temperature: state.config.temp, maxOutputTokens: maxTok } }),
           signal,
         });
 
@@ -3016,7 +3023,8 @@ async function callAI() {
       if (!reply.trim()) { lastErr = new Error(`${modelId}: empty response`); continue; }
 
       // ── Web tool loop: if AI wants to search/read, execute and re-call ──
-      if (!state._webLoopActive) {
+      // Skip entirely in voice mode — each extra round-trip adds 10-20s of latency
+      if (!state._webLoopActive && !isVoice) {
         const searchTags = [...reply.matchAll(/\[SEARCH:\s*([^\]]+)\]/gi)].map(m => m[1].trim());
         const readTags   = [...reply.matchAll(/\[READ:\s*(https?:\/\/[^\s\]]+)\]/gi)].map(m => m[1].trim());
         if (searchTags.length || readTags.length) {
@@ -3355,7 +3363,7 @@ const BillyLive = (function() {
       const v = pickVoice(currentLang);
       if (v) utt.voice = v;
       utt.lang   = currentLang || 'en-US';
-      utt.rate   = 1.0;
+      utt.rate   = 1.35;  // natural conversation speed — not robotic
       utt.pitch  = 0.9;
       utt.volume = 1;
 
