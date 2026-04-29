@@ -3486,9 +3486,9 @@ const BillyLive = (function() {
 
     // Voice pre-search: for factual queries, fetch live data BEFORE calling AI
     // This avoids an extra AI round-trip (search tag → fetch → re-call) which adds 15-20s
+    // Do silently in the background — no UI announcement needed
     let userContent = transcript;
     if (_needsSearch(transcript)) {
-      ui('voice-status', 'SEARCHING…');
       window.logFeed && window.logFeed('system', 'Voice search: ' + transcript.slice(0, 60));
       try {
         // Hard 5s cap — voice must stay snappy, can't wait 15-30s for search
@@ -3501,7 +3501,6 @@ const BillyLive = (function() {
           window.logFeed && window.logFeed('system', 'Voice search results injected');
         }
       } catch(e) { console.warn('Voice pre-search failed:', e.message); }
-      ui('voice-status', 'THINKING…');
     }
 
     state.msgs.push({ role: 'user', content: userContent });
@@ -3516,11 +3515,27 @@ const BillyLive = (function() {
       // After callAI (may have done web loop), find the LAST assistant message
       const last = [...state.msgs].reverse().find(m => m.role === 'assistant');
       if (last) {
-        const clean = last.content.replace(/[*_`#>\[\]]/g, '').replace(/\[SEARCH:[^\]]*\]/gi, '').replace(/\[READ:[^\]]*\]/gi, '').replace(/\n+/g, ' ').trim();
+        // Clean for display: remove markdown, tags, extra whitespace
+        const clean = last.content
+          .replace(/[*_`#>\[\]]/g, '')
+          .replace(/\[SEARCH:[^\]]*\]/gi, '')
+          .replace(/\[READ:[^\]]*\]/gi, '')
+          .replace(/\n+/g, ' ')
+          .trim();
         ui('voice-billy-reply', clean.slice(0, 240) + (clean.length > 240 ? '…' : ''));
 
+        // Clean for speech: remove markdown, tags, URLs, emojis
+        let toSpeak = last.content
+          .replace(/\[SEARCH:[^\]]*\]/gi, '')
+          .replace(/\[READ:[^\]]*\]/gi, '')
+          .replace(/https?:\/\/[^\s"'<>),]+/g, '')  // remove URLs
+          .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')    // remove emojis
+          .replace(/[*_`#>\[\]]/g, '')
+          .replace(/\n+/g, ' ')
+          .trim();
+
         // Split at 6 sentences — ask to continue if response is long
-        const sentences = clean.match(/[^.!?]+[.!?]+\s*/g) || [clean];
+        const sentences = toSpeak.match(/[^.!?]+[.!?]+\s*/g) || [toSpeak];
         const LIMIT = 6;
         if (sentences.length > LIMIT) {
           const spoken = sentences.slice(0, LIMIT).join('').trim();
@@ -3532,7 +3547,7 @@ const BillyLive = (function() {
           speakOut(spoken + continueQ);
         } else {
           state._voiceRemainder = null;
-          speakOut(clean);
+          speakOut(toSpeak);
         }
       } else {
         if (active) startListening();
@@ -3556,11 +3571,12 @@ const BillyLive = (function() {
     ui('voice-status', 'BILLY SPEAKING…');
     setPulse('speak');
 
-    // Strip URLs, markdown/symbols, collapse whitespace, cap length
+    // Strip URLs, emojis, markdown/symbols, collapse whitespace, cap length
     const clean = text
       .replace(/\[SEARCH:[^\]]*\]/gi, '')
       .replace(/\[READ:[^\]]*\]/gi, '')
-      .replace(/https?:\/\/[^\s"'<>),]+/g, '')   // remove raw URLs — don't read them aloud
+      .replace(/https?:\/\/[^\s"'<>),]+/g, '')   // remove URLs — never read aloud
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')    // remove emojis
       .replace(/[*_`#>\[\]]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
