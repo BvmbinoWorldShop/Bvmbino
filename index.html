@@ -3066,12 +3066,14 @@ async function callAI() {
       if (!reply.trim()) { lastErr = new Error(`${modelId}: empty response`); continue; }
 
       // ── Web tool loop: if AI wants to search/read, execute and re-call ──
-      // Skip entirely in voice mode — each extra round-trip adds 10-20s of latency
-      if (!state._webLoopActive && !isVoice) {
+      // In voice mode: execute silently (no UI changes) so Billy gets real data instantly
+      if (!state._webLoopActive) {
         const searchTags = [...reply.matchAll(/\[SEARCH:\s*([^\]]+)\]/gi)].map(m => m[1].trim());
         const readTags   = [...reply.matchAll(/\[READ:\s*(https?:\/\/[^\s\]]+)\]/gi)].map(m => m[1].trim());
         if (searchTags.length || readTags.length) {
           let webData = '';
+          // In voice mode, suppress the "Web results ready" log so it stays completely silent
+          const isSilent = isVoice;
           for (const q of searchTags.slice(0, 3)) {
             const r = await webSearch(q);
             if (r) webData += `[SEARCH: ${q}]\n${r}\n\n`;
@@ -3081,10 +3083,10 @@ async function callAI() {
             if (content) webData += `[READ: ${url}]\n${content}\n\n`;
           }
           if (webData.trim()) {
-            window.logFeed && window.logFeed('system', 'Web results ready — generating final answer');
+            if (!isSilent) window.logFeed && window.logFeed('system', 'Web results ready — generating final answer');
             state.msgs.push({ role: 'user', content: `[LIVE WEB RESULTS — answer using these]\n${webData.trim()}\n\nNow give the complete answer with this real data.` });
             state._webLoopActive = true;
-            hideTyping();
+            if (!isSilent) hideTyping();
             try { await callAI(); } finally { state._webLoopActive = false; }
             state.abortController = null;
             return;
@@ -3603,8 +3605,8 @@ const BillyLive = (function() {
       if (v) utt.voice = v;
       const _isFR = currentLang.startsWith('fr');
       utt.lang   = currentLang || 'en-US';
-      utt.rate   = 1.04;
-      utt.pitch  = _isFR ? 0.72 : 0.90;  // FR: grave africain; EN: natural relaxed American (closer to 1 = less robotic)
+      utt.rate   = 1.12;
+      utt.pitch  = _isFR ? 0.80 : 1.08;  // FR: warm african natural; EN: warm conversational (1.0+ = less robotic)
       utt.volume = 1;
 
       const done = () => {
