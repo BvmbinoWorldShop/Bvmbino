@@ -351,6 +351,8 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
 .ksig.fail { filter: none; opacity: 1; color: var(--rd); text-shadow: 0 0 6px var(--rd); }
 .clr-btn { background: var(--bg3); border: 1px solid var(--bd); border-radius: 4px; color: var(--t3); cursor: pointer; padding: 4px 6px; font-size: 12px; transition: all 0.2s; }
 .clr-btn:hover { border-color: var(--rd); color: var(--rd); background: rgba(239,68,68,0.08); }
+.key-link { display:block; font-size:9px; font-family:var(--mono); color:transparent; text-decoration:none; margin-top:2px; padding:1px 2px; transition:color .2s, opacity .2s; opacity:0; user-select:none; }
+.key-row:hover .key-link, .key-link:focus { color:var(--t3); opacity:1; }
 
 /* ── CANCEL BTN ── */
 #cancel-btn {
@@ -462,6 +464,8 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
 .ksig.ok{opacity:1;color:var(--gn);}
 .clr-btn{background:var(--bg3);border:1px solid var(--bd);border-radius:4px;color:var(--t3);cursor:pointer;padding:4px 6px;font-size:12px;transition:all .2s;flex-shrink:0;}
 .clr-btn:hover{border-color:var(--rd);color:var(--rd);}
+.key-link{display:block;font-size:9px;font-family:var(--mono);color:transparent;text-decoration:none;margin-top:2px;padding:1px 2px;transition:color .2s,opacity .2s;opacity:0;user-select:none;}
+.key-row:hover .key-link,.key-link:focus{color:var(--t3);opacity:1;}
 .set-input{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rsm);padding:7px 10px;color:var(--t1);font-family:var(--mono);font-size:12px;width:100%;outline:none;transition:border-color .2s;}
 .set-input:focus{border-color:var(--bd2);}
 textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
@@ -847,19 +851,26 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
         <span class="lbl">🔑 API Keys (local only)</span>
         <div style="display:flex;flex-direction:column;gap:5px;margin-top:6px">
           <div class="key-row"><div class="key-lbl"><span>Groq (Free · Fast)</span><span class="ksig" id="sig-groq">⚪</span></div>
-            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-groq" placeholder="gsk_…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('groq')">🗑️</button></div></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-groq" placeholder="gsk_…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('groq')">🗑️</button></div>
+            <a class="key-link" href="https://console.groq.com/keys" target="_blank" rel="noopener">↗ console.groq.com</a></div>
           <div class="key-row"><div class="key-lbl"><span>Anthropic</span><span class="ksig" id="sig-anthropic">⚪</span></div>
-            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-anthropic" placeholder="sk-ant-…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('anthropic')">🗑️</button></div></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-anthropic" placeholder="sk-ant-…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('anthropic')">🗑️</button></div>
+            <a class="key-link" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">↗ console.anthropic.com</a></div>
           <div class="key-row"><div class="key-lbl"><span>OpenAI</span><span class="ksig" id="sig-openai">⚪</span></div>
-            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-openai" placeholder="sk-…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('openai')">🗑️</button></div></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-openai" placeholder="sk-…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('openai')">🗑️</button></div>
+            <a class="key-link" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">↗ platform.openai.com</a></div>
           <div class="key-row"><div class="key-lbl"><span>OpenRouter</span><span class="ksig" id="sig-openrouter">⚪</span></div>
-            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-openrouter" placeholder="sk-or-…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('openrouter')">🗑️</button></div></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-openrouter" placeholder="sk-or-…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('openrouter')">🗑️</button></div>
+            <a class="key-link" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">↗ openrouter.ai</a></div>
           <div class="key-row"><div class="key-lbl"><span>Mistral</span><span class="ksig" id="sig-mistral">⚪</span></div>
-            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-mistral" placeholder="…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('mistral')">🗑️</button></div></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-mistral" placeholder="…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('mistral')">🗑️</button></div>
+            <a class="key-link" href="https://console.mistral.ai/api-keys/" target="_blank" rel="noopener">↗ console.mistral.ai</a></div>
           <div class="key-row"><div class="key-lbl"><span>Cerebras</span><span class="ksig" id="sig-cerebras">⚪</span></div>
-            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-cerebras" placeholder="csk_…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('cerebras')">🗑️</button></div></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-cerebras" placeholder="csk_…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('cerebras')">🗑️</button></div>
+            <a class="key-link" href="https://cloud.cerebras.ai/platform/apikeys" target="_blank" rel="noopener">↗ cloud.cerebras.ai</a></div>
           <div class="key-row"><div class="key-lbl"><span>Gemini</span><span class="ksig" id="sig-gemini">⚪</span></div>
-            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-gemini" placeholder="AIza…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('gemini')">🗑️</button></div></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-gemini" placeholder="AIza…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('gemini')">🗑️</button></div>
+            <a class="key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">↗ aistudio.google.com</a></div>
           <div style="display:flex;gap:6px;margin-top:6px">
             <button id="save-keys-btn" class="nbtn" style="flex:1">💾 Save Keys</button>
             <button id="purge-keys-btn" class="nbtn" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:var(--rd)">🗑️ Purge All</button>
@@ -3346,14 +3357,21 @@ const BillyLive = (function() {
 
     // Specific high-quality voices by name — ordered by preference per language
     // EN: Google US English → deep/warm American male voices → any Google EN
-    // FR: Google français → Thomas (Apple FR male) → any Google FR
+    // FR: prioritise natural French male voices; West-African locales (fr-CI, fr-SN, fr-CM) first
     const enPref = /google us english|microsoft guy|marcus|james online|aaron online/i;
-    const frPref = /google français|google french|thomas|google fr/i;
+    const frPref = /google français|google french|thomas|côme|come\b|nicolas|mathieu|fr.*neural|google fr/i;
     const prefMatch = v => isFR ? frPref.test(v.name) : enPref.test(v.name);
 
     const isNatural = v => /google|enhanced|premium|neural|natural|siri|online/i.test(v.name);
-    const isMale    = v => /david|thomas|alex|daniel|côme|fred|reed|luca|oliver|guy|mark|richard|paul|james|aaron|arthur|eddy|nicholas|tom\b|marcus/i.test(v.name);
+    const isMale    = v => /david|thomas|alex|daniel|côme|come\b|fred|reed|luca|oliver|guy|mark|richard|paul|james|aaron|arthur|eddy|nicholas|tom\b|marcus|mathieu|nicolas/i.test(v.name);
     const isFemale  = v => /female|fem|woman|girl|zira|alice|samantha|karen|moira|fiona|serena|victoria|nora|sara|amelie|amelié|virginie/i.test(v.name);
+
+    // For FR, try West/Central African locale codes first for authenticity
+    const frAfricanLocales = ['fr-ci', 'fr-sn', 'fr-cm', 'fr-bf', 'fr-cd', 'fr-mg'];
+    if (isFR) {
+      const africanVoice = vs.find(v => frAfricanLocales.includes(v.lang.toLowerCase()) && (isNatural(v) || isMale(v)));
+      if (africanVoice) return africanVoice;
+    }
 
     // Priority: preferred named voice → natural+male → natural (non-female) → male → non-female → lang fallback
     return vs.find(v => v.lang.toLowerCase().startsWith(l) && prefMatch(v))
@@ -3515,10 +3533,11 @@ const BillyLive = (function() {
     ui('voice-status', 'BILLY SPEAKING…');
     setPulse('speak');
 
-    // Strip all markdown/symbols, collapse whitespace, cap length
+    // Strip URLs, markdown/symbols, collapse whitespace, cap length
     const clean = text
       .replace(/\[SEARCH:[^\]]*\]/gi, '')
       .replace(/\[READ:[^\]]*\]/gi, '')
+      .replace(/https?:\/\/[^\s"'<>),]+/g, '')   // remove raw URLs — don't read them aloud
       .replace(/[*_`#>\[\]]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
@@ -3537,7 +3556,7 @@ const BillyLive = (function() {
       const _isFR = currentLang.startsWith('fr');
       utt.lang   = currentLang || 'en-US';
       utt.rate   = 1.00;
-      utt.pitch  = _isFR ? 0.80 : 0.75;  // EN: deep Afro-American warmth; FR: grave naturel
+      utt.pitch  = _isFR ? 0.70 : 0.75;  // FR: grave africain naturel; EN: deep Afro-American warmth
       utt.volume = 1;
 
       const done = () => {
