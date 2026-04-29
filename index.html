@@ -3417,10 +3417,20 @@ const BillyLive = (function() {
   }
 
   // Auto-detect spoken language (FR vs EN) from transcript
+  // STICKY: once in FR mode, never flip back to EN unless the message is clearly/entirely English.
+  // This prevents short or mixed phrases (e.g. "ok go ahead", "show me") from accidentally switching mid-convo.
   function _detectLang(text) {
-    const frPattern = /\b(je|tu|il|elle|nous|vous|ils|est|sont|avec|pour|dans|sur|que|qui|pas|une|les|des|du|au|mon|ton|son|très|bien|plus|mais|alors|encore|aussi|comme|quand|comment|pourquoi|merci|bonjour|oui|non|voilà|c'est|j'ai|c'est|qu'est|d'un|d'une|parle|peux|peut|faire|avoir|être|aller|veux|veut|donne|dis|montre|cherche|trouve|regarde)\b/i;
-    const matches = (text.match(frPattern) || []).length;
-    return matches >= 2 ? 'fr-FR' : 'en-US';
+    const frPattern = /\b(je|tu|il|elle|nous|vous|ils|est|sont|avec|pour|dans|sur|que|qui|pas|une|les|des|du|au|mon|ton|son|très|bien|plus|mais|alors|encore|aussi|comme|quand|comment|pourquoi|merci|bonjour|oui|non|voilà|c'est|j'ai|qu'est|d'un|d'une|parle|peux|peut|faire|avoir|être|aller|veux|veut|donne|dis|montre|cherche|trouve|regarde|quoi|donc|déjà|jamais|toujours|autre|cette|ceci|ici)\b/i;
+    const enOnlyPattern = /\b(the|this|that|these|those|my|your|his|her|their|what|where|when|how|why|who|which|can|could|would|should|will|have|has|had|do|does|did|is|are|was|were|been|get|say|said|make|know|think|see|need|want|give|tell|show|find|look|search|help|let|take)\b/i;
+    const frMatches = (text.match(frPattern) || []).length;
+    const enMatches = (text.match(enOnlyPattern) || []).length;
+
+    // Any 2+ French markers → switch to / stay in French
+    if (frMatches >= 2) return 'fr-FR';
+    // Already in French → require 5+ strong English-only hits before flipping back
+    // (prevents "ok", "yes", "go on", one-liners from switching the voice mid-convo)
+    if (currentLang === 'fr-FR' && enMatches < 5) return 'fr-FR';
+    return 'en-US';
   }
 
   // Detect if a voice query needs live web data
@@ -3568,8 +3578,8 @@ const BillyLive = (function() {
       if (v) utt.voice = v;
       const _isFR = currentLang.startsWith('fr');
       utt.lang   = currentLang || 'en-US';
-      utt.rate   = 1.08;
-      utt.pitch  = _isFR ? 0.70 : 0.75;  // FR: grave africain naturel; EN: deep Afro-American warmth
+      utt.rate   = 1.04;
+      utt.pitch  = _isFR ? 0.70 : 0.82;  // FR: grave africain naturel; EN: warm relaxed American male
       utt.volume = 1;
 
       const done = () => {
