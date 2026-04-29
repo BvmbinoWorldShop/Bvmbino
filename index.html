@@ -1770,7 +1770,10 @@ function _lsLoadKnowledge() {
 function _lsSaveKnowledge(entry) {
   try {
     const items = _lsLoadKnowledge();
-    items.push(entry);
+    // Replace existing entry with same key — prevents duplicate/stale knowledge stacking
+    const idx = items.findIndex(i => i.key === entry.key);
+    if (idx !== -1) items.splice(idx, 1, entry);
+    else items.push(entry);
     localStorage.setItem(LS_KNOW_KEY, JSON.stringify(items.slice(-100)));
   } catch {}
 }
@@ -3572,12 +3575,37 @@ const BillyLive = (function() {
     }
   }
 
-  function speakOut(text) {
-    const s = getSynth();
-    if (!s) { ui('voice-status', 'TTS NOT SUPPORTED'); if (active) startListening(); return; }
+  // OpenAI TTS — ChatGPT-quality voice using tts-1 + onyx (deep warm masculine)
+  async function _speakOpenAI(text, onEnd, onFail) {
+    const key = localStorage.getItem('bv_key_openai') || localStorage.getItem('bvmbino_key_openai') || '';
+    if (!key) { onFail(); return; }
+    try {
+      const isFR = currentLang.startsWith('fr');
+      const res = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+        body: JSON.stringify({
+          model: 'tts-1',
+          input: text.slice(0, 4096),
+          voice: 'onyx',        // deep warm masculine — natural for EN and FR
+          speed: isFR ? 1.05 : 1.08,
+        }),
+        signal: _abortIn(15000),
+      });
+      if (!res.ok) { onFail(); return; }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => { URL.revokeObjectURL(url); onEnd(); };
+      audio.onerror = () => { URL.revokeObjectURL(url); onFail(); };
+      await audio.play();
+    } catch (e) {
+      console.warn('OpenAI TTS failed, falling back to browser TTS:', e.message);
+      onFail();
+    }
+  }
 
-    // iOS: do NOT cancel — it breaks the audio session. Only cancel on non-iOS.
-    if (!isIOS) s.cancel();
+  function speakOut(text) {
     speaking = true;
     ui('voice-status', 'BILLY SPEAKING…');
     setPulse('speak');
@@ -3586,8 +3614,8 @@ const BillyLive = (function() {
     const clean = text
       .replace(/\[SEARCH:[^\]]*\]/gi, '')
       .replace(/\[READ:[^\]]*\]/gi, '')
-      .replace(/https?:\/\/[^\s"'<>),]+/g, '')   // remove URLs — never read aloud
-      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')    // remove emojis
+      .replace(/https?:\/\/[^\s"'<>),]+/g, '')
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
       .replace(/[*_`#>\[\]]/g, '')
       .replace(/\s+/g, ' ')
       .trim()
@@ -3595,49 +3623,48 @@ const BillyLive = (function() {
 
     if (!clean) { speaking = false; if (active) startListening(); return; }
 
-    function doSpeak() {
-      // Reload voices each time — important on iOS where voices may not be cached
-      const vs = _voicesCache.length ? _voicesCache : (s.getVoices() || []);
-      if (!_voicesCache.length && vs.length) _voicesCache = vs;
+    const done = () => {
+      speaking = false;
+      ui('voice-status', 'LISTENING…');
+      if (active) setTimeout(() => { if (active && !speaking) startListening(); }, 600);
+    };
 
-      const utt = new SpeechSynthesisUtterance(clean);
-      const v = pickVoice(currentLang);
-      if (v) utt.voice = v;
-      const _isFR = currentLang.startsWith('fr');
-      utt.lang   = currentLang || 'en-US';
-      utt.rate   = 1.12;
-      utt.pitch  = _isFR ? 0.80 : 1.08;  // FR: warm african natural; EN: warm conversational (1.0+ = less robotic)
-      utt.volume = 1;
+    // Try OpenAI TTS first (ChatGPT-quality neural voice) — fallback to browser TTS
+    _speakOpenAI(clean, done, () => {
+      const s = getSynth();
+      if (!s) { ui('voice-status', 'TTS NOT SUPPORTED'); speaking = false; if (active) startListening(); return; }
+      if (!isIOS) s.cancel();
 
-      const done = () => {
-        speaking = false;
-        ui('voice-status', 'LISTENING…');
-        if (active) setTimeout(() => { if (active && !speaking) startListening(); }, 600);
-      };
+      function doSpeak() {
+        const vs = _voicesCache.length ? _voicesCache : (s.getVoices() || []);
+        if (!_voicesCache.length && vs.length) _voicesCache = vs;
 
-      utt.onend   = done;
-      utt.onerror = (e) => { console.warn('TTS error:', e.error); done(); };
+        const utt = new SpeechSynthesisUtterance(clean);
+        const v = pickVoice(currentLang);
+        if (v) utt.voice = v;
+        const _isFR = currentLang.startsWith('fr');
+        utt.lang   = currentLang || 'en-US';
+        utt.rate   = 1.12;
+        utt.pitch  = _isFR ? 0.80 : 1.08;
+        utt.volume = 1;
 
-      s.speak(utt);
+        utt.onend   = done;
+        utt.onerror = (e) => { console.warn('TTS error:', e.error); done(); };
 
-      // Keepalive — synth pauses silently on background tabs (Chrome/Android)
-      const keepAlive = setInterval(() => {
-        if (!speaking) { clearInterval(keepAlive); return; }
-        if (s.paused) s.resume();
-      }, 5000);
+        s.speak(utt);
 
-      // Safety fallback: onend sometimes never fires
-      const estMs = Math.max(4000, (clean.length / 10) * 1000);
-      setTimeout(() => { if (speaking) { clearInterval(keepAlive); done(); } }, estMs + 4000);
-    }
+        const keepAlive = setInterval(() => {
+          if (!speaking) { clearInterval(keepAlive); return; }
+          if (s.paused) s.resume();
+        }, 5000);
 
-    // iOS: speak immediately (no delay — must stay close to user gesture context)
-    // Chrome/Android: small delay after cancel() to avoid silent drop
-    if (isIOS) {
-      doSpeak();
-    } else {
-      setTimeout(doSpeak, 150);
-    }
+        const estMs = Math.max(4000, (clean.length / 10) * 1000);
+        setTimeout(() => { if (speaking) { clearInterval(keepAlive); done(); } }, estMs + 4000);
+      }
+
+      if (isIOS) doSpeak();
+      else setTimeout(doSpeak, 150);
+    });
   }
 
   function startListening() {
@@ -3993,7 +4020,11 @@ const App = {
     this._on('train-save-btn', 'click', () => {
       const val = document.getElementById('train-input')?.value.trim();
       if (!val) return;
-      saveToKnowledge('Agent Training', val);
+      // Use first line (up to 48 chars) as the key so each topic is individually addressable
+      // and re-training the same topic REPLACES the old entry instead of stacking duplicates
+      const firstLine = val.split('\n')[0].replace(/^[-•*\s]+/, '').slice(0, 48).trim();
+      const key = firstLine || ('Training ' + new Date().toLocaleDateString('fr-FR'));
+      saveToKnowledge(key, val);
       document.getElementById('train-input').value = '';
       this.toggleModal('train-modal', false);
       toast('Agent Trained ✓');
