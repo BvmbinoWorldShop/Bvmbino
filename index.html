@@ -1024,6 +1024,7 @@ const PROMPTS = {
   gmail:    'Act as an elite email strategy expert. Compose, sequence, and optimize sovereign email campaigns. Focus on deliverability, open rates, conversion psychology, and subject line testing.',
   slack:    'Act as a Slack workspace strategist. Design team communication flows, automations, channel structure, and Slack bots for maximum team velocity and knowledge capture.',
   coach:    'Act as Coach Doobs — elite NBA-certified trainer, strength & conditioning specialist, and peak performance coach. You work with professional NBA athletes on court skills, weight training, physical conditioning, recovery, and mental performance. Give elite basketball insights, real training programs (with sets/reps/drills), player stats comparisons, position-specific development, and sport psychology. Apply this same high-performance framework to business when relevant. Be direct, intense, like a real pro coach.',
+  kenzo:    'YOU ARE BILLY — Chief of Staff and direct voice of BVMBINO. Think out loud together. Quick, sharp answers. No fluff. Real conversation. You remember everything, move fast, and tell the truth even when it stings. Be him.',
   sales:    'Act as Papou, Sales & GTM Director. You close deals. Teach sales strategy, objection handling, DM scripts, cold outreach, qualification frameworks, and negotiation tactics. Think in terms of buyer psychology and conversion funnels.',
   leads:    'Act as Lilly, Lead Intelligence & Qualification Expert. Score prospects, qualify leads, identify decision-makers, and prioritize targets. Use data-driven criteria, intent signals, and fit scoring. You know how to find and score high-value opportunities.',
   website:  'Act as Yuki, Web Architect & UX Designer. Design high-converting landing pages, sales funnels, and user experiences. Think in funnel stages, conversion optimization, CTA psychology, and friction elimination. You build websites that sell.',
@@ -2121,6 +2122,7 @@ const GRID_SKILLS = [
   {id:'gmail',    cat:'revenue',  name:'Postmaster',persona:'Email Engine',             cmd:'/gmail',    desc:'Email Campaigns',    use:'Deliverability & conversion.',                 iconType:'emoji', accent:'#e8a912', icon:'📧'},
   {id:'slack',    cat:'strategy', name:'Signal',    persona:'Team Sync',                cmd:'/slack',    desc:'Workspace Flow',     use:'Slack bots & team velocity.',                  iconType:'emoji', accent:'#22c55e', icon:'💬'},
   {id:'n8n',      cat:'tech',     name:'Hub',       persona:'Automation Hub',           cmd:'/n8n',      desc:'Workflows',          use:'Trigger & automate business ops.',             iconType:'emoji', accent:'#22c55e', icon:'🔄'},
+  {id:'kenzo',    cat:'revenue',  name:'Kenzo',     persona:'Chief of Staff',           cmd:'/kenzo',    desc:'Billy',              use:'Think out loud, make fast decisions, direct answers.',iconType:'img', accent:'#d4940a', icon:'assets/specialists/billy_street.png', zoom:true},
 ];
 
 function renderWelcome() {
@@ -2738,12 +2740,20 @@ function showPdfPreview(text) {
 }
 
 function closePreview() {
-  document.getElementById('preview-modal')?.classList.remove('open');
-  // Clear injected PDF content after animation so it doesn't expand layout on next open
+  const m = document.getElementById('preview-modal');
+  if (!m) return;
+  m.classList.remove('open');
+  // Force layout recalculation and clear preview content
   setTimeout(() => {
     const c = document.getElementById('preview-content');
-    if (c) c.innerHTML = '';
-  }, 320);
+    if (c) {
+      c.innerHTML = '';
+      c.style.height = 'auto';
+    }
+    // Ensure main layout isn't affected
+    const chat = document.getElementById('chat');
+    if (chat) chat.style.minHeight = '0';
+  }, 100);
 }
 
 async function saveAsPdf() {
