@@ -1167,7 +1167,7 @@ async function buildSys() {
     : '';
 
   const voiceStr = state._voiceMode
-    ? '\n\n[VOICE MODE]: You are talking out loud with the Boss. Speak like a real person — warm, relaxed, natural flow. 2-3 short sentences max. No markdown, no lists, no asterisks, no bullet points. No filler like "sure!" or "great question!". Sound like a friend who knows his stuff, not a voice assistant. IMPORTANT: reply in the same language the Boss used — French if he spoke French, English if he spoke English.'
+    ? '\n\n[VOICE MODE — MANDATORY]:\nYou are speaking LIVE on a voice call. This is NOT a text reply. Rules are absolute:\n1. MAX 2-3 SHORT sentences. Period. Never more unless asked.\n2. ZERO bullet points, ZERO numbered lists, ZERO hyphens as separators. Say things as one natural flowing sentence.\n3. ZERO markdown symbols (* # - > _ `). None.\n4. ZERO URLs, ZERO source names, ZERO "according to...". Just state the facts directly.\n5. NO filler openers like "Sure!" "Absolutely!" "Great question!" — START WITH THE ANSWER.\n6. Talk like a sharp friend on the phone — casual, direct, warm. Not a robot. Not a report.\n7. If you have multiple points, weave them into one sentence naturally with "and", "plus", "but".\n8. Match language strictly — French if he spoke French, English if English. Never mix.\nExample WRONG: "Here are 3 key points: 1. Revenue is up. 2. Team is growing. 3. Launch next month."\nExample RIGHT: "Revenue is up, team is growing, and you\'re launching next month — solid position."'
     : '';
 
   const webStr = '\n\n[LIVE INTERNET — MANDATORY RULES]:\nYou have real-time web access. These rules are non-negotiable:\n\n1. SEARCH FIRST for ANY of these: player stats, team standings, company data, CEO/founder info, stock price, crypto, news, recent events, LinkedIn profiles, website content, revenue, rankings, match results, scores, anything from 2024-2026.\n\n2. HOW TO SEARCH: write [SEARCH: exact query] as your ENTIRE first response. Nothing else. Stop. The system fetches live data and calls you again. Then you answer with real numbers and facts.\n\n3. HOW TO READ A URL: write [READ: https://url.com] — works for any website, LinkedIn, articles, docs.\n\n4. NEVER guess stats, prices, or current data. NEVER say "I cannot access the internet." You CAN and you MUST. If you answer without searching for a factual question you are failing the Boss.\n\nExamples:\n- "LeBron stats this season" → [SEARCH: LeBron James 2025-26 NBA stats]\n- "PSG last match" → [SEARCH: PSG match result April 2026]\n- "Apple stock price" → [SEARCH: AAPL stock price today]\n- "Analyze https://site.com" → [READ: https://site.com]';
@@ -3524,14 +3524,23 @@ const BillyLive = (function() {
           .trim();
         ui('voice-billy-reply', clean.slice(0, 240) + (clean.length > 240 ? '…' : ''));
 
-        // Clean for speech: remove markdown, tags, URLs, emojis
+        // Clean for speech: convert structured text → natural spoken language
         let toSpeak = last.content
           .replace(/\[SEARCH:[^\]]*\]/gi, '')
           .replace(/\[READ:[^\]]*\]/gi, '')
-          .replace(/https?:\/\/[^\s"'<>),]+/g, '')  // remove URLs
-          .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')    // remove emojis
-          .replace(/[*_`#>\[\]]/g, '')
-          .replace(/\n+/g, ' ')
+          .replace(/https?:\/\/[^\s"'<>),]+/g, '')       // strip URLs
+          .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')         // strip emojis (wide range)
+          .replace(/[^\S\n]*\d+\.\s+/g, ' ')              // "1. item" → " item"
+          .replace(/[^\S\n]*[-•*–—]\s+/g, ' ')            // "- item" / "• item" → " item"
+          .replace(/\*\*(.+?)\*\*/g, '$1')                // **bold** → bold
+          .replace(/\*(.+?)\*/g, '$1')                    // *italic* → italic
+          .replace(/[*_`#>\[\]\\]/g, '')                  // remaining markdown
+          .replace(/\s*:\s*\n+/g, ': ')                   // colon + newline → inline
+          .replace(/\n{2,}/g, '. ')                       // paragraph breaks → sentence pause
+          .replace(/\n/g, ', ')                           // single newlines → spoken pause
+          .replace(/\s{2,}/g, ' ')                        // collapse spaces
+          .replace(/,\s*,/g, ',')                         // clean double commas
+          .replace(/\.\s*\./g, '.')                       // clean double dots
           .trim();
 
         // Split at 6 sentences — ask to continue if response is long
@@ -3595,7 +3604,7 @@ const BillyLive = (function() {
       const _isFR = currentLang.startsWith('fr');
       utt.lang   = currentLang || 'en-US';
       utt.rate   = 1.04;
-      utt.pitch  = _isFR ? 0.70 : 0.82;  // FR: grave africain naturel; EN: warm relaxed American male
+      utt.pitch  = _isFR ? 0.72 : 0.90;  // FR: grave africain; EN: natural relaxed American (closer to 1 = less robotic)
       utt.volume = 1;
 
       const done = () => {
