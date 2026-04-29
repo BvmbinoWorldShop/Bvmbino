@@ -456,7 +456,7 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble th{padding:4px 6px;font-size:9px;}
   .bubble td{padding:4px 6px;font-size:10px;}
   .inzone{padding:8px 10px 10px;}
-  .matrix-grid{grid-template-columns:1fr;}
+  .matrix-grid{grid-template-columns:repeat(2,1fr);}
   .wcuse{display:none;}
   .b-us,.b-ai{max-width:95vw;}
 }
@@ -2122,7 +2122,7 @@ const GRID_SKILLS = [
   {id:'gmail',    cat:'revenue',  name:'Postmaster',persona:'Email Engine',             cmd:'/gmail',    desc:'Email Campaigns',    use:'Deliverability & conversion.',                 iconType:'emoji', accent:'#e8a912', icon:'📧'},
   {id:'slack',    cat:'strategy', name:'Signal',    persona:'Team Sync',                cmd:'/slack',    desc:'Workspace Flow',     use:'Slack bots & team velocity.',                  iconType:'emoji', accent:'#22c55e', icon:'💬'},
   {id:'n8n',      cat:'tech',     name:'Hub',       persona:'Automation Hub',           cmd:'/n8n',      desc:'Workflows',          use:'Trigger & automate business ops.',             iconType:'emoji', accent:'#22c55e', icon:'🔄'},
-  {id:'kenzo',    cat:'revenue',  name:'Kenzo',     persona:'Chief of Staff',           cmd:'/billy',    desc:'Billy',              use:'Think out loud, make fast decisions, direct answers.',iconType:'img', accent:'#d4940a', icon:'assets/specialists/billy_street.png', zoom:true},
+  {id:'kenzo',    cat:'revenue',  name:'Billy',     persona:'Chief of Staff',           cmd:'/billy',    desc:'Direct Voice',       use:'Think out loud, make fast decisions, direct answers.',iconType:'img', accent:'#d4940a', icon:'assets/specialists/billy_street.png', zoom:true},
 ];
 
 function renderWelcome() {
@@ -3632,7 +3632,7 @@ const BillyLive = (function() {
     if (!key) { onFail(); return; }
     try {
       const isFR = currentLang.startsWith('fr');
-      const voice = isFR ? 'onyx' : 'echo';  // FR: onyx (warm), EN: echo (authoritative American male)
+      const voice = isFR ? 'onyx' : 'fable';  // FR: onyx (deep/grave), EN: fable (warm, natural American male)
       const res = await fetch('https://api.openai.com/v1/audio/speech', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
