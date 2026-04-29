@@ -3355,25 +3355,40 @@ const BillyLive = (function() {
     const l = (lang || currentLang || 'en-US').slice(0, 2).toLowerCase();
     const isFR = l === 'fr';
 
-    // Specific high-quality voices by name — ordered by preference per language
-    // EN: Google US English → deep/warm American male voices → any Google EN
-    // FR: prioritise natural French male voices; West-African locales (fr-CI, fr-SN, fr-CM) first
-    const enPref = /google us english|microsoft guy|marcus|james online|aaron online/i;
-    const frPref = /google français|google french|thomas|côme|come\b|nicolas|mathieu|fr.*neural|google fr/i;
+    // Voice matchers
+    const enPref = /google us english|microsoft guy|marcus|david|james|aaron|mark|guy|american/i;
+    const frPref = /google français|thomas|côme|come\b|nicolas|mathieu|olivier|african|fr.*neural/i;
     const prefMatch = v => isFR ? frPref.test(v.name) : enPref.test(v.name);
+    const isNatural = v => /google|enhanced|premium|neural|natural|siri|online|ai|cloud/i.test(v.name);
+    const isMale    = v => /david|thomas|alex|daniel|côme|come\b|fred|reed|luca|oliver|guy|mark|richard|paul|james|aaron|arthur|eddy|nicholas|tom\b|marcus|mathieu|nicolas|olivier/i.test(v.name);
+    const isFemale  = v => /female|fem|woman|girl|zira|alice|samantha|karen|moira|fiona|serena|victoria|nora|sara|amelie|amelié|virginie|woman|lady|girl/i.test(v.name);
 
-    const isNatural = v => /google|enhanced|premium|neural|natural|siri|online/i.test(v.name);
-    const isMale    = v => /david|thomas|alex|daniel|côme|come\b|fred|reed|luca|oliver|guy|mark|richard|paul|james|aaron|arthur|eddy|nicholas|tom\b|marcus|mathieu|nicolas/i.test(v.name);
-    const isFemale  = v => /female|fem|woman|girl|zira|alice|samantha|karen|moira|fiona|serena|victoria|nora|sara|amelie|amelié|virginie/i.test(v.name);
-
-    // For FR, try West/Central African locale codes first for authenticity
-    const frAfricanLocales = ['fr-ci', 'fr-sn', 'fr-cm', 'fr-bf', 'fr-cd', 'fr-mg'];
-    if (isFR) {
-      const africanVoice = vs.find(v => frAfricanLocales.includes(v.lang.toLowerCase()) && (isNatural(v) || isMale(v)));
-      if (africanVoice) return africanVoice;
+    // EN-US PRIORITY: require natural voice + male from en-US locale
+    if (!isFR) {
+      const enUS_natural_male = vs.find(v => v.lang.toLowerCase().startsWith('en-us') && isNatural(v) && isMale(v));
+      if (enUS_natural_male) return enUS_natural_male;
+      const enUS_natural = vs.find(v => v.lang.toLowerCase().startsWith('en-us') && isNatural(v) && !isFemale(v));
+      if (enUS_natural) return enUS_natural;
+      const enUS_male = vs.find(v => v.lang.toLowerCase().startsWith('en-us') && isMale(v));
+      if (enUS_male) return enUS_male;
+      const enUS_any = vs.find(v => v.lang.toLowerCase().startsWith('en-us'));
+      if (enUS_any) return enUS_any;
     }
 
-    // Priority: preferred named voice → natural+male → natural (non-female) → male → non-female → lang fallback
+    // FR PRIORITY: West/African locales first, then fr-FR with male voices
+    if (isFR) {
+      const frAfricanLocales = ['fr-ci', 'fr-sn', 'fr-cm', 'fr-bf', 'fr-cd', 'fr-mg'];
+      const african = vs.find(v => frAfricanLocales.includes(v.lang.toLowerCase()) && (isNatural(v) || isMale(v)));
+      if (african) return african;
+      const frFR_natural_male = vs.find(v => v.lang.toLowerCase().startsWith('fr') && isNatural(v) && isMale(v));
+      if (frFR_natural_male) return frFR_natural_male;
+      const frFR_male = vs.find(v => v.lang.toLowerCase().startsWith('fr') && isMale(v));
+      if (frFR_male) return frFR_male;
+      const frFR_natural = vs.find(v => v.lang.toLowerCase().startsWith('fr') && isNatural(v));
+      if (frFR_natural) return frFR_natural;
+    }
+
+    // Generic fallback
     return vs.find(v => v.lang.toLowerCase().startsWith(l) && prefMatch(v))
         || vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v) && isMale(v))
         || vs.find(v => v.lang.toLowerCase().startsWith(l) && isNatural(v) && !isFemale(v))
@@ -3381,8 +3396,6 @@ const BillyLive = (function() {
         || vs.find(v => v.lang.toLowerCase().startsWith(l) && isMale(v))
         || vs.find(v => v.lang.toLowerCase().startsWith(l) && !isFemale(v))
         || vs.find(v => v.lang.toLowerCase().startsWith(l))
-        || vs.find(v => v.lang.startsWith('en') && isNatural(v) && !isFemale(v))
-        || vs.find(v => v.lang.startsWith('en') && !isFemale(v))
         || vs[0] || null;
   }
 
@@ -3555,7 +3568,7 @@ const BillyLive = (function() {
       if (v) utt.voice = v;
       const _isFR = currentLang.startsWith('fr');
       utt.lang   = currentLang || 'en-US';
-      utt.rate   = 1.00;
+      utt.rate   = 1.08;
       utt.pitch  = _isFR ? 0.70 : 0.75;  // FR: grave africain naturel; EN: deep Afro-American warmth
       utt.volume = 1;
 
