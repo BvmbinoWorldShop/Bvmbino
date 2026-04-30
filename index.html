@@ -2936,7 +2936,8 @@ async function send() {
 
 // ── CORE AI ──
 async function callAI() {
-  // Set up AbortController so cancel-btn can stop the request
+  // Abort any in-flight request before starting a new one
+  if (state.abortController) { state.abortController.abort(); }
   state.abortController = new AbortController();
   const { signal } = state.abortController;
   window.__lockUI?.();
@@ -3185,13 +3186,14 @@ async function callAI() {
       if (execN8n) {
         clean = clean.replace(/\[EXECUTE:n8n\]/gi, '').trim();
         const n8nUrl = localStorage.getItem('bv_n8n_url');
-        if (n8nUrl) {
+        if (n8nUrl && _isSafeExternalUrl(n8nUrl)) {
           fetch(n8nUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ source:'bvmbino', agent: state.activeSkill||'kenzo', timestamp: new Date().toISOString(), content: clean }), signal: _abortIn(8000) })
             .then(r => { window.logFeed && window.logFeed('system', `n8n auto-triggered: ${r.status}`); toast('⚡ n8n triggered'); })
             .catch(e => { window.logFeed && window.logFeed('warn', 'n8n auto-trigger failed: ' + e.message); });
         }
       }
       state.msgs.push({ role: 'assistant', content: clean });
+      if (state.msgs.length > 80) state.msgs.splice(0, state.msgs.length - 80); // cap history
       appendAiText(clean, xtype);
       window.logFeed && window.logFeed('billy', clean.replace(/[#*_`]/g,'').slice(0, 90) + (clean.length > 90 ? '…' : ''));
       updTok(clean.length / 3.5);
@@ -3236,6 +3238,7 @@ function _isBotWall(text) {
 
 // Read a URL with CAPTCHA detection and fallback chain
 async function readUrl(url) {
+  if (!_isSafeExternalUrl(url)) return ''; // block private IPs / non-HTTPS
   // Primary: Jina reader
   try {
     const res = await fetch('https://r.jina.ai/' + url, {
@@ -3330,6 +3333,7 @@ async function handleSearch(query) {
 }
 
 async function handleScrape(url) {
+  if (!_isSafeExternalUrl(url)) { toast('⚠ Cannot read that URL'); return; }
   const id = 'scrape-' + Date.now();
   appendToolRow(id, '🔍', 'info', `Reading: ${url}…`);
   window.logFeed && window.logFeed('system', 'Reading URL: ' + url);
@@ -3703,7 +3707,9 @@ const BillyLive = (function() {
 
     if (!clean) { speaking = false; if (active) startListening(); return; }
 
+    let _ka = null; // keepAlive ref shared between doSpeak and done so it's always cleared
     const done = () => {
+      clearInterval(_ka); _ka = null;
       speaking = false;
       ui('voice-status', 'LISTENING…');
       if (active) setTimeout(() => { if (active && !speaking) startListening(); }, 600);
@@ -3733,13 +3739,13 @@ const BillyLive = (function() {
 
         s.speak(utt);
 
-        const keepAlive = setInterval(() => {
-          if (!speaking) { clearInterval(keepAlive); return; }
+        _ka = setInterval(() => {
+          if (!speaking) { clearInterval(_ka); _ka = null; return; }
           if (s.paused) s.resume();
         }, 5000);
 
         const estMs = Math.max(4000, (clean.length / 10) * 1000);
-        setTimeout(() => { if (speaking) { clearInterval(keepAlive); done(); } }, estMs + 4000);
+        setTimeout(() => { if (speaking) { clearInterval(_ka); done(); } }, estMs + 4000);
       }
 
       if (isIOS) doSpeak();
@@ -4124,7 +4130,7 @@ const App = {
       if (!btn) return;
       const { action, url, prompt } = btn.dataset;
       if (action === 'to-chat')  this.sendImgToChat(url, prompt);
-      if (action === 'open')     window.open(url, '_blank');
+      if (action === 'open' && _isSafeExternalUrl(url)) window.open(url, '_blank');
       if (action === 'download') this.downloadImg(url);
     });
 
@@ -4482,7 +4488,7 @@ const App = {
         card.querySelectorAll('[data-action]').forEach(b => {
           b.addEventListener('click', () => {
             if (b.dataset.action === 'to-chat')  this.sendImgToChat(url, prompt);
-            if (b.dataset.action === 'open')      window.open(url, '_blank');
+            if (b.dataset.action === 'open' && _isSafeExternalUrl(url)) window.open(url, '_blank');
             if (b.dataset.action === 'download')  this.downloadImg(url);
           });
         });
@@ -4517,7 +4523,7 @@ const App = {
     // wire these buttons via the img-result handler won't work here — do it directly
     d.querySelectorAll('[data-action]').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (btn.dataset.action === 'open')     window.open(url, '_blank');
+        if (btn.dataset.action === 'open' && _isSafeExternalUrl(url)) window.open(url, '_blank');
         if (btn.dataset.action === 'download') this.downloadImg(url);
       });
     });
