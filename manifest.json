@@ -1,22 +1,42 @@
 {
-  "name": "Bvmbino AI Agent Pro",
+  "name": "Bvmbino Pro",
   "short_name": "Bvmbino",
-  "description": "High-performance AI Orchestrator for elite business operations.",
+  "description": "Your Sovereign AI Chief of Staff. Billy runs the show.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#06080a",
   "theme_color": "#e8a912",
+  "categories": ["business", "productivity"],
+  "lang": "en",
   "icons": [
     {
-      "src": "https://bvmbino-ai-agent.vercel.app/icon-192.png",
+      "src": "assets/specialists/billy_street.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "https://bvmbino-ai-agent.vercel.app/icon-512.png",
+      "src": "assets/specialists/billy_street.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Talk to Billy",
+      "short_name": "Billy",
+      "description": "Open direct voice mode with your Chief of Staff",
+      "url": "/?mode=voice"
+    },
+    {
+      "name": "New Session",
+      "short_name": "New",
+      "description": "Start a fresh conversation",
+      "url": "/?new=1"
     }
   ]
 }

@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#06080a">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bvmbino">
+<meta name="theme-color" content="#e8a912">
+<meta name="description" content="Your Sovereign AI Chief of Staff. Billy runs the show.">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="assets/specialists/billy_street.png">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; img-src * data: blob:; connect-src *; frame-src 'none'; object-src 'none'">
 <title>Bvmbino Pro — Sovereign v6.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -925,7 +930,12 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
+// Set PDF.js worker
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
 
 
 
@@ -3885,6 +3895,15 @@ window.expLastPdf     = () => App.exportLastPdf();
 // ─────────────────────────────────────────────────────────────────
 //  BOOT — one-time startup, then delegates everything to App.init()
 // ─────────────────────────────────────────────────────────────────
+// ── PWA: Service Worker registration ─────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+
 async function boot() {
   console.log('BVMBINO Pro v6.1 · Booting…');
   setTimeout(() => {
@@ -4381,37 +4400,49 @@ const App = {
         reader.readAsDataURL(file);
 
       } else if (file.type === 'application/pdf') {
-        // PDFs → extract readable text runs (4+ consecutive printable chars)
-        reader.onload = e => {
-          const raw = new Uint8Array(e.target.result);
-          let text = '', run = '';
-          for (let i = 0; i < raw.length && text.length < 12000; i++) {
-            const c = raw[i];
-            if (c >= 32 && c < 127) {
-              run += String.fromCharCode(c);
-            } else {
-              if (run.length >= 4) text += run + ' ';
-              run = '';
+        // PDFs → PDF.js proper text extraction (falls back to binary if library not ready)
+        reader.onload = async e => {
+          const arrayBuf = e.target.result;
+          try {
+            // Wait up to 3s for PDF.js to load from CDN
+            let waited = 0;
+            while (typeof pdfjsLib === 'undefined' && waited < 3000) {
+              await new Promise(r => setTimeout(r, 150));
+              waited += 150;
             }
+            if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
+
+            const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuf) }).promise;
+            let text = '';
+            const maxPages = Math.min(pdf.numPages, 20);
+            for (let p = 1; p <= maxPages; p++) {
+              const page = await pdf.getPage(p);
+              const content = await page.getTextContent();
+              const pageText = content.items.map(i => i.str).join(' ');
+              text += pageText + '\n';
+              if (text.length > 9000) break;
+            }
+            text = text.replace(/\s{3,}/g, '  ').trim().slice(0, 9000);
+            const label = `[PDF: ${file.name} — ${pdf.numPages} page${pdf.numPages>1?'s':''}]`;
+            state.attachedFiles.push({
+              name: file.name, type: 'pdf', mimeType: file.type,
+              data: text.length > 100
+                ? `${label}\n\n${text}`
+                : `${label}\n[No extractable text — scanned/image PDF. Describe what you need.]`,
+              preview: null,
+            });
+            this._renderFileStrip();
+            toast(`📄 ${file.name} — ${pdf.numPages} pages attached`);
+          } catch (err) {
+            // Fallback: at least tell the AI the file was there
+            state.attachedFiles.push({
+              name: file.name, type: 'pdf', mimeType: file.type,
+              data: `[PDF: ${file.name} — ${(file.size/1024).toFixed(0)}KB — extraction failed, answer based on filename and context]`,
+              preview: null,
+            });
+            this._renderFileStrip();
+            toast(`📄 ${file.name} attached`);
           }
-          if (run.length >= 4) text += run;
-          // Strip PDF internal syntax noise
-          text = text
-            .replace(/<<[^>]{0,200}>>/g, ' ')
-            .replace(/\/(Type|Subtype|Font|Page|Kids|Parent|MediaBox|Resources|Contents|Count|Width|Height|Filter|Length|BitsPerComponent|ColorSpace|Creator|Producer|CreationDate|ModDate|Trapped|Info|Root|Encrypt|ID)\b[^\/\n]{0,80}/g, ' ')
-            .replace(/\b(obj|endobj|stream|endstream|xref|trailer|startxref)\b/g, ' ')
-            .replace(/\s{3,}/g, ' ')
-            .trim()
-            .slice(0, 8000);
-          state.attachedFiles.push({
-            name: file.name, type: 'pdf', mimeType: file.type,
-            data: text.length > 200
-              ? `[PDF: ${file.name}]\n\nExtracted content:\n${text}`
-              : `[PDF File: ${file.name} — ${(file.size/1024).toFixed(0)}KB — This PDF uses encoded text streams. Describe what information you need from it and I'll help based on the filename and context.]`,
-            preview: null,
-          });
-          this._renderFileStrip();
-          toast(`📄 ${file.name} attached`);
         };
         reader.onerror = () => toast(`Failed to read ${file.name}`);
         reader.readAsArrayBuffer(file);
