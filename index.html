@@ -216,26 +216,28 @@ body::before{
 .mmeta{font-size:10px;color:var(--t3);margin-bottom:5px;font-family:var(--head);font-weight:700;text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .mmeta.ai-meta{color:var(--pu);}
 .mmtag{font-size:8px;padding:1px 6px;background:var(--pu3);color:var(--pu2);border-radius:10px;border:1px solid rgba(232,169,18,.2);font-family:var(--mono);font-weight:400;}
-.bubble{padding:11px 15px;border-radius:12px;font-size:13px;line-height:1.7;word-break:break-word;}
+.bubble{padding:14px 16px;border-radius:12px;font-size:13.5px;line-height:1.9;word-break:break-word;}
 .b-ai{background:var(--s1);border:1px solid var(--bd);border-top-left-radius:3px;}
 .b-us{background:linear-gradient(135deg,var(--pu),#c89008);color:#0a0800;border-top-right-radius:3px;font-weight:500;}
-.bubble strong{color:var(--pu2);font-weight:700;}
+.bubble strong{color:#e8a912;font-weight:700;letter-spacing:.01em;}
 .b-us strong{color:#0a0800;}
 .bubble em{color:var(--t2);font-style:italic;}
-.bubble .bh{font-size:14px;font-weight:700;color:var(--t1);display:block;margin:12px 0 5px;font-family:var(--head);}
+.bubble .bh{font-size:14px;font-weight:800;color:#e8a912;display:block;margin:16px 0 8px;font-family:var(--head);letter-spacing:.4px;padding:7px 13px;border-left:3px solid #e8a912;background:rgba(232,169,18,.07);border-radius:0 7px 7px 0;}
 .bubble .bh:first-child{margin-top:0;}
-.bubble .bl{display:flex;gap:7px;margin:3px 0;}
-.bubble .bld{color:var(--pu2);flex-shrink:0;}
-.bubble .bn{display:flex;gap:8px;margin:3px 0;}
-.bubble .bnn{color:var(--pu2);flex-shrink:0;font-size:11px;font-family:var(--mono);min-width:18px;}
-.bubble code{font-family:var(--mono);font-size:11px;background:var(--s2);padding:2px 6px;border-radius:4px;color:var(--pu);}
-.bubble pre{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rsm);padding:14px;margin:10px 0;overflow-x:auto;}
-.bubble pre code{background:none;padding:0;color:var(--t1);}
-.bubble table{width:100%;border-collapse:collapse;margin:10px 0;}
-.bubble th{background:var(--s1);color:var(--pu2);padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;border:1px solid var(--bd);}
-.bubble td{padding:7px 10px;border:1px solid var(--bd);font-size:12px;}
-.bubble a{color:var(--pu2);text-decoration:none;}
+.bubble .bl{display:flex;gap:9px;margin:5px 0;align-items:flex-start;padding-left:2px;}
+.bubble .bld{color:#e8a912;flex-shrink:0;font-size:13px;line-height:1.9;font-weight:700;}
+.bubble .bn{display:flex;gap:9px;margin:5px 0;align-items:flex-start;}
+.bubble .bnn{flex-shrink:0;min-width:20px;height:20px;background:#e8a912;color:#0a0800;font-size:10px;font-family:var(--mono);font-weight:800;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:3px;}
+.bubble code{font-family:var(--mono);font-size:11px;background:rgba(232,169,18,.1);padding:2px 8px;border-radius:4px;color:#e8a912;border:1px solid rgba(232,169,18,.2);}
+.bubble pre{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid #e8a912;border-radius:var(--rsm);padding:14px;margin:12px 0;overflow-x:auto;}
+.bubble pre code{background:none;padding:0;color:var(--t1);border:none;}
+.bubble table{width:100%;border-collapse:collapse;margin:14px 0;border-radius:8px;overflow:hidden;border:1px solid rgba(232,169,18,.2);}
+.bubble th{background:linear-gradient(135deg,rgba(232,169,18,.28),rgba(196,122,10,.18));color:#e8a912;padding:9px 13px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;border-bottom:1px solid rgba(232,169,18,.25);}
+.bubble td{padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;line-height:1.5;}
+.bubble tr:nth-child(even) td{background:rgba(255,255,255,.025);}
+.bubble a{color:#e8a912;text-decoration:none;}
 .bubble a:hover{text-decoration:underline;}
+.bubble .bq{border-left:3px solid #e8a912;padding:8px 14px;margin:10px 0;background:rgba(232,169,18,.05);border-radius:0 6px 6px 0;color:var(--t2);font-style:italic;}
 .macts{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
 .mact{font-size:10px;padding:3px 9px;background:var(--bg3);border:1px solid var(--bd);border-radius:5px;cursor:pointer;color:var(--t3);transition:all .2s;font-family:var(--mono);}
 .mact:hover{border-color:var(--bd2);color:var(--pu2);}
@@ -448,13 +450,14 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
 }
 @media(max-width:420px){
   .chat{padding:10px;}
-  .bubble{padding:10px 12px;font-size:12px;line-height:1.6;}
-  .bubble .bh{font-size:13px;margin:10px 0 4px;}
-  .bubble code{font-size:10px;padding:1px 4px;}
-  .bubble pre{padding:8px;font-size:10px;margin:8px 0;overflow-x:auto;}
-  .bubble table{font-size:10px;margin:8px 0;}
-  .bubble th{padding:4px 6px;font-size:9px;}
-  .bubble td{padding:4px 6px;font-size:10px;}
+  .bubble{padding:11px 13px;font-size:12.5px;line-height:1.75;}
+  .bubble .bh{font-size:13px;margin:12px 0 6px;padding:5px 10px;}
+  .bubble code{font-size:10px;padding:2px 5px;}
+  .bubble pre{padding:10px;font-size:10px;margin:10px 0;overflow-x:auto;}
+  .bubble table{font-size:11px;margin:10px 0;}
+  .bubble th{padding:6px 8px;font-size:9px;}
+  .bubble td{padding:6px 8px;font-size:11px;}
+  .bubble .bnn{min-width:18px;height:18px;font-size:9px;}
   .inzone{padding:8px 10px 10px;}
   .matrix-grid{grid-template-columns:repeat(2,1fr);}
   .wcuse{display:none;}
@@ -1108,7 +1111,17 @@ COUNCIL MODE: When boss says "council" or the job is multi-domain, 2-3 specialis
 
 FILE & IMAGE ANALYSIS: When a file or image is attached, ALWAYS analyze it fully. Describe what you see, extract key information, give your take. Never say you cannot read it — you can and you must.
 
-MEMORY: You remember the vault — ventures context, projects, knowledge. Reference it naturally. Save new intel when the boss shares it.`;
+MEMORY: You remember the vault — ventures context, projects, knowledge. Reference it naturally. Save new intel when the boss shares it.
+
+RESPONSE FORMAT — ALWAYS APPLY (non-voice mode):
+Structure every answer so the boss can scan fast and act immediately.
+- Use **bold** for every key term, number, decision point, or action item
+- Use ## Section Headers for multi-part answers
+- Use bullet lists (- ) for options, insights, pros/cons
+- Use numbered lists (1.) for ranked steps or sequences
+- Use tables for comparisons, pricing, data, side-by-sides
+- Add relevant emojis to headers and key bullets for visual clarity (💰 🎯 ⚡ 📊 🔥 ✅ ❌ 💡 🚀 etc.)
+- Never give a wall of text — always structure it so it looks premium and readable on mobile`;
 
 
 // ── APPLICATION STATE ──
@@ -1372,9 +1385,10 @@ function mdHtml(text) {
     if (ln.includes('|') && ln.trim().startsWith('|')) { if (!inTable) inTable = true; tableBuf.push(ln); continue; }
     else if (inTable) { html += mkTable(tableBuf); tableBuf = []; inTable = false; }
     if (/^#{1,3} /.test(ln)) { html += `<span class="bh">${inl(ln.replace(/^#{1,3} /, ''))}</span>`; continue; }
-    const nm = ln.match(/^(\d+)\. (.+)/); if (nm) { html += `<div class="bn"><span class="bnn">${nm[1]}.</span><span>${inl(nm[2])}</span></div>`; continue; }
-    const bm = ln.match(/^[-*•] (.+)/); if (bm) { html += `<div class="bl"><span class="bld">›</span><span>${inl(bm[1])}</span></div>`; continue; }
-    if (/^---+$/.test(ln.trim())) { html += `<hr style="border:none;border-top:1px solid var(--bd);margin:10px 0">`; continue; }
+    const nm = ln.match(/^(\d+)\. (.+)/); if (nm) { html += `<div class="bn"><span class="bnn">${nm[1]}</span><span>${inl(nm[2])}</span></div>`; continue; }
+    const bm = ln.match(/^[-*•] (.+)/); if (bm) { html += `<div class="bl"><span class="bld">▸</span><span>${inl(bm[1])}</span></div>`; continue; }
+    const qm = ln.match(/^> (.+)/); if (qm) { html += `<div class="bq">${inl(qm[1])}</div>`; continue; }
+    if (/^---+$/.test(ln.trim())) { html += `<hr style="border:none;border-top:1px solid rgba(232,169,18,.2);margin:14px 0">`; continue; }
     if (ln.trim() === '') { html += '<br>'; continue; }
     html += `<span>${inl(ln)}</span><br>`;
   }
@@ -2760,30 +2774,44 @@ async function saveAsPdf() {
   try {
     const el = document.getElementById('preview-content');
     if (!el) { toast('Nothing to export'); return; }
-    if (typeof html2pdf === 'undefined') { toast('PDF library not loaded'); return; }
+
+    // Wait up to 4s for html2pdf to finish loading from CDN
+    let waited = 0;
+    while (typeof html2pdf === 'undefined' && waited < 4000) {
+      await new Promise(r => setTimeout(r, 200));
+      waited += 200;
+    }
+    if (typeof html2pdf === 'undefined') { toast('PDF library not loaded — check connection'); return; }
 
     toast('Generating PDF…');
-    // Clone so we don't mutate the live DOM
     const clone = el.cloneNode(true);
-    // Strip images that cause CORS/canvas crashes — text content is preserved
     clone.querySelectorAll('img').forEach(img => {
       const ph = document.createElement('span');
       ph.textContent = '[image]';
       ph.style.cssText = 'color:#888;font-size:11px;font-style:italic;';
       img.replaceWith(ph);
     });
-    clone.style.cssText = 'background:#fff;color:#111;padding:20px;font-family:Arial,sans-serif;max-width:none;';
+    clone.style.cssText = 'background:#fff;color:#111;padding:24px;font-family:Arial,sans-serif;max-width:none;font-size:13px;line-height:1.75;';
 
-    await html2pdf().from(clone).set({
-      margin:     [12, 12, 12, 12],
-      filename:   currentPdfFilename || 'bvmbino-export.pdf',
-      image:      { type: 'jpeg', quality: 0.85 },
-      html2canvas:{ scale: 1, backgroundColor: '#ffffff', useCORS: false, allowTaint: true, logging: false },
-      jsPDF:      { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
-    }).save();
+    // Wrap in a sized container so html2canvas captures reliably
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'width:794px;background:#fff;';
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
 
-    toast('PDF Exported ✓');
-    closePreview();
+    try {
+      await html2pdf().from(wrapper).set({
+        margin:      [14, 14, 14, 14],
+        filename:    currentPdfFilename || 'bvmbino-export.pdf',
+        image:       { type: 'jpeg', quality: 0.92 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: false, allowTaint: true, logging: false, removeContainer: true },
+        jsPDF:       { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
+      }).save();
+      toast('PDF Exported ✓');
+      closePreview();
+    } finally {
+      document.body.removeChild(wrapper);
+    }
   } catch (err) {
     console.error('PDF export error:', err);
     toast('PDF failed — try again');
@@ -4347,21 +4375,33 @@ const App = {
         reader.readAsDataURL(file);
 
       } else if (file.type === 'application/pdf') {
-        // PDFs → read as text (best effort) or just attach as name reference
+        // PDFs → extract readable text runs (4+ consecutive printable chars)
         reader.onload = e => {
-          // PDF binary → extract readable chars for context
           const raw = new Uint8Array(e.target.result);
-          let text = '';
-          for (let i = 0; i < raw.length && text.length < 8000; i++) {
+          let text = '', run = '';
+          for (let i = 0; i < raw.length && text.length < 12000; i++) {
             const c = raw[i];
-            if (c >= 32 && c < 127) text += String.fromCharCode(c);
-            else if (c === 10 || c === 13) text += ' ';
+            if (c >= 32 && c < 127) {
+              run += String.fromCharCode(c);
+            } else {
+              if (run.length >= 4) text += run + ' ';
+              run = '';
+            }
           }
-          // Clean up PDF binary noise — keep readable stretches
-          text = text.replace(/[^\x20-\x7E ]/g, ' ').replace(/\s{3,}/g, '  ').trim();
+          if (run.length >= 4) text += run;
+          // Strip PDF internal syntax noise
+          text = text
+            .replace(/<<[^>]{0,200}>>/g, ' ')
+            .replace(/\/(Type|Subtype|Font|Page|Kids|Parent|MediaBox|Resources|Contents|Count|Width|Height|Filter|Length|BitsPerComponent|ColorSpace|Creator|Producer|CreationDate|ModDate|Trapped|Info|Root|Encrypt|ID)\b[^\/\n]{0,80}/g, ' ')
+            .replace(/\b(obj|endobj|stream|endstream|xref|trailer|startxref)\b/g, ' ')
+            .replace(/\s{3,}/g, ' ')
+            .trim()
+            .slice(0, 8000);
           state.attachedFiles.push({
             name: file.name, type: 'pdf', mimeType: file.type,
-            data: text.length > 100 ? text : `[PDF: ${file.name} — ${(file.size/1024).toFixed(0)}KB]`,
+            data: text.length > 200
+              ? `[PDF: ${file.name}]\n\nExtracted content:\n${text}`
+              : `[PDF File: ${file.name} — ${(file.size/1024).toFixed(0)}KB — This PDF uses encoded text streams. Describe what information you need from it and I'll help based on the filename and context.]`,
             preview: null,
           });
           this._renderFileStrip();
