@@ -472,6 +472,7 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
 
 /* ── kbhint ── */
 .kbhint{font-size:9px;color:var(--t3);opacity:.6;}
+@media(max-width:768px){.kbhint{display:none;}}
 /* ── rd2 var (referenced in voice modal) ── */
 :root{--rd2:rgba(239,68,68,.4);}
 /* ── Persona card names ── */
@@ -3061,11 +3062,11 @@ async function callAI() {
   for (const modelId of tryOrder) {
     try {
       let res;
-      const isGroq       = !modelId.includes('/') && (modelId.includes('llama') || modelId.includes('mixtral') || modelId.includes('gemma'));
+      const isCerebras   = keys.cerebras && (modelId === 'llama3.1-70b-versatile' || modelId.startsWith('llama3.'));
+      const isGroq       = !modelId.includes('/') && !isCerebras && (modelId.includes('llama') || modelId.includes('mixtral') || modelId.includes('gemma'));
       const isAnthropic  = modelId.includes('claude');
       const isOpenAI     = modelId.includes('gpt');
       const isMistral    = modelId.includes('mistral');
-      const isCerebras   = modelId.includes('llama3');
       const isGemini     = modelId.includes('gemini') && !modelId.includes('/');
       const isOpenRouter = modelId.includes('/');
 
@@ -3213,6 +3214,12 @@ async function callAI() {
       return;
 
     } catch (e) {
+      if (e.name === 'AbortError') {
+        hideTyping();
+        state.abortController = null;
+        window.__unlockUI?.();
+        return; // User cancelled — exit silently, no error message
+      }
       lastErr = e;
       console.warn(`[AI fallback] ${modelId}:`, e.message);
     }
