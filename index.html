@@ -472,6 +472,9 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
 
 /* ── kbhint ── */
 .kbhint{display:none;}
+/* ── Streaming cursor ── */
+.stream-cursor{display:inline-block;width:.5ch;animation:blink-cur .8s step-end infinite;color:var(--pu2);font-weight:bold;}
+@keyframes blink-cur{0%,100%{opacity:1}50%{opacity:0}}
 /* ── rd2 var (referenced in voice modal) ── */
 :root{--rd2:rgba(239,68,68,.4);}
 /* ── Persona card names ── */
@@ -891,6 +894,9 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
           <div class="key-row"><div class="key-lbl"><span>Gemini</span><span class="ksig" id="sig-gemini">⚪</span></div>
             <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-gemini" placeholder="AIza…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('gemini')">🗑️</button></div>
             <a class="key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">↗ aistudio.google.com</a></div>
+          <div class="key-row"><div class="key-lbl"><span>Jina AI (Web Search)</span><span class="ksig" id="sig-jina">⚪</span></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-jina" placeholder="jina_…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('jina')">🗑️</button></div>
+            <a class="key-link" href="https://jina.ai/" target="_blank" rel="noopener">↗ jina.ai (free tier — 10× better search)</a></div>
           <div style="display:flex;gap:6px;margin-top:6px">
             <button id="save-keys-btn" class="nbtn" style="flex:1">💾 Save Keys</button>
             <button id="purge-keys-btn" class="nbtn" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:var(--rd)">🗑️ Purge All</button>
@@ -1511,6 +1517,55 @@ function appendAiText(text, xtype) {
     } catch {}
     updateMemoryChip(text.slice(0, 100) + '...');
   }
+}
+
+// Creates a streaming bubble that can be updated chunk-by-chunk, then finalized
+function createStreamingBubble() {
+  const ci = document.getElementById('ci');
+  if (!ci) return null;
+  const mid = 'm' + Date.now();
+  const d = document.createElement('div');
+  d.className = 'mrow';
+  d.innerHTML = `
+    <div class="av av-ai">🤖</div>
+    <div class="mwrap">
+      <div class="mmeta ai-meta">Bvmbino AI <span class="mmtag">· ${esc(currentModelLabel())}</span></div>
+      <div class="bubble b-ai" id="sbub-${mid}"><span class="stream-cursor">▋</span></div>
+    </div>`;
+  ci.appendChild(d);
+  scrollToMsgTop(d);
+  const bubbleEl = d.querySelector('.bubble');
+  return {
+    mid,
+    update(text) {
+      bubbleEl.innerHTML = mdHtml(text) + '<span class="stream-cursor">▋</span>';
+      const chat = document.getElementById('chat');
+      if (chat) chat.scrollTop = chat.scrollHeight;
+    },
+    finalize(text, xtype) {
+      state.msgStore[mid] = { text, xtype };
+      const l = (text || '').toLowerCase();
+      let sug = '';
+      if (l.includes('sell') || l.includes('product')) sug = 'sales';
+      else if (l.includes('post') || l.includes('content')) sug = 'content';
+      else if (l.includes('legal')) sug = 'lex';
+      else if (l.includes('money') || l.includes('expense')) sug = 'budget';
+      else if (l.includes('strategy')) sug = 'strategy';
+      const sugHtml = sug ? `<div class="sugg-chip" onclick="window.slash && window.slash('${sug}')">✨ Suggestion: /${sug}</div>` : '';
+      bubbleEl.innerHTML = mdHtml(text) + (xtype ? xcard(xtype) : '') + sugHtml;
+      d.querySelector('.mwrap').appendChild(msgActions(mid));
+      scrollToMsgTop(d);
+      if (text && text.length > 50 && !xtype) {
+        try {
+          const mem = JSON.parse(localStorage.getItem('bv_memory') || '[]');
+          mem.unshift(text.slice(0, 90) + '…');
+          localStorage.setItem('bv_memory', JSON.stringify(mem.slice(0, 20)));
+        } catch {}
+        updateMemoryChip(text.slice(0, 100) + '...');
+      }
+    },
+    destroy() { d.remove(); }
+  };
 }
 
 function updateMemoryChip(insight) {
@@ -3025,6 +3080,9 @@ async function callAI() {
     });
   }
 
+  // Streaming ON for chat mode; OFF for voice (needs full text to speak) and Anthropic/Gemini
+  const useStream = !isVoice;
+
   let lastErr = null;
   for (const modelId of tryOrder) {
     try {
@@ -3036,6 +3094,8 @@ async function callAI() {
       const isMistral    = modelId.includes('mistral');
       const isGemini     = modelId.includes('gemini') && !modelId.includes('/');
       const isOpenRouter = modelId.includes('/');
+      // Streaming supported on OpenAI-format APIs only
+      const canStream    = useStream && (isGroq || isOpenAI || isOpenRouter);
 
       if (isAnthropic && keys.anthropic) {
         res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -3049,7 +3109,7 @@ async function callAI() {
         res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.groq },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: canStream }),
           signal,
         });
 
@@ -3057,7 +3117,7 @@ async function callAI() {
         res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.openai },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: false }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: canStream }),
           signal,
         });
 
@@ -3065,7 +3125,7 @@ async function callAI() {
         res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + keys.openrouter, 'HTTP-Referer': 'https://bvmbino.vercel.app', 'X-Title': 'Bvmbino AI' },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: canStream }),
           signal,
         });
 
@@ -3073,7 +3133,7 @@ async function callAI() {
         res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'HTTP-Referer': 'https://bvmbino.vercel.app', 'X-Title': 'Bvmbino AI' },
-          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok }),
+          body: JSON.stringify({ model: modelId, messages: [{ role: 'system', content: sys }, ...toOAIMsgs(cleanMsgs)], temperature: state.config.temp, max_tokens: maxTok, stream: canStream }),
           signal,
         });
 
@@ -3117,14 +3177,29 @@ async function callAI() {
         continue;
       }
 
-      const data = await res.json();
-      if (data.error && !data.content) {
-        lastErr = new Error(`${modelId}: ${data.error?.message || JSON.stringify(data.error)}`);
-        continue;
+      // ── Parse response: streaming or JSON ──
+      let reply, streamBubble = null;
+      if (canStream) {
+        let firstChunk = true;
+        reply = await _streamOpenAI(res, (accumulated) => {
+          if (firstChunk) { hideTyping(); streamBubble = createStreamingBubble(); firstChunk = false; }
+          streamBubble?.update(accumulated);
+        });
+        if (!reply && streamBubble) { streamBubble.destroy(); streamBubble = null; }
+      } else {
+        const data = await res.json();
+        if (data.error && !data.content) {
+          lastErr = new Error(`${modelId}: ${data.error?.message || JSON.stringify(data.error)}`);
+          continue;
+        }
+        reply = data.content?.[0]?.text || data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.reply || '';
       }
 
-      const reply = data.content?.[0]?.text || data.choices?.[0]?.message?.content || data.candidates?.[0]?.content?.parts?.[0]?.text || data.reply || '';
-      if (!reply.trim()) { lastErr = new Error(`${modelId}: empty response`); continue; }
+      if (!reply.trim()) {
+        streamBubble?.destroy();
+        lastErr = new Error(`${modelId}: empty response`);
+        continue;
+      }
 
       // ── Web tool loop: if AI wants to search/read, execute and re-call ──
       // In voice mode: execute silently (no UI changes) so Billy gets real data instantly
@@ -3132,6 +3207,7 @@ async function callAI() {
         const searchTags = [...reply.matchAll(/\[SEARCH:\s*([^\]]+)\]/gi)].map(m => m[1].trim());
         const readTags   = [...reply.matchAll(/\[READ:\s*(https?:\/\/[^\s\]]+)\]/gi)].map(m => m[1].trim());
         if (searchTags.length || readTags.length) {
+          streamBubble?.destroy(); // remove partial bubble that shows raw tags
           let webData = '';
           // In voice mode, suppress the "Web results ready" log so it stays completely silent
           const isSilent = isVoice;
@@ -3180,7 +3256,11 @@ async function callAI() {
       }
       state.msgs.push({ role: 'assistant', content: clean });
       if (state.msgs.length > 80) state.msgs.splice(0, state.msgs.length - 80); // cap history
-      appendAiText(clean, xtype);
+      if (streamBubble) {
+        streamBubble.finalize(clean, xtype);
+      } else {
+        appendAiText(clean, xtype);
+      }
       window.logFeed && window.logFeed('billy', clean.replace(/[#*_`]/g,'').slice(0, 90) + (clean.length > 90 ? '…' : ''));
       updTok(clean.length / 3.5);
       state.abortController = null;
@@ -3214,6 +3294,35 @@ async function callAI() {
   );
 }
 
+// ── STREAMING ──
+// Parse OpenAI-compatible SSE stream; calls onChunk(accumulatedText) for each text delta
+async function _streamOpenAI(response, onChunk) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '', full = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data: ')) continue;
+        const payload = trimmed.slice(6);
+        if (payload === '[DONE]') return full;
+        try {
+          const parsed = JSON.parse(payload);
+          const chunk = parsed.choices?.[0]?.delta?.content || '';
+          if (chunk) { full += chunk; onChunk(full); }
+        } catch {}
+      }
+    }
+  } finally { try { reader.releaseLock(); } catch {} }
+  return full;
+}
+
 // ── TOOLS ──
 // Safe AbortSignal with timeout — polyfill for browsers lacking AbortSignal.timeout()
 function _abortIn(ms) {
@@ -3231,10 +3340,12 @@ function _isBotWall(text) {
 // Read a URL with CAPTCHA detection and fallback chain
 async function readUrl(url) {
   if (!_isSafeExternalUrl(url)) return ''; // block private IPs / non-HTTPS
+  const _jinaKey = localStorage.getItem('bv_key_jina') || '';
+  const _jinaAuth = _jinaKey ? { 'Authorization': 'Bearer ' + _jinaKey } : {};
   // Primary: Jina reader
   try {
     const res = await fetch('https://r.jina.ai/' + url, {
-      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text' },
+      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text', ..._jinaAuth },
       signal: _abortIn(12000),
     });
     if (res.ok) {
@@ -3258,10 +3369,12 @@ async function readUrl(url) {
 
 // Web search — multi-backend with fallback chain
 async function webSearch(query) {
+  const _jinaKey = localStorage.getItem('bv_key_jina') || '';
+  const _jinaAuth = _jinaKey ? { 'Authorization': 'Bearer ' + _jinaKey } : {};
   // Primary: Jina Search API (s.jina.ai) — purpose-built web search, reliable, free
   try {
     const res = await fetch('https://s.jina.ai/' + encodeURIComponent(query), {
-      headers: { 'Accept': 'text/plain', 'X-Respond-With': 'no-references', 'X-Return-Format': 'text' },
+      headers: { 'Accept': 'text/plain', 'X-Respond-With': 'no-references', 'X-Return-Format': 'text', ..._jinaAuth },
       signal: _abortIn(6000),
     });
     if (res.ok) {
@@ -3274,7 +3387,7 @@ async function webSearch(query) {
   try {
     const ddgUrl = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
     const res = await fetch('https://r.jina.ai/' + ddgUrl, {
-      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text' },
+      headers: { 'Accept': 'text/plain', 'X-Return-Format': 'text', ..._jinaAuth },
       signal: _abortIn(5000),
     });
     if (res.ok) {
@@ -3867,7 +3980,7 @@ window.toggleSettings = (force) => {
   const isOpen = document.getElementById('settings-modal')?.classList.contains('open');
   App.toggleModal('settings-modal', force !== undefined ? !!force : !isOpen);
   if (!isOpen) { // reload keys on open
-    ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini'].forEach(p => {
+    ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina'].forEach(p => {
       const v = localStorage.getItem('bv_key_'+p) || localStorage.getItem('bvmbino_key_'+p) || '';
       const el = document.getElementById('key-'+p); if (el) el.value = v;
       if (typeof App !== 'undefined') App._updateKeySig && App._updateKeySig(p, !!v);
@@ -4061,14 +4174,14 @@ const App = {
     });
 
     this._on('save-keys-btn', 'click', () => {
-      ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini'].forEach(p => {
+      ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini', 'jina'].forEach(p => {
         const val = document.getElementById(`key-${p}`)?.value.trim();
         if (val) {
           localStorage.setItem(`bv_key_${p}`, val);
           localStorage.setItem(`bvmbino_key_${p}`, val); // legacy key compat
         }
       });
-      const saved = ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini'].filter(p => document.getElementById(`key-${p}`)?.value.trim());
+      const saved = ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini','jina'].filter(p => document.getElementById(`key-${p}`)?.value.trim());
       window.logFeed && window.logFeed('system', 'API keys saved: ' + (saved.length ? saved.join(', ') : 'none'));
       toast('API Keys Saved ✓');
       this.toggleModal('settings-modal', false);
@@ -4264,7 +4377,7 @@ const App = {
 
   // ── Seed forms from localStorage ─────────────────────────────
   _seedForms() {
-    ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini'].forEach(p => {
+    ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini', 'jina'].forEach(p => {
       const v = localStorage.getItem(`bv_key_${p}`) || localStorage.getItem(`bvmbino_key_${p}`) || '';
       const el = document.getElementById(`key-${p}`);
       if (el && v) el.value = v;
@@ -4628,7 +4741,7 @@ const App = {
 
   // ── Reload key fields from localStorage when settings opens ──
   _reloadKeyFields() {
-    ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini'].forEach(p => {
+    ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini','jina'].forEach(p => {
       const v = localStorage.getItem(`bv_key_${p}`) || localStorage.getItem(`bvmbino_key_${p}`) || '';
       const el = document.getElementById(`key-${p}`);
       if (el) el.value = v;
@@ -4764,7 +4877,7 @@ window.toggleSettings = (force) => {
   const isOpen = document.getElementById('settings-modal')?.classList.contains('open');
   App.toggleModal('settings-modal', force !== undefined ? !!force : !isOpen);
   if (!isOpen) { // reload keys on open
-    ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini'].forEach(p => {
+    ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina'].forEach(p => {
       const v = localStorage.getItem('bv_key_'+p) || localStorage.getItem('bvmbino_key_'+p) || '';
       const el = document.getElementById('key-'+p); if (el) el.value = v;
       if (typeof App !== 'undefined') App._updateKeySig && App._updateKeySig(p, !!v);
