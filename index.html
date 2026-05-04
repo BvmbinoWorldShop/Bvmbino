@@ -32,7 +32,7 @@
   --shadow:0 4px 24px rgba(0,0,0,.6);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{height:100dvh;overflow:hidden;}body{height:100dvh;overflow:hidden;}
+html{height:100%;}body{height:100%;overflow:hidden;}
 body{
   background:var(--bg);
   color:var(--t1);font-family:var(--mono);font-size:13px;display:flex;position:relative;
@@ -84,7 +84,7 @@ body::before{
 .mod-item:hover,.mod-item.on{border-color:var(--bd2);background:var(--pu3);color:var(--pu2);}
 .live-sig{width:6px;height:6px;border-radius:50%;background:var(--gn);flex-shrink:0;box-shadow:0 0 6px var(--gn);}
 
-.main{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.main{flex:1;display:flex;flex-direction:column;height:var(--app-height,100dvh);min-height:0;overflow:hidden;}
 .topbar{height:calc(var(--top-h) + env(safe-area-inset-top,0px));background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:flex-end;justify-content:space-between;padding:0 16px 10px;padding-top:env(safe-area-inset-top,0px);flex-shrink:0;gap:10px;}
 .tb-left{display:flex;align-items:center;gap:10px;min-width:0;}
 .tb-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
@@ -700,7 +700,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 </aside>
 
 <!-- ═══ MAIN ═══ -->
-<div id="offline-bar" style="display:none;background:#dc2626;color:#fff;text-align:center;font-size:11px;font-family:var(--mono);padding:5px 12px;position:fixed;top:0;left:0;right:0;z-index:9999;letter-spacing:.03em;">⚡ NO CONNECTION — Messages will send when you're back online</div>
+<div id="offline-bar" style="display:none"></div>
 <main class="main">
   <div class="topbar">
     <div class="tb-left">
@@ -942,6 +942,15 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
+// iOS viewport fix — window.innerHeight is the exact visible height (accounts for URL bar, home indicator)
+// CSS dvh/vh units do NOT reliably fill the screen on iPhone Safari; this JS approach does.
+(function(){
+  function _setAppH(){document.documentElement.style.setProperty('--app-height',window.innerHeight+'px');}
+  _setAppH();
+  window.addEventListener('resize',_setAppH);
+  window.addEventListener('orientationchange',function(){setTimeout(_setAppH,200);});
+})();
+
 // PDF.js: disable external worker to avoid iOS PWA CORS crash — runs in fake-worker mode on main thread
 if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = '';
@@ -2973,14 +2982,6 @@ async function send() {
 
 // ── CORE AI ──
 async function callAI() {
-  // Early exit when browser is offline — no point attempting API calls
-  if (!navigator.onLine) {
-    hideTyping();
-    appendAiText('**You\'re offline.** Connect to the internet and I\'ll be right back, Boss.', null);
-    window.__unlockUI?.();
-    return;
-  }
-
   // Abort any in-flight request before starting a new one
   if (state.abortController) { state.abortController.abort(); }
   state.abortController = new AbortController();
@@ -4093,17 +4094,6 @@ async function boot() {
   } catch(err) {
     console.error('❌ App.init() failed:', err);
   }
-
-  // ── Offline / Online banner ─────────────────────────────────────
-  const _offBar = document.getElementById('offline-bar');
-  const _setOffline = (isOffline) => {
-    if (_offBar) _offBar.style.display = isOffline ? 'block' : 'none';
-    if (isOffline) toast('⚡ No internet connection');
-    else toast('✅ Back online');
-  };
-  if (!navigator.onLine) _setOffline(true);
-  window.addEventListener('offline', () => _setOffline(true));
-  window.addEventListener('online',  () => _setOffline(false));
 }
 
 // ─────────────────────────────────────────────────────────────────
