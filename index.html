@@ -575,6 +575,16 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   box-shadow:0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(232,169,18,.08);
 }
 
+/* Avatar flip on slash command swap */
+@keyframes avatar-swap{
+  0%{transform:scale(1) rotateY(0deg);opacity:1;}
+  40%{transform:scale(.15) rotateY(90deg);opacity:0;}
+  60%{transform:scale(.15) rotateY(-90deg);opacity:0;}
+  100%{transform:scale(1) rotateY(0deg);opacity:1;}
+}
+.av{overflow:hidden;}
+.av.swapping{animation:avatar-swap .42s cubic-bezier(.22,1,.36,1) both;}
+
 /* ── kbhint ── */
 .kbhint{display:none;}
 /* ── Streaming cursor ── */
@@ -1609,6 +1619,18 @@ window.fireWebhook = async function(target, btn) {
   }
 };
 
+// Micro haptic — silent no-op when not supported
+function haptic(pattern){if(navigator&&navigator.vibrate){try{navigator.vibrate(pattern);}catch(e){}}}
+
+// Avatar HTML for active specialist (falls back to default bot)
+function skillAvatar(){
+  if(!state.activeSkill)return'🤖';
+  const sk=GRID_SKILLS.find(s=>s.id===state.activeSkill);
+  if(!sk)return'🤖';
+  if(sk.iconType==='img')return`<img src="${sk.icon}" alt="${sk.name}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
+  return sk.icon||'🤖';
+}
+
 function appendAiText(text, xtype) {
   const ci = document.getElementById('ci');
   if (!ci) return;
@@ -1627,14 +1649,14 @@ function appendAiText(text, xtype) {
   const d = document.createElement('div');
   d.className = 'mrow';
   d.innerHTML = `
-    <div class="av av-ai">🤖</div>
+    <div class="av av-ai">${skillAvatar()}</div>
     <div class="mwrap">
       <div class="mmeta ai-meta">Bvmbino AI <span class="mmtag">· ${esc(currentModelLabel())}</span></div>
       <div class="bubble b-ai">${mdHtml(text)}${xtype ? xcard(xtype) : ''}${sugHtml}</div>
     </div>`;
   d.querySelector('.mwrap').appendChild(msgActions(mid));
   ci.appendChild(d);
-  // Scroll so the TOP of Billy's new message is visible (not the bottom)
+  haptic(6);
   scrollToMsgTop(d);
 
   // Auto-update memory feed
@@ -1656,7 +1678,7 @@ function createStreamingBubble() {
   const d = document.createElement('div');
   d.className = 'mrow';
   d.innerHTML = `
-    <div class="av av-ai">🤖</div>
+    <div class="av av-ai">${skillAvatar()}</div>
     <div class="mwrap">
       <div class="mmeta ai-meta">Bvmbino AI <span class="mmtag">· ${esc(currentModelLabel())}</span></div>
       <div class="bubble b-ai" id="sbub-${mid}"><span class="stream-cursor">▋</span></div>
@@ -1683,6 +1705,7 @@ function createStreamingBubble() {
       const sugHtml = sug ? `<div class="sugg-chip" onclick="window.slash && window.slash('${sug}')">✨ Suggestion: /${sug}</div>` : '';
       bubbleEl.innerHTML = mdHtml(text) + (xtype ? xcard(xtype) : '') + sugHtml;
       d.querySelector('.mwrap').appendChild(msgActions(mid));
+      haptic(6);
       scrollToMsgTop(d);
       if (text && text.length > 50 && !xtype) {
         try {
@@ -1732,7 +1755,7 @@ function showTyping() {
   const d = document.createElement('div');
   d.id = 'type-row'; d.className = 'mrow';
   d.innerHTML = `
-    <div class="av av-ai">🤖</div>
+    <div class="av av-ai">${skillAvatar()}</div>
     <div class="mwrap">
       <div class="mmeta ai-meta">Bvmbino AI Council</div>
       <div class="bubble b-ai" style="font-style:italic;color:var(--t3);font-size:12px">
@@ -2658,6 +2681,15 @@ function slash(key) {
 
   const skill = GRID_SKILLS.find(s => s.id === key) || { name: key, persona: key };
   state.activeSkill = key;
+  haptic([12, 50, 12]);
+
+  // Animate all existing AI avatars to the new specialist
+  const newAv = skillAvatar();
+  document.querySelectorAll('.av-ai').forEach(el => {
+    el.classList.add('swapping');
+    setTimeout(() => { el.innerHTML = newAv; el.classList.remove('swapping'); }, 210);
+  });
+
   const p = PROMPTS[key] || '';
 
   // Build activation greeting — agent introduces themselves directly
@@ -3034,6 +3066,7 @@ async function send() {
   const _w = document.getElementById('welcome');
   if (_w) _w.style.display = 'none';
   window.logFeed && window.logFeed('user', raw.slice(0, 80) + (raw.length > 80 ? '…' : ''));
+  haptic(8);
   lock();
 
   try {
