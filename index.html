@@ -700,6 +700,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 </aside>
 
 <!-- ═══ MAIN ═══ -->
+<div id="offline-bar" style="display:none;background:#dc2626;color:#fff;text-align:center;font-size:11px;font-family:var(--mono);padding:5px 12px;position:sticky;top:0;z-index:9999;letter-spacing:.03em;">⚡ NO CONNECTION — Messages will send when you're back online</div>
 <main class="main">
   <div class="topbar">
     <div class="tb-left">
@@ -897,6 +898,9 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
           <div class="key-row"><div class="key-lbl"><span>Jina AI (Web Search)</span><span class="ksig" id="sig-jina">⚪</span></div>
             <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-jina" placeholder="jina_…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('jina')">🗑️</button></div>
             <a class="key-link" href="https://jina.ai/" target="_blank" rel="noopener">↗ jina.ai (free tier — 10× better search)</a></div>
+          <div class="key-row"><div class="key-lbl"><span>ElevenLabs (Premium Voice)</span><span class="ksig" id="sig-elevenlabs">⚪</span></div>
+            <div style="display:flex;gap:4px"><input class="set-input" type="password" id="key-elevenlabs" placeholder="sk_…" autocomplete="off"><button class="clr-btn" onclick="window.clearKey && window.clearKey('elevenlabs')">🗑️</button></div>
+            <a class="key-link" href="https://elevenlabs.io/" target="_blank" rel="noopener">↗ elevenlabs.io (free tier — studio-quality voice)</a></div>
           <div style="display:flex;gap:6px;margin-top:6px">
             <button id="save-keys-btn" class="nbtn" style="flex:1">💾 Save Keys</button>
             <button id="purge-keys-btn" class="nbtn" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.4);color:var(--rd)">🗑️ Purge All</button>
@@ -2969,6 +2973,14 @@ async function send() {
 
 // ── CORE AI ──
 async function callAI() {
+  // Early exit when browser is offline — no point attempting API calls
+  if (!navigator.onLine) {
+    hideTyping();
+    appendAiText('**You\'re offline.** Connect to the internet and I\'ll be right back, Boss.', null);
+    window.__unlockUI?.();
+    return;
+  }
+
   // Abort any in-flight request before starting a new one
   if (state.abortController) { state.abortController.abort(); }
   state.abortController = new AbortController();
@@ -3255,7 +3267,11 @@ async function callAI() {
         }
       }
       state.msgs.push({ role: 'assistant', content: clean });
-      if (state.msgs.length > 80) state.msgs.splice(0, state.msgs.length - 80); // cap history
+      if (state.msgs.length > 80) {
+        state.msgs.splice(0, state.msgs.length - 80); // cap history
+        toast('💭 Memory trimmed — earliest messages cleared to free context', 'info');
+        window.logFeed && window.logFeed('warn', 'History capped at 80 messages — oldest cleared');
+      }
       if (streamBubble) {
         streamBubble.finalize(clean, xtype);
       } else {
@@ -3770,6 +3786,37 @@ const BillyLive = (function() {
     }
   }
 
+  // ElevenLabs TTS — studio-quality voice, no iOS audio session conflict
+  async function _speakElevenLabs(text, onEnd, onFail) {
+    const key = localStorage.getItem('bv_key_elevenlabs') || '';
+    if (!key) { onFail(); return; }
+    try {
+      const isFR = currentLang.startsWith('fr');
+      // Default voice: Adam (natural English male). FR: use a different voice if available.
+      const voiceId = isFR ? 'pNInz6obpgDQGcFmaJgB' : 'pNInz6obpgDQGcFmaJgB'; // Adam for both; can be customised
+      const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'xi-api-key': key },
+        body: JSON.stringify({
+          text: text.slice(0, 1000),
+          model_id: 'eleven_turbo_v2_5',
+          voice_settings: { stability: 0.45, similarity_boost: 0.82, speed: isFR ? 1.05 : 1.1 },
+        }),
+        signal: _abortIn(12000),
+      });
+      if (!res.ok) { onFail(); return; }
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audio.onended = () => { URL.revokeObjectURL(url); onEnd(); };
+      audio.onerror = () => { URL.revokeObjectURL(url); onFail(); };
+      await audio.play();
+    } catch (e) {
+      console.warn('ElevenLabs TTS failed, falling back:', e.message);
+      onFail();
+    }
+  }
+
   // OpenAI TTS — ChatGPT-quality voice using tts-1 model
   async function _speakOpenAI(text, onEnd, onFail) {
     const key = localStorage.getItem('bv_key_openai') || localStorage.getItem('bvmbino_key_openai') || '';
@@ -3827,8 +3874,9 @@ const BillyLive = (function() {
       if (active) setTimeout(() => { if (active && !speaking) startListening(); }, isIOS ? 1000 : 600);
     };
 
-    // Try OpenAI TTS first (ChatGPT-quality neural voice) — fallback to browser TTS
-    _speakOpenAI(clean, done, () => {
+    // Priority: ElevenLabs → OpenAI TTS → browser SpeechSynthesis
+    // ElevenLabs and OpenAI both use Audio element — no iOS audio session conflict with SpeechRecognition
+    _speakElevenLabs(clean, done, () => { _speakOpenAI(clean, done, () => {
       const s = getSynth();
       if (!s) { ui('voice-status', 'TTS NOT SUPPORTED'); speaking = false; if (active) startListening(); return; }
       if (!isIOS) s.cancel();
@@ -3862,7 +3910,7 @@ const BillyLive = (function() {
 
       if (isIOS) doSpeak();
       else setTimeout(doSpeak, 150);
-    });
+    }); }); // close _speakOpenAI → _speakElevenLabs chain
   }
 
   function startListening() {
@@ -3980,7 +4028,7 @@ window.toggleSettings = (force) => {
   const isOpen = document.getElementById('settings-modal')?.classList.contains('open');
   App.toggleModal('settings-modal', force !== undefined ? !!force : !isOpen);
   if (!isOpen) { // reload keys on open
-    ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina'].forEach(p => {
+    ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina','elevenlabs'].forEach(p => {
       const v = localStorage.getItem('bv_key_'+p) || localStorage.getItem('bvmbino_key_'+p) || '';
       const el = document.getElementById('key-'+p); if (el) el.value = v;
       if (typeof App !== 'undefined') App._updateKeySig && App._updateKeySig(p, !!v);
@@ -4045,6 +4093,17 @@ async function boot() {
   } catch(err) {
     console.error('❌ App.init() failed:', err);
   }
+
+  // ── Offline / Online banner ─────────────────────────────────────
+  const _offBar = document.getElementById('offline-bar');
+  const _setOffline = (isOffline) => {
+    if (_offBar) _offBar.style.display = isOffline ? 'block' : 'none';
+    if (isOffline) toast('⚡ No internet connection');
+    else toast('✅ Back online');
+  };
+  if (!navigator.onLine) _setOffline(true);
+  window.addEventListener('offline', () => _setOffline(true));
+  window.addEventListener('online',  () => _setOffline(false));
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -4174,14 +4233,14 @@ const App = {
     });
 
     this._on('save-keys-btn', 'click', () => {
-      ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini', 'jina'].forEach(p => {
+      ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini', 'jina', 'elevenlabs'].forEach(p => {
         const val = document.getElementById(`key-${p}`)?.value.trim();
         if (val) {
           localStorage.setItem(`bv_key_${p}`, val);
           localStorage.setItem(`bvmbino_key_${p}`, val); // legacy key compat
         }
       });
-      const saved = ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini','jina'].filter(p => document.getElementById(`key-${p}`)?.value.trim());
+      const saved = ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini','jina','elevenlabs'].filter(p => document.getElementById(`key-${p}`)?.value.trim());
       window.logFeed && window.logFeed('system', 'API keys saved: ' + (saved.length ? saved.join(', ') : 'none'));
       toast('API Keys Saved ✓');
       this.toggleModal('settings-modal', false);
@@ -4377,7 +4436,7 @@ const App = {
 
   // ── Seed forms from localStorage ─────────────────────────────
   _seedForms() {
-    ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini', 'jina'].forEach(p => {
+    ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini', 'jina', 'elevenlabs'].forEach(p => {
       const v = localStorage.getItem(`bv_key_${p}`) || localStorage.getItem(`bvmbino_key_${p}`) || '';
       const el = document.getElementById(`key-${p}`);
       if (el && v) el.value = v;
@@ -4741,7 +4800,7 @@ const App = {
 
   // ── Reload key fields from localStorage when settings opens ──
   _reloadKeyFields() {
-    ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini','jina'].forEach(p => {
+    ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini','jina','elevenlabs'].forEach(p => {
       const v = localStorage.getItem(`bv_key_${p}`) || localStorage.getItem(`bvmbino_key_${p}`) || '';
       const el = document.getElementById(`key-${p}`);
       if (el) el.value = v;
@@ -4877,7 +4936,7 @@ window.toggleSettings = (force) => {
   const isOpen = document.getElementById('settings-modal')?.classList.contains('open');
   App.toggleModal('settings-modal', force !== undefined ? !!force : !isOpen);
   if (!isOpen) { // reload keys on open
-    ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina'].forEach(p => {
+    ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina','elevenlabs'].forEach(p => {
       const v = localStorage.getItem('bv_key_'+p) || localStorage.getItem('bvmbino_key_'+p) || '';
       const el = document.getElementById('key-'+p); if (el) el.value = v;
       if (typeof App !== 'undefined') App._updateKeySig && App._updateKeySig(p, !!v);
