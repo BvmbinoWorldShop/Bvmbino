@@ -454,7 +454,7 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble pre{padding:10px;font-size:11px;}
   /* Pin input bar to physical bottom — bypasses all iOS viewport height issues */
   .inzone{position:fixed;bottom:0;left:0;right:0;z-index:20;}
-  .chat{padding-bottom:140px;}
+  .chat{padding-bottom:var(--inzone-h,100px);}
 }
 @media(max-width:420px){
   .chat{padding:10px;}
@@ -949,9 +949,20 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 // CSS dvh/vh units do NOT reliably fill the screen on iPhone Safari; this JS approach does.
 (function(){
   function _setAppH(){document.documentElement.style.setProperty('--app-height',window.innerHeight+'px');}
-  _setAppH();
-  window.addEventListener('resize',_setAppH);
-  window.addEventListener('orientationchange',function(){setTimeout(_setAppH,200);});
+  function _setInzoneH(){
+    var iz=document.querySelector('.inzone');
+    if(iz)document.documentElement.style.setProperty('--inzone-h',iz.offsetHeight+'px');
+  }
+  function _tick(){_setAppH();_setInzoneH();}
+  _tick();
+  window.addEventListener('resize',_tick);
+  window.addEventListener('orientationchange',function(){setTimeout(_tick,200);});
+  // Track inzone size changes (file attached, textarea grows, etc.)
+  document.addEventListener('DOMContentLoaded',function(){
+    _setInzoneH();
+    var iz=document.querySelector('.inzone');
+    if(iz&&window.ResizeObserver)new ResizeObserver(_setInzoneH).observe(iz);
+  });
 })();
 
 // PDF.js: disable external worker to avoid iOS PWA CORS crash — runs in fake-worker mode on main thread
