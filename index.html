@@ -85,7 +85,7 @@ body::before{
 .live-sig{width:6px;height:6px;border-radius:50%;background:var(--gn);flex-shrink:0;box-shadow:0 0 6px var(--gn);}
 
 .main{flex:1;display:flex;flex-direction:column;height:var(--app-height,100dvh);min-height:0;overflow:hidden;}
-.topbar{height:var(--top-h);background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:flex-end;justify-content:space-between;padding:0 16px 10px;flex-shrink:0;gap:10px;}
+.topbar{height:calc(var(--top-h) + env(safe-area-inset-top,0px));background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:flex-end;justify-content:space-between;padding:0 16px 10px;padding-top:env(safe-area-inset-top,0px);flex-shrink:0;gap:10px;}
 .tb-left{display:flex;align-items:center;gap:10px;min-width:0;}
 .tb-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .mb-menu{display:none;background:none;border:1px solid var(--bd);color:var(--t2);width:32px;height:32px;border-radius:var(--rsm);cursor:pointer;font-size:14px;align-items:center;justify-content:center;transition:all .2s;}
