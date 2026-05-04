@@ -452,9 +452,10 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble table{font-size:11px;}
   .bubble th,.bubble td{padding:5px 8px;}
   .bubble pre{padding:10px;font-size:11px;}
-  /* Pin input bar to physical bottom — bypasses all iOS viewport height issues */
-  .inzone{position:fixed;bottom:0;left:0;right:0;z-index:20;}
-  .chat{padding-bottom:var(--inzone-h,100px);}
+  /* Main fills exact viewport — bypasses every iOS height/overflow issue */
+  .main{position:fixed;inset:0;display:flex;flex-direction:column;}
+  .chat{flex:1;min-height:0;overflow-y:auto;}
+  .inzone{flex-shrink:0;}
 }
 @media(max-width:420px){
   .chat{padding:10px;}
