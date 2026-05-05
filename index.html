@@ -304,7 +304,7 @@ body::before{
 .sbtn:hover{background:var(--pu2);}
 .sbtn:active{transform:scale(.95);}
 .sbtn:disabled{opacity:.4;cursor:not-allowed;}
-.infoot{display:flex;align-items:center;gap:6px;padding-top:1px;flex-wrap:wrap;}
+.infoot{display:flex;align-items:center;gap:6px;padding-top:7px;flex-wrap:wrap;}
 .pill{padding:3px 8px;border-radius:20px;font-size:9px;font-family:var(--head);font-weight:700;background:var(--bg3);border:1px solid var(--bd);color:var(--t3);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px;user-select:none;}
 .pill.on{border-color:var(--bd2);color:var(--pu2);background:var(--pu3);}
 .pill .pdot{width:5px;height:5px;border-radius:50%;background:currentColor;}
@@ -440,8 +440,11 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
 }
 
 @media(max-width:768px){
-  .sb{position:fixed;left:0;top:0;transform:translateX(-100%);z-index:200;}
+  /* Sidebar slides in BELOW the topbar so logo + settings are always accessible */
+  .sb{position:fixed;left:0;top:calc(var(--top-h) + env(safe-area-inset-top,0px));height:calc(100dvh - var(--top-h) - env(safe-area-inset-top,0px));transform:translateX(-100%);z-index:200;}
   .sb.open{transform:translateX(0);}
+  /* Overlay only dims the chat area below the topbar */
+  #ov{top:calc(var(--top-h) + env(safe-area-inset-top,0px));}
   .mpanel{position:fixed !important;right:0;top:0;z-index:200;transform:translateX(100%);}
   .mpanel.closed{transform:translateX(100%);}
   .mpanel:not(.closed){transform:translateX(0);}
@@ -455,7 +458,8 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   /* Main fills exact viewport — bypasses every iOS height/overflow issue */
   .main{position:fixed;inset:0;display:flex;flex-direction:column;}
   .chat{flex:1;min-height:0;overflow-y:auto;}
-  .inzone{flex-shrink:0;}
+  /* Inzone absorbs bottom safe area visually — no black gap, no content blocked */
+  .inzone{flex-shrink:0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));}
 }
 @media(max-width:420px){
   .chat{padding:10px;}
@@ -467,7 +471,7 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble th{padding:6px 8px;font-size:9px;}
   .bubble td{padding:6px 8px;font-size:11px;}
   .bubble .bnn{min-width:18px;height:18px;font-size:9px;}
-  .inzone{padding:4px 8px 6px;}
+  .inzone{padding:4px 8px calc(6px + env(safe-area-inset-bottom,0px));}
   .matrix-grid{grid-template-columns:repeat(2,1fr);}
   .wcuse{display:none;}
   .b-us,.b-ai{max-width:95vw;}
@@ -835,7 +839,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="welcome" id="welcome">
         <div class="w3d-scene">
           <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-          <div class="w3d-core">🤖</div>
+          <div class="w3d-core" style="overflow:hidden;font-size:0;"><img src="assets/specialists/billy_street.png" alt="Billy" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
         <div class="wsubtitle">AI AGENTS V.6.1</div>
@@ -1227,8 +1231,14 @@ INNER CIRCLE (bring them in naturally when relevant):
 - **Coach Doobs** (bestfriend, NBA Coach) — elite performance, training, basketball intel
 - **Papou** → sales, closing, GTM · **Lilly** → leads · **Yuki** → UX/funnels · **Sarah** → copy · **Malik** → content · **Chloé** → ads · **Kenzo** → automation
 
+CHIEF OF STAFF DECISION ENGINE:
+When Boss's request is complex or multi-domain, you decide who handles it:
+- "Bringing in [Name] for [reason] — [their response in their voice]"
+- Route to ONE specialist when the task is clear. Handle directly when it's quick strategy or conversation.
+- Council mode (when Boss says "council" or "what does the team think"): 2-3 specialists debate briefly → one concrete play.
+- When Boss says "done", "back to you", "merci", "ok billy", "c'est bon" → return to your own voice as Billy, confirm you're back in command.
+
 Pull in a specialist: "Bringing in [Name] — [one-line reason]." They respond in their own voice.
-Council mode (when Boss says "council"): 2-3 specialists debate briefly → one concrete play.
 
 RESPONSE FORMAT (non-voice):
 - **Bold** every key term, number, and action item
@@ -1577,6 +1587,7 @@ function xcard(type) {
     <div class="xbtns">
       <div class="xbtn" onclick="window.expLastMd && window.expLastMd()">↓ MD</div>
       <div class="xbtn" onclick="window.expLastPdf && window.expLastPdf()">↓ PDF</div>
+      <div class="xbtn" onclick="window.expLastHtml && window.expLastHtml()">↓ HTML</div>
       <div class="xbtn" onclick="window.copyLast && window.copyLast()">⎘ Copy</div>
       ${webhookBtns}
     </div>
@@ -1622,13 +1633,14 @@ window.fireWebhook = async function(target, btn) {
 // Micro haptic — silent no-op when not supported
 function haptic(pattern){if(navigator&&navigator.vibrate){try{navigator.vibrate(pattern);}catch(e){}}}
 
-// Avatar HTML for active specialist (falls back to default bot)
+// Avatar HTML for active specialist (falls back to Billy portrait)
 function skillAvatar(){
-  if(!state.activeSkill)return'🤖';
+  const billyImg=`<img src="assets/specialists/billy_street.png" alt="Billy" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
+  if(!state.activeSkill)return billyImg;
   const sk=GRID_SKILLS.find(s=>s.id===state.activeSkill);
-  if(!sk)return'🤖';
+  if(!sk)return billyImg;
   if(sk.iconType==='img')return`<img src="${sk.icon}" alt="${sk.name}" style="width:100%;height:100%;object-fit:cover;border-radius:7px;">`;
-  return sk.icon||'🤖';
+  return sk.icon||billyImg;
 }
 
 function appendAiText(text, xtype) {
@@ -2329,7 +2341,7 @@ function renderWelcome() {
       <div class="welcome" id="welcome">
         <div class="w3d-scene">
           <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-          <div class="w3d-core">🤖</div>
+          <div class="w3d-core" style="overflow:hidden;font-size:0;"><img src="assets/specialists/billy_street.png" alt="Billy" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
         <div class="wsubtitle">AI AGENTS V.6.1</div>
@@ -3098,6 +3110,18 @@ async function send() {
     const words = raw.trim().split(/\s+/).filter(Boolean);
     const tb = document.getElementById('tbtitle');
     if (tb) tb.textContent = words.slice(0, 5).join(' ') + (words.length > 5 ? '…' : '');
+
+    // "Back to Billy" — deactivate specialist, return to chief of staff
+    if (state.activeSkill && /\b(back to billy|give.*billy|let billy|done.*specialist|switch.*billy|billy.*back|billy.*take|reset agent|stop.*agent|deactivate|ok billy|hey billy|i want billy|talk to billy|c'est bon|merci|reviens billy|revenez billy)\b/i.test(raw)) {
+      state.activeSkill = null;
+      const billyAv = skillAvatar();
+      document.querySelectorAll('.av-ai').forEach(el => {
+        el.classList.add('swapping');
+        setTimeout(() => { el.innerHTML = billyAv; el.classList.remove('swapping'); }, 210);
+      });
+      haptic([8, 40, 8]);
+      toast('Billy back in charge');
+    }
 
     // Intent detection
     const intent = detectIntent(raw);
@@ -4194,6 +4218,7 @@ window.editMemoryTier = editMemoryTier;
 window.openSb         = openSb;
 window.send           = send;
 window.expLastPdf     = () => App.exportLastPdf();
+window.expLastHtml    = () => App.exportLastHtml();
 
 // ─────────────────────────────────────────────────────────────────
 //  BOOT — one-time startup, then delegates everything to App.init()
@@ -4932,6 +4957,15 @@ const App = {
     toast('Markdown downloaded ✓');
   },
 
+  exportLastHtml() {
+    const last = state.msgs.filter(m => m.role === 'assistant').pop();
+    if (!last) { toast('No content to export'); return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([buildExportHtml(last.content)], { type: 'text/html' }));
+    a.download = `bvmbino-${Date.now()}.html`; a.click();
+    toast('HTML downloaded ✓ — open in any browser');
+  },
+
   // ── Session history ───────────────────────────────────────────
   deleteSession(id) {
     // Delegate to the real deleteSession (store.js) — storeDeleteSession was undefined
@@ -5052,6 +5086,7 @@ window.expMsgPdf       = (mid)  => App.exportMsgPdf(mid);
 window.expMsgHtml      = (mid)  => App.exportMsgHtml(mid);
 window.expLastPdf      = ()     => App.exportLastPdf();
 window.expLastMd       = ()     => App.exportLastMd();
+window.expLastHtml     = ()     => App.exportLastHtml();
 
 // Files & media
 window.removeFile      = (idx)          => App.removeFile(idx);
