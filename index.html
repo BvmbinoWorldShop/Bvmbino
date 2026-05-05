@@ -28,7 +28,7 @@
   --gn:#22c55e;--rd:#ef4444;--am:#f59e0b;
   --t1:#f0e8d0;--t2:#9aa0b0;--t3:#5a6070;--t4:#3a404c;
   --mono:'Space Mono',monospace;--head:'Syne',sans-serif;
-  --r:10px;--rsm:6px;--top-h:44px;
+  --r:10px;--rsm:6px;--top-h:36px;
   --shadow:0 4px 24px rgba(0,0,0,.6);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -85,7 +85,7 @@ body::before{
 .live-sig{width:6px;height:6px;border-radius:50%;background:var(--gn);flex-shrink:0;box-shadow:0 0 6px var(--gn);}
 
 .main{flex:1;display:flex;flex-direction:column;height:var(--app-height,100dvh);min-height:0;overflow:hidden;}
-.topbar{height:calc(var(--top-h) + env(safe-area-inset-top,0px));background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:flex-end;justify-content:space-between;padding:0 16px 10px;padding-top:env(safe-area-inset-top,0px);flex-shrink:0;gap:10px;}
+.topbar{height:calc(var(--top-h) + env(safe-area-inset-top,0px));background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:flex-end;justify-content:space-between;padding:0 14px 6px;padding-top:env(safe-area-inset-top,0px);flex-shrink:0;gap:8px;}
 .tb-left{display:flex;align-items:center;gap:10px;min-width:0;}
 .tb-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .mb-menu{display:none;background:none;border:1px solid var(--bd);color:var(--t2);width:32px;height:32px;border-radius:var(--rsm);cursor:pointer;font-size:14px;align-items:center;justify-content:center;transition:all .2s;}
@@ -111,16 +111,16 @@ body::before{
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 .w3d-scene{position:relative;width:150px;height:150px;margin-bottom:24px;}
 .w3d-core{
-  position:absolute;inset:18px;
-  background:radial-gradient(circle at 38% 36%, rgba(255,200,66,.18) 0%, rgba(232,169,18,.08) 60%, transparent 100%);
-  border:2px solid var(--bd2);border-radius:50%;
+  position:absolute;inset:14px;
+  background:radial-gradient(circle at 38% 36%, rgba(80,160,255,.12) 0%, transparent 70%);
+  border:1.5px solid rgba(80,160,255,.35);border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:58px;
-  animation:spin-slow 10s linear infinite;
-  box-shadow:0 0 40px rgba(232,169,18,.25),0 0 80px rgba(232,169,18,.08);
+  font-size:58px;overflow:hidden;
+  animation:spin-slow 14s linear infinite;
+  box-shadow:0 0 30px rgba(80,160,255,.25),0 0 60px rgba(80,160,255,.08);
 }
 @keyframes spin-slow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-.w3d-ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(--bd2);animation:ring-pulse 3s ease infinite;}
+.w3d-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(80,160,255,.3);animation:ring-pulse 3s ease infinite;}
 .w3d-ring:nth-child(2){inset:-10px;animation-delay:.5s;opacity:.5;}
 .w3d-ring:nth-child(3){inset:-20px;animation-delay:1s;opacity:.25;}
 @keyframes ring-pulse{0%,100%{opacity:.8;transform:scale(1);}50%{opacity:.2;transform:scale(1.05);}}
@@ -440,30 +440,45 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
 }
 
 @media(max-width:768px){
-  /* Sidebar slides in BELOW the topbar so logo + settings are always accessible */
+  /* Left sidebar — below topbar so settings always accessible */
   .sb{position:fixed;left:0;top:calc(var(--top-h) + env(safe-area-inset-top,0px));height:calc(100dvh - var(--top-h) - env(safe-area-inset-top,0px));transform:translateX(-100%);z-index:200;}
   .sb.open{transform:translateX(0);}
-  /* Overlay only dims the chat area below the topbar */
-  #ov{top:calc(var(--top-h) + env(safe-area-inset-top,0px));}
-  .mpanel{position:fixed !important;right:0;top:0;z-index:200;transform:translateX(100%);}
+  /* Right memory panel — same: below topbar */
+  .mpanel{position:fixed !important;right:0;top:calc(var(--top-h) + env(safe-area-inset-top,0px));height:calc(100dvh - var(--top-h) - env(safe-area-inset-top,0px));z-index:200;transform:translateX(100%);}
   .mpanel.closed{transform:translateX(100%);}
   .mpanel:not(.closed){transform:translateX(0);}
+  /* Overlay only dims below topbar */
+  #ov{top:calc(var(--top-h) + env(safe-area-inset-top,0px));}
   .mb-menu{display:flex;}
   .in-meta{display:none;}
-  .matrix-grid{grid-template-columns:repeat(2,1fr);}
-  /* Table responsiveness on tablet */
+  /* 3-column grid → 6 agents visible at once */
+  .matrix-grid{grid-template-columns:repeat(3,1fr);gap:6px;}
+  /* Table responsiveness */
   .bubble table{font-size:11px;}
   .bubble th,.bubble td{padding:5px 8px;}
   .bubble pre{padding:10px;font-size:11px;}
-  /* Main fills exact viewport — bypasses every iOS height/overflow issue */
-  .main{position:fixed;inset:0;display:flex;flex-direction:column;}
+  /* Main — position:fixed fills screen; height:100dvh overrides --app-height so bottom:0 truly hits the edge */
+  .main{position:fixed;inset:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
   .chat{flex:1;min-height:0;overflow-y:auto;}
-  /* Inzone absorbs bottom safe area visually — no black gap, no content blocked */
+  /* Inzone: bottom safe area absorbed by padding so no black gap below */
   .inzone{flex-shrink:0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));}
+  /* Compact welcome header — more room for the 6-agent grid */
+  .w3d-scene{width:90px;height:90px;margin-bottom:10px;}
+  .wt{font-size:22px;letter-spacing:4px;margin-bottom:2px;}
+  .wsubtitle{font-size:9px;letter-spacing:3px;margin-bottom:6px;}
+  .ws{font-size:11px;margin-bottom:12px;max-width:100%;}
+  .skills-grid-label{margin-bottom:8px;}
+  .welcome{padding:10px 10px 10px;}
+  /* Compact specialist cards — fit 3×2 grid without overflow */
+  .wcard{min-height:0;aspect-ratio:unset;height:120px;}
+  .wcard-persona,.wcd,.wcard-cmd{display:none;}
+  .wcard-name{font-size:10px;letter-spacing:.1px;}
+  .wcard-body{padding:6px 6px 7px;}
+  .wcard-cat-dot{margin-bottom:3px;}
 }
 @media(max-width:420px){
-  .chat{padding:10px;}
-  .bubble{padding:11px 13px;font-size:12.5px;line-height:1.75;}
+  .chat{padding:8px;}
+  .bubble{padding:10px 12px;font-size:12.5px;line-height:1.75;}
   .bubble .bh{font-size:13px;margin:12px 0 6px;padding:5px 10px;}
   .bubble code{font-size:10px;padding:2px 5px;}
   .bubble pre{padding:10px;font-size:10px;margin:10px 0;overflow-x:auto;}
@@ -472,9 +487,11 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble td{padding:6px 8px;font-size:11px;}
   .bubble .bnn{min-width:18px;height:18px;font-size:9px;}
   .inzone{padding:4px 8px calc(6px + env(safe-area-inset-bottom,0px));}
-  .matrix-grid{grid-template-columns:repeat(2,1fr);}
   .wcuse{display:none;}
   .b-us,.b-ai{max-width:95vw;}
+  /* 3-col grid stays on small phones too, just tighter */
+  .matrix-grid{grid-template-columns:repeat(3,1fr);gap:4px;}
+  .wcard{height:110px;}
 }
 
 /* ── PREMIUM VISUAL UPGRADES ── */
@@ -839,7 +856,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="welcome" id="welcome">
         <div class="w3d-scene">
           <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-          <div class="w3d-core" style="overflow:hidden;font-size:0;"><img src="assets/specialists/billy_street.png" alt="Billy" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
+          <div class="w3d-core" style="overflow:hidden;font-size:0;background:radial-gradient(circle at 40% 30%,rgba(80,160,255,.18) 0%,transparent 70%);box-shadow:0 0 40px rgba(80,160,255,.2),0 0 80px rgba(80,160,255,.06);"><img src="assets/billy_robot.jpg" alt="BILLY" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;border-radius:50%;"></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
         <div class="wsubtitle">AI AGENTS V.6.1</div>
@@ -2341,7 +2358,7 @@ function renderWelcome() {
       <div class="welcome" id="welcome">
         <div class="w3d-scene">
           <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-          <div class="w3d-core" style="overflow:hidden;font-size:0;"><img src="assets/specialists/billy_street.png" alt="Billy" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
+          <div class="w3d-core" style="overflow:hidden;font-size:0;background:radial-gradient(circle at 40% 30%,rgba(80,160,255,.18) 0%,transparent 70%);box-shadow:0 0 40px rgba(80,160,255,.2),0 0 80px rgba(80,160,255,.06);"><img src="assets/billy_robot.jpg" alt="BILLY" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;border-radius:50%;"></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
         <div class="wsubtitle">AI AGENTS V.6.1</div>
