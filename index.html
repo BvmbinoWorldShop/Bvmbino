@@ -109,21 +109,24 @@ body::before{
   animation:fadeUp .6s ease both;
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-.w3d-scene{position:relative;width:150px;height:150px;margin-bottom:24px;}
+.w3d-scene{position:relative;width:160px;height:160px;margin-bottom:20px;}
 .w3d-core{
-  position:absolute;inset:14px;
-  background:radial-gradient(circle at 38% 36%, rgba(80,160,255,.12) 0%, transparent 70%);
-  border:1.5px solid rgba(80,160,255,.35);border-radius:50%;
+  position:absolute;inset:12px;
+  border:1.5px solid rgba(80,160,255,.4);border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:58px;overflow:hidden;
-  animation:spin-slow 14s linear infinite;
-  box-shadow:0 0 30px rgba(80,160,255,.25),0 0 60px rgba(80,160,255,.08);
+  animation:core-glow 4s ease-in-out infinite;
+  box-shadow:0 0 28px rgba(80,160,255,.35),0 0 56px rgba(80,160,255,.1),inset 0 0 20px rgba(80,160,255,.08);
+}
+@keyframes core-glow{
+  0%,100%{box-shadow:0 0 28px rgba(80,160,255,.35),0 0 56px rgba(80,160,255,.1),inset 0 0 20px rgba(80,160,255,.08);}
+  50%{box-shadow:0 0 45px rgba(80,160,255,.55),0 0 90px rgba(80,160,255,.18),inset 0 0 30px rgba(80,160,255,.14);}
 }
 @keyframes spin-slow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-.w3d-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(80,160,255,.3);animation:ring-pulse 3s ease infinite;}
-.w3d-ring:nth-child(2){inset:-10px;animation-delay:.5s;opacity:.5;}
-.w3d-ring:nth-child(3){inset:-20px;animation-delay:1s;opacity:.25;}
-@keyframes ring-pulse{0%,100%{opacity:.8;transform:scale(1);}50%{opacity:.2;transform:scale(1.05);}}
+.w3d-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(80,160,255,.35);animation:ring-orbit 8s linear infinite;}
+.w3d-ring:nth-child(2){inset:-12px;border-color:rgba(80,160,255,.2);animation-duration:12s;animation-direction:reverse;}
+.w3d-ring:nth-child(3){inset:-24px;border-color:rgba(80,160,255,.1);animation-duration:18s;}
+@keyframes ring-orbit{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 .wt{
   font-family:'Quantico',sans-serif;
   font-weight:700;
@@ -451,30 +454,17 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   #ov{top:calc(var(--top-h) + env(safe-area-inset-top,0px));}
   .mb-menu{display:flex;}
   .in-meta{display:none;}
-  /* 3-column grid → 6 agents visible at once */
-  .matrix-grid{grid-template-columns:repeat(3,1fr);gap:6px;}
+  /* Original 2-column grid */
+  .matrix-grid{grid-template-columns:repeat(2,1fr);}
   /* Table responsiveness */
   .bubble table{font-size:11px;}
   .bubble th,.bubble td{padding:5px 8px;}
   .bubble pre{padding:10px;font-size:11px;}
-  /* Main — position:fixed fills screen; height:100dvh overrides --app-height so bottom:0 truly hits the edge */
+  /* Main — height:100dvh overrides --app-height so bottom edge truly reaches screen edge on iOS PWA */
   .main{position:fixed;inset:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
   .chat{flex:1;min-height:0;overflow-y:auto;}
-  /* Inzone: bottom safe area absorbed by padding so no black gap below */
+  /* Inzone: bottom safe area absorbed by padding — no black gap */
   .inzone{flex-shrink:0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));}
-  /* Compact welcome header — more room for the 6-agent grid */
-  .w3d-scene{width:90px;height:90px;margin-bottom:10px;}
-  .wt{font-size:22px;letter-spacing:4px;margin-bottom:2px;}
-  .wsubtitle{font-size:9px;letter-spacing:3px;margin-bottom:6px;}
-  .ws{font-size:11px;margin-bottom:12px;max-width:100%;}
-  .skills-grid-label{margin-bottom:8px;}
-  .welcome{padding:10px 10px 10px;}
-  /* Compact specialist cards — fit 3×2 grid without overflow */
-  .wcard{min-height:0;aspect-ratio:unset;height:120px;}
-  .wcard-persona,.wcd,.wcard-cmd{display:none;}
-  .wcard-name{font-size:10px;letter-spacing:.1px;}
-  .wcard-body{padding:6px 6px 7px;}
-  .wcard-cat-dot{margin-bottom:3px;}
 }
 @media(max-width:420px){
   .chat{padding:8px;}
@@ -487,11 +477,9 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble td{padding:6px 8px;font-size:11px;}
   .bubble .bnn{min-width:18px;height:18px;font-size:9px;}
   .inzone{padding:4px 8px calc(6px + env(safe-area-inset-bottom,0px));}
+  .matrix-grid{grid-template-columns:repeat(2,1fr);}
   .wcuse{display:none;}
   .b-us,.b-ai{max-width:95vw;}
-  /* 3-col grid stays on small phones too, just tighter */
-  .matrix-grid{grid-template-columns:repeat(3,1fr);gap:4px;}
-  .wcard{height:110px;}
 }
 
 /* ── PREMIUM VISUAL UPGRADES ── */
@@ -856,7 +844,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="welcome" id="welcome">
         <div class="w3d-scene">
           <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-          <div class="w3d-core" style="overflow:hidden;font-size:0;background:radial-gradient(circle at 40% 30%,rgba(80,160,255,.18) 0%,transparent 70%);box-shadow:0 0 40px rgba(80,160,255,.2),0 0 80px rgba(80,160,255,.06);"><img src="assets/billy_robot.jpg" alt="BILLY" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;border-radius:50%;"></div>
+          <div class="w3d-core" style="overflow:hidden;font-size:0;"><img src="assets/billy_robot.jpg" alt="BILLY" style="width:130%;height:130%;object-fit:cover;object-position:center 20%;margin-left:-15%;margin-top:-10%;"></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
         <div class="wsubtitle">AI AGENTS V.6.1</div>
@@ -2358,7 +2346,7 @@ function renderWelcome() {
       <div class="welcome" id="welcome">
         <div class="w3d-scene">
           <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-          <div class="w3d-core" style="overflow:hidden;font-size:0;background:radial-gradient(circle at 40% 30%,rgba(80,160,255,.18) 0%,transparent 70%);box-shadow:0 0 40px rgba(80,160,255,.2),0 0 80px rgba(80,160,255,.06);"><img src="assets/billy_robot.jpg" alt="BILLY" style="width:100%;height:100%;object-fit:cover;object-position:center 30%;border-radius:50%;"></div>
+          <div class="w3d-core" style="overflow:hidden;font-size:0;"><img src="assets/billy_robot.jpg" alt="BILLY" style="width:130%;height:130%;object-fit:cover;object-position:center 20%;margin-left:-15%;margin-top:-10%;"></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
         <div class="wsubtitle">AI AGENTS V.6.1</div>
