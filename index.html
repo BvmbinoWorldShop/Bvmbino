@@ -457,11 +457,11 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble table{font-size:11px;}
   .bubble th,.bubble td{padding:5px 8px;}
   .bubble pre{padding:10px;font-size:11px;}
-  /* Main — height:100dvh overrides --app-height so bottom edge truly reaches screen edge on iOS PWA */
-  .main{position:fixed;inset:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+  /* Main — extends into the home indicator zone so inzone truly reaches the screen edge */
+  .main{position:fixed;top:0;left:0;right:0;height:calc(100dvh + env(safe-area-inset-bottom,34px));display:flex;flex-direction:column;overflow:hidden;}
   .chat{flex:1;min-height:0;overflow-y:auto;}
-  /* Inzone: no bottom safe area — content pushes to screen edge */
-  .inzone{flex-shrink:0;padding-bottom:6px;}
+  /* Inzone sits at the very bottom — minimal padding, no safe area gap */
+  .inzone{flex-shrink:0;padding-bottom:8px;}
 }
 @media(max-width:420px){
   .chat{padding:8px;}
