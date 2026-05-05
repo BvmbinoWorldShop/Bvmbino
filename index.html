@@ -109,24 +109,21 @@ body::before{
   animation:fadeUp .6s ease both;
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
-.w3d-scene{position:relative;width:160px;height:160px;margin-bottom:20px;}
+.w3d-scene{position:relative;width:150px;height:150px;margin-bottom:24px;}
 .w3d-core{
-  position:absolute;inset:12px;
-  border:1.5px solid rgba(80,160,255,.4);border-radius:50%;
+  position:absolute;inset:18px;
+  background:radial-gradient(circle at 38% 36%, rgba(255,200,66,.18) 0%, rgba(232,169,18,.08) 60%, transparent 100%);
+  border:2px solid var(--bd2);border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:58px;overflow:hidden;
-  animation:core-glow 4s ease-in-out infinite;
-  box-shadow:0 0 28px rgba(80,160,255,.35),0 0 56px rgba(80,160,255,.1),inset 0 0 20px rgba(80,160,255,.08);
-}
-@keyframes core-glow{
-  0%,100%{box-shadow:0 0 28px rgba(80,160,255,.35),0 0 56px rgba(80,160,255,.1),inset 0 0 20px rgba(80,160,255,.08);}
-  50%{box-shadow:0 0 45px rgba(80,160,255,.55),0 0 90px rgba(80,160,255,.18),inset 0 0 30px rgba(80,160,255,.14);}
+  font-size:58px;
+  animation:spin-slow 10s linear infinite;
+  box-shadow:0 0 40px rgba(232,169,18,.25),0 0 80px rgba(232,169,18,.08);
 }
 @keyframes spin-slow{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-.w3d-ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(80,160,255,.35);animation:ring-orbit 8s linear infinite;}
-.w3d-ring:nth-child(2){inset:-12px;border-color:rgba(80,160,255,.2);animation-duration:12s;animation-direction:reverse;}
-.w3d-ring:nth-child(3){inset:-24px;border-color:rgba(80,160,255,.1);animation-duration:18s;}
-@keyframes ring-orbit{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.w3d-ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(--bd2);animation:ring-pulse 3s ease infinite;}
+.w3d-ring:nth-child(2){inset:-10px;animation-delay:.5s;opacity:.5;}
+.w3d-ring:nth-child(3){inset:-20px;animation-delay:1s;opacity:.25;}
+@keyframes ring-pulse{0%,100%{opacity:.8;transform:scale(1);}50%{opacity:.2;transform:scale(1.05);}}
 .wt{
   font-family:'Quantico',sans-serif;
   font-weight:700;
@@ -463,8 +460,8 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   /* Main — height:100dvh overrides --app-height so bottom edge truly reaches screen edge on iOS PWA */
   .main{position:fixed;inset:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
   .chat{flex:1;min-height:0;overflow-y:auto;}
-  /* Inzone: bottom safe area absorbed by padding — no black gap */
-  .inzone{flex-shrink:0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));}
+  /* Inzone: no bottom safe area — content pushes to screen edge */
+  .inzone{flex-shrink:0;padding-bottom:6px;}
 }
 @media(max-width:420px){
   .chat{padding:8px;}
@@ -476,7 +473,7 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble th{padding:6px 8px;font-size:9px;}
   .bubble td{padding:6px 8px;font-size:11px;}
   .bubble .bnn{min-width:18px;height:18px;font-size:9px;}
-  .inzone{padding:4px 8px calc(6px + env(safe-area-inset-bottom,0px));}
+  .inzone{padding:4px 8px 6px;}
   .matrix-grid{grid-template-columns:repeat(2,1fr);}
   .wcuse{display:none;}
   .b-us,.b-ai{max-width:95vw;}
@@ -844,7 +841,22 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="welcome" id="welcome">
         <div class="w3d-scene">
           <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-          <div class="w3d-core" style="overflow:hidden;font-size:0;"><img src="assets/billy_robot.jpg" alt="BILLY" style="width:130%;height:130%;object-fit:cover;object-position:center 20%;margin-left:-15%;margin-top:-10%;"></div>
+          <div class="w3d-core"><svg width="72" height="72" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="15" y="28" width="70" height="54" rx="13" fill="#0a0800" stroke="#e8a912" stroke-width="1.5" stroke-opacity=".4"/>
+  <rect x="24" y="40" width="18" height="14" rx="5" fill="#e8a912" opacity=".9"/>
+  <rect x="58" y="40" width="18" height="14" rx="5" fill="#e8a912" opacity=".9"/>
+  <circle cx="33" cy="47" r="4" fill="#22c55e"/>
+  <circle cx="67" cy="47" r="4" fill="#22c55e"/>
+  <circle cx="33" cy="47" r="1.8" fill="#fff" opacity=".6"/>
+  <circle cx="67" cy="47" r="1.8" fill="#fff" opacity=".6"/>
+  <rect x="35" y="64" width="30" height="6" rx="3" fill="#e8a912" opacity=".75"/>
+  <rect x="39" y="13" width="22" height="17" rx="5" fill="#0a0800" stroke="#e8a912" stroke-width="2.5"/>
+  <circle cx="50" cy="7" r="4.5" fill="#e8a912"/>
+  <line x1="50" y1="7" x2="50" y2="13" stroke="#e8a912" stroke-width="2.5"/>
+  <rect x="2" y="46" width="13" height="9" rx="4.5" fill="#0a0800" stroke="#e8a912" stroke-width="2"/>
+  <rect x="85" y="46" width="13" height="9" rx="4.5" fill="#0a0800" stroke="#e8a912" stroke-width="2"/>
+  <rect x="26" y="57" width="48" height="3" rx="1.5" fill="#e8a912" opacity=".15"/>
+</svg></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
         <div class="wsubtitle">AI AGENTS V.6.1</div>
@@ -2346,7 +2358,22 @@ function renderWelcome() {
       <div class="welcome" id="welcome">
         <div class="w3d-scene">
           <div class="w3d-ring"></div><div class="w3d-ring"></div><div class="w3d-ring"></div>
-          <div class="w3d-core" style="overflow:hidden;font-size:0;"><img src="assets/billy_robot.jpg" alt="BILLY" style="width:130%;height:130%;object-fit:cover;object-position:center 20%;margin-left:-15%;margin-top:-10%;"></div>
+          <div class="w3d-core"><svg width="72" height="72" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="15" y="28" width="70" height="54" rx="13" fill="#0a0800" stroke="#e8a912" stroke-width="1.5" stroke-opacity=".4"/>
+  <rect x="24" y="40" width="18" height="14" rx="5" fill="#e8a912" opacity=".9"/>
+  <rect x="58" y="40" width="18" height="14" rx="5" fill="#e8a912" opacity=".9"/>
+  <circle cx="33" cy="47" r="4" fill="#22c55e"/>
+  <circle cx="67" cy="47" r="4" fill="#22c55e"/>
+  <circle cx="33" cy="47" r="1.8" fill="#fff" opacity=".6"/>
+  <circle cx="67" cy="47" r="1.8" fill="#fff" opacity=".6"/>
+  <rect x="35" y="64" width="30" height="6" rx="3" fill="#e8a912" opacity=".75"/>
+  <rect x="39" y="13" width="22" height="17" rx="5" fill="#0a0800" stroke="#e8a912" stroke-width="2.5"/>
+  <circle cx="50" cy="7" r="4.5" fill="#e8a912"/>
+  <line x1="50" y1="7" x2="50" y2="13" stroke="#e8a912" stroke-width="2.5"/>
+  <rect x="2" y="46" width="13" height="9" rx="4.5" fill="#0a0800" stroke="#e8a912" stroke-width="2"/>
+  <rect x="85" y="46" width="13" height="9" rx="4.5" fill="#0a0800" stroke="#e8a912" stroke-width="2"/>
+  <rect x="26" y="57" width="48" height="3" rx="1.5" fill="#e8a912" opacity=".15"/>
+</svg></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
         <div class="wsubtitle">AI AGENTS V.6.1</div>
@@ -3174,15 +3201,15 @@ async function callAI() {
   // Strip non-ISO-8859-1 chars that crash fetch() headers
   function sk(v) { return String(v||'').replace(/[^\x00-\xFF]/g,'').trim(); }
 
-  // Read all keys
+  // Read all keys — both bv_key_ prefix (current) and bvmbino_key_ prefix (legacy compat)
   const keys = {
     groq:        sk(localStorage.getItem('bv_key_groq')        || localStorage.getItem('bvmbino_key_groq')        || ''),
     anthropic:   sk(localStorage.getItem('bv_key_anthropic')   || localStorage.getItem('bvmbino_key_anthropic')   || ''),
     openai:      sk(localStorage.getItem('bv_key_openai')      || localStorage.getItem('bvmbino_key_openai')      || ''),
-    openrouter:  sk(localStorage.getItem('bv_key_openrouter')  || ''),
-    mistral:     sk(localStorage.getItem('bv_key_mistral')     || ''),
-    cerebras:    sk(localStorage.getItem('bv_key_cerebras')    || ''),
-    gemini:      sk(localStorage.getItem('bv_key_gemini')      || ''),
+    openrouter:  sk(localStorage.getItem('bv_key_openrouter')  || localStorage.getItem('bvmbino_key_openrouter')  || ''),
+    mistral:     sk(localStorage.getItem('bv_key_mistral')     || localStorage.getItem('bvmbino_key_mistral')     || ''),
+    cerebras:    sk(localStorage.getItem('bv_key_cerebras')    || localStorage.getItem('bvmbino_key_cerebras')    || ''),
+    gemini:      sk(localStorage.getItem('bv_key_gemini')      || localStorage.getItem('bvmbino_key_gemini')      || ''),
   };
 
   // Build try order — each key only unlocks its own provider
