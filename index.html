@@ -469,8 +469,8 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   /* Main — 100dvh = full screen on iOS PWA, body gradient already covers home indicator zone */
   .main{position:fixed;top:0;left:0;right:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
   .chat{flex:1;min-height:0;overflow-y:auto;}
-  /* Inzone transparent — pills sit just above home indicator, body gradient shows below through inzone */
-  .inzone{flex-shrink:0;padding-bottom:calc(env(safe-area-inset-bottom,34px) + 6px);}
+  /* Pills flush to the home indicator — gradient shows through below */
+  .inzone{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,20px);}
 }
 @media(max-width:420px){
   .chat{padding:8px;}
@@ -482,7 +482,7 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble th{padding:6px 8px;font-size:9px;}
   .bubble td{padding:6px 8px;font-size:11px;}
   .bubble .bnn{min-width:18px;height:18px;font-size:9px;}
-  .inzone{padding:4px 8px calc(env(safe-area-inset-bottom,34px) + 6px);}
+  .inzone{padding:4px 8px env(safe-area-inset-bottom,20px);}
   .matrix-grid{grid-template-columns:repeat(2,1fr);}
   .wcuse{display:none;}
   .b-us,.b-ai{max-width:95vw;}
@@ -1144,9 +1144,10 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
   });
 })();
 
-// PDF.js: disable external worker to avoid iOS PWA CORS crash — runs in fake-worker mode on main thread
+// PDF.js: point to matching CDN worker — required in v3.x (empty string breaks extraction)
 if (typeof pdfjsLib !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
 
@@ -4871,7 +4872,7 @@ const App = {
             }
             if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js not loaded');
 
-            const loadTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuf), disableWorker: true });
+            const loadTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuf) });
             const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error('PDF timeout')), 20000));
             const pdf = await Promise.race([loadTask.promise, timeoutP]);
             let text = '';
