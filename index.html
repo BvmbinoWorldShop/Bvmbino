@@ -470,7 +470,7 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .main{position:fixed;top:0;left:0;right:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
   .chat{flex:1;min-height:0;overflow-y:auto;}
   /* Pills flush to the home indicator — gradient shows through below */
-  .inzone{flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,20px);}
+  .inzone{flex-shrink:0;padding-bottom:4px;}
 }
 @media(max-width:420px){
   .chat{padding:8px;}
@@ -482,7 +482,7 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
   .bubble th{padding:6px 8px;font-size:9px;}
   .bubble td{padding:6px 8px;font-size:11px;}
   .bubble .bnn{min-width:18px;height:18px;font-size:9px;}
-  .inzone{padding:4px 8px env(safe-area-inset-bottom,20px);}
+  .inzone{padding:4px 8px 4px;}
   .matrix-grid{grid-template-columns:repeat(2,1fr);}
   .wcuse{display:none;}
   .b-us,.b-ai{max-width:95vw;}
@@ -3098,39 +3098,30 @@ async function saveAsPdf() {
 
     toast('Generating PDF…');
 
-    // Clone & strip images to prevent memory crash on mobile
-    const clone = el.cloneNode(true);
-    clone.querySelectorAll('img,video,canvas,svg').forEach(el => {
-      const ph = document.createElement('span');
-      ph.textContent = el.tagName === 'IMG' ? '[image]' : '[media]';
-      ph.style.cssText = 'color:#888;font-size:11px;font-style:italic;display:inline-block;margin:4px 0;';
-      el.replaceWith(ph);
-    });
-    clone.style.cssText = 'background:#fff;color:#111;padding:20px;font-family:Arial,sans-serif;max-width:none;font-size:12px;line-height:1.7;word-break:break-word;';
-
-    // Mobile uses scale:1 to avoid OOM crash; desktop gets scale:1.5 for quality
     const isMobile = window.innerWidth <= 768 || /iPhone|iPad|Android/i.test(navigator.userAgent);
     const pdfScale = isMobile ? 1 : 1.5;
 
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:740px;background:#fff;overflow:hidden;';
-    wrapper.appendChild(clone);
-    document.body.appendChild(wrapper);
+    // Clone, strip media, then pass as HTML string — avoids html2canvas blank-capture bug
+    // that occurs when rendering off-screen DOM nodes (position:fixed;left:-9999px)
+    const inner = el.cloneNode(true);
+    inner.querySelectorAll('img,video,canvas').forEach(m => {
+      const ph = document.createElement('span');
+      ph.textContent = m.tagName === 'IMG' ? '[image]' : '[media]';
+      ph.style.cssText = 'color:#888;font-size:11px;font-style:italic;display:inline-block;margin:4px 0;';
+      m.replaceWith(ph);
+    });
+    const htmlString = `<div style="background:#fff;color:#111;padding:20px;font-family:Arial,sans-serif;font-size:12px;line-height:1.7;word-break:break-word;width:700px;">${inner.innerHTML}</div>`;
 
-    try {
-      await html2pdf().from(wrapper).set({
-        margin:      [12, 12, 12, 12],
-        filename:    currentPdfFilename || 'bvmbino-export.pdf',
-        image:       { type: 'jpeg', quality: isMobile ? 0.75 : 0.88 },
-        html2canvas: { scale: pdfScale, backgroundColor: '#ffffff', useCORS: false, allowTaint: false, logging: false, removeContainer: true, imageTimeout: 0 },
-        jsPDF:       { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
-        pagebreak:   { mode: ['avoid-all'] },
-      }).save();
-      toast('PDF Exported ✓');
-      closePreview();
-    } finally {
-      if (document.body.contains(wrapper)) document.body.removeChild(wrapper);
-    }
+    await html2pdf().from(htmlString, 'string').set({
+      margin:      [12, 12, 12, 12],
+      filename:    currentPdfFilename || 'bvmbino-export.pdf',
+      image:       { type: 'jpeg', quality: isMobile ? 0.75 : 0.88 },
+      html2canvas: { scale: pdfScale, backgroundColor: '#ffffff', useCORS: false, allowTaint: false, logging: false },
+      jsPDF:       { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
+      pagebreak:   { mode: ['avoid-all'] },
+    }).save();
+    toast('PDF Exported ✓');
+    closePreview();
   } catch (err) {
     console.error('PDF export error:', err);
     toast('PDF export failed — try on desktop for large docs');
