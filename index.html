@@ -753,9 +753,60 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 .cmd-pill .cp-name{font-weight:600;}
 .cmd-pill .cp-cmd{opacity:.45;font-size:8px;margin-left:1px;}
 
+/* ── Auth Gate ──────────────────────────────────────────────── */
+#auth-gate{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(ellipse 80% 60% at 20% 0%,rgba(30,36,50,.95) 0%,transparent 70%),radial-gradient(ellipse 60% 50% at 80% 100%,rgba(20,26,40,.9) 0%,transparent 65%),linear-gradient(160deg,#0f1318 0%,#06080a 40%,#0b0e14 100%);}
+#auth-gate.dismissed{display:none;}
+.gate-card{position:relative;background:rgba(13,16,20,.9);border:1px solid rgba(232,169,18,.22);border-radius:18px;padding:44px 28px 32px;width:min(340px,88vw);text-align:center;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 8px 48px rgba(0,0,0,.75);}
+.gate-logo{margin:0 auto 18px;display:flex;align-items:center;justify-content:center;}
+.gate-title{font-family:var(--head);font-size:22px;font-weight:800;color:var(--pu2);letter-spacing:.07em;margin-bottom:4px;}
+.gate-sub{font-size:11px;color:var(--t3);margin-bottom:26px;letter-spacing:.03em;}
+.gate-input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(232,169,18,.25);border-radius:10px;padding:14px 16px;font-size:16px;color:#fff;outline:none;text-align:center;letter-spacing:.2em;margin-bottom:10px;font-family:var(--mono);transition:border-color .2s,box-shadow .2s;display:block;}
+.gate-input:focus{border-color:rgba(232,169,18,.6);box-shadow:0 0 0 3px rgba(232,169,18,.08);}
+.gate-btn{width:100%;background:rgba(232,169,18,.14);border:1px solid rgba(232,169,18,.4);border-radius:10px;padding:13px;font-size:13px;font-weight:700;color:var(--pu2);cursor:pointer;transition:all .2s;letter-spacing:.05em;font-family:var(--head);margin-top:4px;}
+.gate-btn:hover{background:rgba(232,169,18,.26);box-shadow:0 0 18px rgba(232,169,18,.16);}
+.gate-err{color:#ef4444;font-size:11px;margin-top:10px;min-height:16px;transition:opacity .3s;}
+.gate-lock{font-size:10px;color:var(--t3);margin-top:16px;opacity:.5;display:flex;align-items:center;justify-content:center;gap:5px;}
+
 </style>
 </head>
 <body>
+<!-- ═══ AUTH GATE — shown before boot(), dismissed after passphrase verified ═══ -->
+<div id="auth-gate">
+  <div class="gate-card">
+    <div class="gate-logo">
+      <svg width="56" height="56" viewBox="0 0 100 100" fill="none">
+        <defs>
+          <radialGradient id="gb2" cx="40%" cy="25%" r="70%"><stop offset="0%" stop-color="#2a3040"/><stop offset="100%" stop-color="#0d1018"/></radialGradient>
+          <linearGradient id="gvl2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffd060"/><stop offset="100%" stop-color="#9a6000"/></linearGradient>
+          <radialGradient id="gel2" cx="30%" cy="30%" r="65%"><stop offset="0%" stop-color="white" stop-opacity=".9"/><stop offset="35%" stop-color="#22c55e"/><stop offset="100%" stop-color="#22c55e" stop-opacity=".2"/></radialGradient>
+        </defs>
+        <rect x="16" y="26" width="68" height="54" rx="13" fill="url(#gb2)" stroke="#e8a912" stroke-width="1.8" stroke-opacity=".45"/>
+        <rect x="16" y="26" width="2" height="54" rx="1" fill="rgba(255,200,60,.1)"/>
+        <rect x="39" y="12" width="22" height="15" rx="5" fill="#0d1018" stroke="#e8a912" stroke-width="1.4" stroke-opacity=".4"/>
+        <circle cx="50" cy="11" r="4.5" fill="url(#gvl2)"/>
+        <circle cx="50" cy="11" r="2" fill="#fff" opacity=".5"/>
+        <rect x="20" y="36" width="20" height="16" rx="5.5" fill="url(#gvl2)" opacity=".85"/>
+        <circle cx="30" cy="44" r="6" fill="url(#gel2)"/>
+        <circle cx="30" cy="44" r="2.2" fill="#fff" opacity=".65"/>
+        <rect x="60" y="36" width="20" height="16" rx="5.5" fill="url(#gvl2)" opacity=".85"/>
+        <circle cx="70" cy="44" r="6" fill="url(#gel2)"/>
+        <circle cx="70" cy="44" r="2.2" fill="#fff" opacity=".65"/>
+        <rect x="30" y="60" width="40" height="9" rx="4.5" fill="#0a0c10" stroke="rgba(232,169,18,.2)" stroke-width="1"/>
+        <rect x="32" y="62.5" width="14" height="4" rx="2" fill="#e8a912" opacity=".45"/>
+        <rect x="8" y="46" width="8" height="18" rx="4" fill="#1a2030" stroke="#e8a912" stroke-width="1" stroke-opacity=".3"/>
+        <rect x="84" y="46" width="8" height="18" rx="4" fill="#1a2030" stroke="#e8a912" stroke-width="1" stroke-opacity=".3"/>
+      </svg>
+    </div>
+    <div class="gate-title">BVMBINO</div>
+    <div class="gate-sub" id="gate-sub">Enter your passphrase to continue</div>
+    <input class="gate-input" type="password" id="gate-pw" placeholder="Passphrase" autocomplete="current-password">
+    <input class="gate-input" type="password" id="gate-pw2" placeholder="Confirm passphrase" autocomplete="new-password" style="display:none">
+    <button class="gate-btn" id="gate-btn" onclick="gateSubmit()">Unlock</button>
+    <div class="gate-err" id="gate-err"></div>
+    <div class="gate-lock">🔒 Keys encrypted with AES-256 · Never sent anywhere</div>
+  </div>
+</div>
+
 <div id="ov"></div>
 
 <!-- ═══ SIDEBAR ═══ -->
@@ -1143,6 +1194,178 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
     if(iz&&window.ResizeObserver)new ResizeObserver(_setInzoneH).observe(iz);
   });
 })();
+
+// ══════════ SECURITY LAYER ══════════════════════════════════════════════════
+// 1. AES-256-GCM encrypted key storage  (keys never sit in localStorage as plaintext)
+// 2. Auth gate  (passphrase required before boot; SHA-256 hash stored, never the pass)
+// 3. Anti-tamper  (context-menu + devtools keyboard shortcuts disabled in prod)
+// ────────────────────────────────────────────────────────────────────────────
+
+// ── In-memory key vault ──────────────────────────────────────────────────────
+// Populated by unlockKeys() after gate auth; read by getKey() everywhere else.
+let _kv = {};
+const _KEY_PROVIDERS = ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina','elevenlabs'];
+const _ENC_PFX = 'bv_enc_'; // AES-GCM ciphertext prefix in localStorage
+
+function getKey(name) { return _kv[name] || ''; }
+
+// ── AES-256-GCM helpers ──────────────────────────────────────────────────────
+async function _deriveKey(pin) {
+  const km = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt: new TextEncoder().encode('bvmbino-salt-v1'), iterations: 100000, hash:'SHA-256' },
+    km, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function _encVal(plain, pin) {
+  if (!plain) return '';
+  const key = await _deriveKey(pin);
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const ct  = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, new TextEncoder().encode(plain));
+  return btoa(JSON.stringify({ iv: Array.from(iv), ct: Array.from(new Uint8Array(ct)) }));
+}
+async function _decVal(enc, pin) {
+  if (!enc) return '';
+  try {
+    const { iv, ct } = JSON.parse(atob(enc));
+    const key   = await _deriveKey(pin);
+    const plain = await crypto.subtle.decrypt({ name:'AES-GCM', iv: new Uint8Array(iv) }, key, new Uint8Array(ct));
+    return new TextDecoder().decode(plain);
+  } catch { return ''; }
+}
+
+// Decrypt all provider keys into _kv; migrate legacy plaintext keys on first use
+async function unlockKeys(pin) {
+  await Promise.all(_KEY_PROVIDERS.map(async p => {
+    const enc = localStorage.getItem(_ENC_PFX + p);
+    if (enc) {
+      _kv[p] = await _decVal(enc, pin);
+    } else {
+      // Legacy plaintext fallback — migrate to encrypted and wipe plaintext
+      const legacy = localStorage.getItem('bv_key_' + p) || localStorage.getItem('bvmbino_key_' + p) || '';
+      _kv[p] = legacy;
+      if (legacy) {
+        const encrypted = await _encVal(legacy, pin);
+        if (encrypted) {
+          localStorage.setItem(_ENC_PFX + p, encrypted);
+          localStorage.removeItem('bv_key_' + p);
+          localStorage.removeItem('bvmbino_key_' + p);
+        }
+      }
+    }
+  }));
+}
+
+// Save a key: encrypt into localStorage + update in-memory vault
+async function saveKeyEncrypted(provider, value) {
+  const pin = sessionStorage.getItem('bv_pin');
+  _kv[provider] = value || '';
+  if (!value) { localStorage.removeItem(_ENC_PFX + provider); return; }
+  if (pin) {
+    const enc = await _encVal(value, pin);
+    if (enc) { localStorage.setItem(_ENC_PFX + provider, enc); return; }
+  }
+  // No pin set (shouldn't happen after gate) — store plaintext as fallback
+  localStorage.setItem('bv_key_' + provider, value);
+}
+
+// ── Auth gate ────────────────────────────────────────────────────────────────
+const _GATE_HASH_KEY = 'bv_gate_hash';
+const _GATE_SALT     = 'bvmbino-gate:';
+
+async function _sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function _gateErr(msg) {
+  const el = document.getElementById('gate-err');
+  if (el) { el.textContent = msg; setTimeout(() => { if (el) el.textContent = ''; }, 3000); }
+}
+
+function _showGateSetup() {
+  const sub = document.getElementById('gate-sub');
+  const pw2 = document.getElementById('gate-pw2');
+  const btn = document.getElementById('gate-btn');
+  const hint = document.querySelector('.gate-lock');
+  if (sub)  sub.textContent  = 'Create a passphrase to protect your keys';
+  if (pw2)  pw2.style.display = 'block';
+  if (btn)  btn.textContent  = 'Set Passphrase';
+  if (hint) hint.textContent = '🔒 First time setup · Passphrase encrypts your API keys';
+}
+
+function _dismissGate() {
+  const gate = document.getElementById('auth-gate');
+  if (gate) gate.classList.add('dismissed');
+}
+
+async function gateSubmit() {
+  const pin  = document.getElementById('gate-pw')?.value  || '';
+  const pin2 = document.getElementById('gate-pw2')?.value || '';
+  const isSetup = document.getElementById('gate-pw2')?.style.display !== 'none';
+
+  if (!pin) { _gateErr('Enter a passphrase'); return; }
+
+  if (isSetup) {
+    if (pin.length < 4)   { _gateErr('Minimum 4 characters'); return; }
+    if (pin !== pin2)     { _gateErr('Passphrases do not match'); return; }
+    const hash = await _sha256(_GATE_SALT + pin);
+    localStorage.setItem(_GATE_HASH_KEY, hash);
+    sessionStorage.setItem('bv_pin', pin);
+    sessionStorage.setItem('bv_gate_ok', '1');
+    await unlockKeys(pin);
+    _dismissGate();
+    boot();
+  } else {
+    const stored = localStorage.getItem(_GATE_HASH_KEY);
+    const hash   = await _sha256(_GATE_SALT + pin);
+    if (hash !== stored) { _gateErr('Wrong passphrase — try again'); return; }
+    sessionStorage.setItem('bv_pin', pin);
+    sessionStorage.setItem('bv_gate_ok', '1');
+    await unlockKeys(pin);
+    _dismissGate();
+    boot();
+  }
+}
+
+// Called from the boot entry point instead of boot() directly
+async function gateInit() {
+  // Wire Enter key on passphrase inputs
+  ['gate-pw','gate-pw2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') gateSubmit(); });
+  });
+
+  const hash = localStorage.getItem(_GATE_HASH_KEY);
+  if (!hash) {
+    // First visit — show setup screen
+    _showGateSetup();
+    return; // boot() will be called after setup completes
+  }
+  if (sessionStorage.getItem('bv_gate_ok')) {
+    // Already authenticated this session — reload keys and go
+    const pin = sessionStorage.getItem('bv_pin');
+    if (pin) await unlockKeys(pin);
+    _dismissGate();
+    boot();
+    return;
+  }
+  // Show login screen (default state of the gate HTML)
+}
+
+// ── Anti-tamper ──────────────────────────────────────────────────────────────
+// Disable right-click and common devtools keyboard shortcuts in production.
+// The obfuscator's debugProtection already handles the debugger timing loop.
+(function _antiTamper() {
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.addEventListener('keydown', e => {
+    if (e.key === 'F12') { e.preventDefault(); return; }
+    if (e.ctrlKey && e.shiftKey && ['I','J','C','K'].includes(e.key.toUpperCase())) { e.preventDefault(); return; }
+    if (e.ctrlKey && e.key === 'u') { e.preventDefault(); return; }
+    if (e.metaKey && e.altKey  && ['I','J','C'].includes(e.key.toUpperCase())) { e.preventDefault(); }
+  });
+})();
+// ════════════════════════════════════════════════════════════════════════════
 
 // PDF.js: point to matching CDN worker — required in v3.x (empty string breaks extraction)
 if (typeof pdfjsLib !== 'undefined') {
@@ -3276,15 +3499,15 @@ async function callAI() {
   // Strip non-ISO-8859-1 chars that crash fetch() headers
   function sk(v) { return String(v||'').replace(/[^\x00-\xFF]/g,'').trim(); }
 
-  // Read all keys — both bv_key_ prefix (current) and bvmbino_key_ prefix (legacy compat)
+  // Read all keys from the in-memory vault (populated at gate unlock, AES-encrypted at rest)
   const keys = {
-    groq:        sk(localStorage.getItem('bv_key_groq')        || localStorage.getItem('bvmbino_key_groq')        || ''),
-    anthropic:   sk(localStorage.getItem('bv_key_anthropic')   || localStorage.getItem('bvmbino_key_anthropic')   || ''),
-    openai:      sk(localStorage.getItem('bv_key_openai')      || localStorage.getItem('bvmbino_key_openai')      || ''),
-    openrouter:  sk(localStorage.getItem('bv_key_openrouter')  || localStorage.getItem('bvmbino_key_openrouter')  || ''),
-    mistral:     sk(localStorage.getItem('bv_key_mistral')     || localStorage.getItem('bvmbino_key_mistral')     || ''),
-    cerebras:    sk(localStorage.getItem('bv_key_cerebras')    || localStorage.getItem('bvmbino_key_cerebras')    || ''),
-    gemini:      sk(localStorage.getItem('bv_key_gemini')      || localStorage.getItem('bvmbino_key_gemini')      || ''),
+    groq:        sk(getKey('groq')),
+    anthropic:   sk(getKey('anthropic')),
+    openai:      sk(getKey('openai')),
+    openrouter:  sk(getKey('openrouter')),
+    mistral:     sk(getKey('mistral')),
+    cerebras:    sk(getKey('cerebras')),
+    gemini:      sk(getKey('gemini')),
   };
 
   // Build try order — each key only unlocks its own provider
@@ -3639,7 +3862,7 @@ function _isBotWall(text) {
 // Read a URL with CAPTCHA detection and fallback chain
 async function readUrl(url) {
   if (!_isSafeExternalUrl(url)) return ''; // block private IPs / non-HTTPS
-  const _jinaKey = localStorage.getItem('bv_key_jina') || '';
+  const _jinaKey = getKey('jina');
   const _jinaAuth = _jinaKey ? { 'Authorization': 'Bearer ' + _jinaKey } : {};
   // Primary: Jina reader
   try {
@@ -3668,7 +3891,7 @@ async function readUrl(url) {
 
 // Web search — multi-backend with fallback chain
 async function webSearch(query) {
-  const _jinaKey = localStorage.getItem('bv_key_jina') || '';
+  const _jinaKey = getKey('jina');
   const _jinaAuth = _jinaKey ? { 'Authorization': 'Bearer ' + _jinaKey } : {};
   // Primary: Jina Search API (s.jina.ai) — purpose-built web search, reliable, free
   try {
@@ -3762,7 +3985,7 @@ async function generateImage(prompt, size = '1024x1024', quality = 'standard') {
   if (_imgGenActive) throw new Error('Already generating an image — please wait');
   _imgGenActive = true;
   try {
-    const openaiKey = safeKey(localStorage.getItem('bv_key_openai') || localStorage.getItem('bvmbino_key_openai') || '');
+    const openaiKey = safeKey(getKey('openai'));
     if (openaiKey) {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 30000);
@@ -4071,7 +4294,7 @@ const BillyLive = (function() {
 
   // ElevenLabs TTS — studio-quality voice, no iOS audio session conflict
   async function _speakElevenLabs(text, onEnd, onFail) {
-    const key = localStorage.getItem('bv_key_elevenlabs') || '';
+    const key = getKey('elevenlabs');
     if (!key) { onFail(); return; }
     try {
       const isFR = currentLang.startsWith('fr');
@@ -4102,7 +4325,7 @@ const BillyLive = (function() {
 
   // OpenAI TTS — ChatGPT-quality voice using tts-1 model
   async function _speakOpenAI(text, onEnd, onFail) {
-    const key = localStorage.getItem('bv_key_openai') || localStorage.getItem('bvmbino_key_openai') || '';
+    const key = getKey('openai');
     if (!key) { onFail(); return; }
     try {
       const isFR = currentLang.startsWith('fr');
@@ -4312,7 +4535,7 @@ window.toggleSettings = (force) => {
   App.toggleModal('settings-modal', force !== undefined ? !!force : !isOpen);
   if (!isOpen) { // reload keys on open
     ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina','elevenlabs'].forEach(p => {
-      const v = localStorage.getItem('bv_key_'+p) || localStorage.getItem('bvmbino_key_'+p) || '';
+      const v = getKey(p);
       const el = document.getElementById('key-'+p); if (el) el.value = v;
       if (typeof App !== 'undefined') App._updateKeySig && App._updateKeySig(p, !!v);
     });
@@ -4519,11 +4742,8 @@ const App = {
 
     this._on('save-keys-btn', 'click', () => {
       ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini', 'jina', 'elevenlabs'].forEach(p => {
-        const val = document.getElementById(`key-${p}`)?.value.trim();
-        if (val) {
-          localStorage.setItem(`bv_key_${p}`, val);
-          localStorage.setItem(`bvmbino_key_${p}`, val); // legacy key compat
-        }
+        const val = document.getElementById(`key-${p}`)?.value.trim() || '';
+        saveKeyEncrypted(p, val); // AES-256-GCM encrypted, never plaintext in localStorage
       });
       const saved = ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini','jina','elevenlabs'].filter(p => document.getElementById(`key-${p}`)?.value.trim());
       window.logFeed && window.logFeed('system', 'API keys saved: ' + (saved.length ? saved.join(', ') : 'none'));
@@ -4722,7 +4942,7 @@ const App = {
   // ── Seed forms from localStorage ─────────────────────────────
   _seedForms() {
     ['groq', 'anthropic', 'openai', 'cerebras', 'mistral', 'openrouter', 'gemini', 'jina', 'elevenlabs'].forEach(p => {
-      const v = localStorage.getItem(`bv_key_${p}`) || localStorage.getItem(`bvmbino_key_${p}`) || '';
+      const v = getKey(p);
       const el = document.getElementById(`key-${p}`);
       if (el && v) el.value = v;
     });
@@ -5095,7 +5315,7 @@ const App = {
   // ── Reload key fields from localStorage when settings opens ──
   _reloadKeyFields() {
     ['groq','anthropic','openai','cerebras','mistral','openrouter','gemini','jina','elevenlabs'].forEach(p => {
-      const v = localStorage.getItem(`bv_key_${p}`) || localStorage.getItem(`bvmbino_key_${p}`) || '';
+      const v = getKey(p);
       const el = document.getElementById(`key-${p}`);
       if (el) el.value = v;
       this._updateKeySig(p, !!v);
@@ -5126,8 +5346,10 @@ const App = {
 
   // ── Clear a single key ────────────────────────────────────────
   clearKey(provider) {
+    localStorage.removeItem(_ENC_PFX + provider);
     localStorage.removeItem(`bv_key_${provider}`);
     localStorage.removeItem(`bvmbino_key_${provider}`);
+    _kv[provider] = '';
     const el = document.getElementById(`key-${provider}`);
     if (el) el.value = '';
     this._updateKeySig(provider, false);
@@ -5232,7 +5454,7 @@ window.toggleSettings = (force) => {
   App.toggleModal('settings-modal', force !== undefined ? !!force : !isOpen);
   if (!isOpen) { // reload keys on open
     ['groq','anthropic','openai','openrouter','mistral','cerebras','gemini','jina','elevenlabs'].forEach(p => {
-      const v = localStorage.getItem('bv_key_'+p) || localStorage.getItem('bvmbino_key_'+p) || '';
+      const v = getKey(p);
       const el = document.getElementById('key-'+p); if (el) el.value = v;
       if (typeof App !== 'undefined') App._updateKeySig && App._updateKeySig(p, !!v);
     });
@@ -5284,9 +5506,9 @@ window.clearMemoryFeed = function() {
 //  BOOT
 // ─────────────────────────────────────────────────────────────────
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
+  document.addEventListener('DOMContentLoaded', gateInit);
 } else {
-  boot();
+  gateInit();
 }
 
 

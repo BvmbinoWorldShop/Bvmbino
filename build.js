@@ -37,24 +37,32 @@ html = html.replace(/<script(?![^>]*\bsrc\b)[^>]*>([\s\S]*?)<\/script>/gi, (matc
   try {
     const result = JavaScriptObfuscator.obfuscate(code, {
       compact: true,
-      controlFlowFlattening: false,       // keep it fast on mobile
+      controlFlowFlattening: false,
       deadCodeInjection: false,
-      debugProtection: true,              // breaks devtools pause
-      debugProtectionInterval: 2000,      // re-triggers every 2s
-      disableConsoleOutput: true,         // silences console.log in prod
+      debugProtection: true,
+      debugProtectionInterval: 2000,
+      disableConsoleOutput: true,
       identifierNamesGenerator: 'hexadecimal',
       log: false,
-      renameGlobals: false,               // don't rename window/document refs
-      selfDefending: true,                // code resists reformatting
+      numbersToExpressions: true,
+      renameGlobals: false,
+      selfDefending: true,
+      simplify: true,
+      splitStrings: true,
+      splitStringsChunkLength: 10,
       stringArray: true,
       stringArrayCallsTransform: true,
+      stringArrayCallsTransformThreshold: 0.75,
       stringArrayEncoding: ['base64'],
       stringArrayIndexShift: true,
       stringArrayRotate: true,
       stringArrayShuffle: true,
-      stringArrayWrappersCount: 2,
+      stringArrayThreshold: 0.85,
+      stringArrayWrappersCount: 3,
       stringArrayWrappersChainedCalls: true,
-      unicodeEscapeSequence: false,       // avoid bloat on mobile
+      stringArrayWrappersParametersMaxCount: 3,
+      transformObjectKeys: true,
+      unicodeEscapeSequence: false,
     });
     return `<script>${result.getObfuscatedCode()}</script>`;
   } catch (err) {
