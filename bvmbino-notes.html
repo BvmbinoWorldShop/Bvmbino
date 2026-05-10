@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bvmbino Pro — Project Notes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --gold: #e8a912;
+    --gold-light: #ffd060;
+    --dark: #06080a;
+    --card: #0f1318;
+    --border: rgba(232,169,18,.2);
+    --text: #d4d8e0;
+    --muted: #6b7280;
+    --green: #22c55e;
+    --red: #ef4444;
+    --blue: #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    color: #111;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* ── Cover page ── */
+  .cover {
+    background: linear-gradient(160deg, #0f1318 0%, #06080a 40%, #0b0e14 70%, #0f1218 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+  }
+  .cover-robot { margin-bottom: 32px; }
+  .cover-badge {
+    display: inline-block;
+    border: 1px solid rgba(232,169,18,.35);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--gold);
+    margin-bottom: 20px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .cover h1 {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--gold-light);
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+  }
+  .cover h2 {
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(255,255,255,.45);
+    letter-spacing: .04em;
+    margin-bottom: 48px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .cover-meta-item { text-align: center; }
+  .cover-meta-item .label {
+    font-size: 9px;
+    letter-spacing: .1em;
+    color: rgba(255,255,255,.3);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .cover-meta-item .value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .cover-line {
+    width: 60px;
+    height: 1px;
+    background: rgba(232,169,18,.3);
+    margin: 36px auto;
+  }
+  .cover-footer {
+    font-size: 10px;
+    color: rgba(255,255,255,.2);
+    letter-spacing: .08em;
+  }
+
+  /* ── Content pages ── */
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 56px 48px;
+  }
+
+  /* section break for print */
+  .page-break { page-break-before: always; }
+
+  /* ── Typography ── */
+  h3 {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f1318;
+    margin-bottom: 6px;
+    margin-top: 40px;
+    letter-spacing: -.01em;
+  }
+  h3:first-child { margin-top: 0; }
+  h3 .num {
+    display: inline-block;
+    background: #0f1318;
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-right: 10px;
+    letter-spacing: .04em;
+    vertical-align: middle;
+  }
+  h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 20px 0 8px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  p { margin-bottom: 10px; color: #2d2d2d; }
+  .lead {
+    font-size: 15px;
+    color: #333;
+    margin-bottom: 28px;
+    line-height: 1.8;
+  }
+
+  /* ── Divider ── */
+  hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 32px 0;
+  }
+
+  /* ── Section header bar ── */
+  .section-bar {
+    background: #0f1318;
+    color: var(--gold);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-bar .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #111;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .tag {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #111;
+    color: var(--gold);
+  }
+  .card-title .tag.green { background: #dcfce7; color: #15803d; }
+  .card-title .tag.blue  { background: #dbeafe; color: #1d4ed8; }
+  .card-title .tag.red   { background: #fee2e2; color: #b91c1c; }
+  .card-body { font-size: 12px; color: #4b5563; line-height: 1.65; }
+
+  /* ── Two-col grid ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Code block ── */
+  pre {
+    background: #0f1318;
+    color: #d4d8e0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: #f3f4f6;
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: #374151;
+  }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 12px;
+  }
+  th {
+    background: #0f1318;
+    color: var(--gold);
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: .06em;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #374151;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  /* ── Priority badges ── */
+  .prio {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .prio-1 { background: #fee2e2; color: #b91c1c; }
+  .prio-2 { background: #fef3c7; color: #92400e; }
+  .prio-3 { background: #dcfce7; color: #15803d; }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid var(--gold);
+    background: #fffbeb;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 12px;
+    color: #374151;
+  }
+  .callout.info  { border-color: #3b82f6; background: #eff6ff; }
+  .callout.warn  { border-color: #f59e0b; background: #fffbeb; }
+  .callout.good  { border-color: #22c55e; background: #f0fdf4; }
+  .callout.bad   { border-color: #ef4444; background: #fef2f2; }
+  .callout strong { display: block; margin-bottom: 4px; color: #111; }
+
+  /* ── Print ── */
+  @media print {
+    body { font-size: 12px; }
+    .cover { min-height: auto; padding: 80px 60px; }
+    .page { padding: 40px 48px; }
+    .no-print { display: none; }
+  }
+
+  /* ── Print button ── */
+  .print-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #0f1318;
+    color: var(--gold);
+    border: 1px solid rgba(232,169,18,.4);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: .04em;
+    z-index: 100;
+  }
+  .print-btn:hover { background: #1a2030; }
+  @media print { .print-btn { display: none; } }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">Save as PDF</button>
+
+<!-- ═══════════════════════════ COVER ═══════════════════════════ -->
+<div class="cover">
+  <div class="cover-robot">
+    <svg width="90" height="90" viewBox="0 0 100 100" fill="none">
+      <defs>
+        <radialGradient id="rb" cx="40%" cy="25%" r="70%"><stop offset="0%" stop-color="#2a3040"/><stop offset="100%" stop-color="#0d1018"/></radialGradient>
+        <linearGradient id="rvl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffd060"/><stop offset="100%" stop-color="#9a6000"/></linearGradient>
+        <radialGradient id="rel" cx="30%" cy="30%" r="65%"><stop offset="0%" stop-color="white" stop-opacity=".9"/><stop offset="35%" stop-color="#22c55e"/><stop offset="100%" stop-color="#22c55e" stop-opacity=".2"/></radialGradient>
+      </defs>
+      <rect x="14" y="24" width="72" height="56" rx="14" fill="url(#rb)" stroke="#e8a912" stroke-width="2" stroke-opacity=".5"/>
+      <rect x="14" y="24" width="2.5" height="56" rx="1.2" fill="rgba(255,200,60,.12)"/>
+      <rect x="37" y="10" width="26" height="16" rx="6" fill="#0d1018" stroke="#e8a912" stroke-width="1.5" stroke-opacity=".4"/>
+      <circle cx="50" cy="9" r="5" fill="url(#rvl)"/>
+      <circle cx="50" cy="9" r="2.2" fill="#fff" opacity=".5"/>
+      <rect x="17" y="33" width="22" height="18" rx="6" fill="url(#rvl)" opacity=".9"/>
+      <circle cx="28" cy="42" r="7" fill="url(#rel)"/>
+      <circle cx="28" cy="42" r="2.5" fill="#fff" opacity=".7"/>
+      <rect x="61" y="33" width="22" height="18" rx="6" fill="url(#rvl)" opacity=".9"/>
+      <circle cx="72" cy="42" r="7" fill="url(#rel)"/>
+      <circle cx="72" cy="42" r="2.5" fill="#fff" opacity=".7"/>
+      <rect x="28" y="59" width="44" height="10" rx="5" fill="#0a0c10" stroke="rgba(232,169,18,.25)" stroke-width="1"/>
+      <rect x="30" y="61.5" width="16" height="5" rx="2.5" fill="#e8a912" opacity=".5"/>
+      <rect x="5" y="44" width="9" height="20" rx="4.5" fill="#1a2030" stroke="#e8a912" stroke-width="1" stroke-opacity=".3"/>
+      <rect x="86" y="44" width="9" height="20" rx="4.5" fill="#1a2030" stroke="#e8a912" stroke-width="1" stroke-opacity=".3"/>
+    </svg>
+  </div>
+
+  <div class="cover-badge">PROJECT DOCUMENTATION · v6.1</div>
+  <h1>BVMBINO</h1>
+  <h2>Sovereign AI Chief of Staff — Technical Notes</h2>
+
+  <div class="cover-line"></div>
+
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="label">VERSION</div>
+      <div class="value">6.1.0</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">PLATFORM</div>
+      <div class="value">Vercel PWA</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">ARCHITECTURE</div>
+      <div class="value">Single-file</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">DATE</div>
+      <div class="value">May 2026</div>
+    </div>
+  </div>
+
+  <div class="cover-line"></div>
+  <div class="cover-footer">CONFIDENTIAL — PERSONAL USE ONLY</div>
+</div>
+
+
+<!-- ═══════════════════════════ PAGE 1 — WHAT IS BVMBINO ═══════════════════ -->
+<div class="page">
+  <div class="section-bar"><div class="dot"></div> OVERVIEW</div>
+
+  <h3>What is Bvmbino Pro?</h3>
+  <p class="lead">
+    Bvmbino Pro is a personal AI assistant web app built as a single self-contained HTML file,
+    deployed as a Progressive Web App (PWA) on Vercel. It operates as a multi-provider AI
+    Chief of Staff — routing your requests across 7 different AI providers automatically,
+    always trying the most powerful free-tier models first.
+  </p>
+
+  <h4>Core concept</h4>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">BYOK Model <span class="tag">Key Architecture</span></div>
+      <div class="card-body">Users bring their own API keys. Keys are stored encrypted in the browser — never sent to any third-party server. Each user owns their own access.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Single-file PWA <span class="tag blue">Tech</span></div>
+      <div class="card-body">The entire app — UI, logic, security, AI routing — lives in one <code>index.html</code>. No backend. No database. Installable on iPhone/Android like a native app.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Multi-provider fallback <span class="tag green">Smart</span></div>
+      <div class="card-body">If one AI provider fails or rate-limits, the app silently tries the next. Groq → OpenRouter → Cerebras → Mistral → OpenAI → Anthropic → Gemini.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Offline-capable <span class="tag">PWA</span></div>
+      <div class="card-body">Service worker caches the app shell. The UI loads even without internet. Connection state is shown via the robot's eye color (green = online, red = offline).</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>What Makes It Unique</h3>
+
+  <div class="card">
+    <div class="card-title">🤖 3D Connection-Aware Robot</div>
+    <div class="card-body">
+      The robot mascot is a fully custom SVG with radial gradients, specular highlights, depth shading, and arm geometry. It's not a flat icon — it has a 3D appearance. More importantly, it's <em>alive</em>: it spins when the device is online (green eyes) and pauses when offline (red eyes). The eye color is driven by a CSS custom property <code>--robot-eye</code> updated in real time via JavaScript event listeners on <code>navigator.onLine</code>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ Free-First AI Routing</div>
+    <div class="card-body">
+      Most AI apps force you to pick one provider and pay. Bvmbino Pro automatically cycles through 7 providers in priority order, always hitting free-tier endpoints first. The try order is determined by which keys you've added — you only pay if free tiers are exhausted. This is transparent to the user.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔒 AES-256 Encrypted Key Storage</div>
+    <div class="card-body">
+      API keys are never stored in plaintext. They are encrypted with AES-256-GCM using a PBKDF2-derived key from your personal passphrase (100,000 iterations). The localStorage only holds ciphertext blobs. Even if someone clones your browser storage, they see <code>{"iv":[...],"ct":[...]}</code> — not your actual keys.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏗 Obfuscated Production Build</div>
+    <div class="card-body">
+      The <code>npm run build</code> pipeline extracts all inline JavaScript, passes it through <code>javascript-obfuscator</code> with hexadecimal identifiers, base64 string arrays, split strings, number-to-expression transforms, object key obfuscation, and self-defending code. The output is deployed to Vercel's <code>dist/</code> folder. The source stays readable locally; production is protected.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📱 True Edge-to-Edge on iPhone</div>
+    <div class="card-body">
+      The app background extends behind the iOS status bar (top) and the home indicator (bottom) using <code>body::before</code> with <code>bottom: calc(-1 * env(safe-area-inset-bottom))</code>. The topbar is transparent glass (<code>rgba(6,8,10,.06)</code> + <code>backdrop-filter: blur(28px)</code>) so the gradient shows through behind the clock and signal icons. No black bars anywhere.
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ PAGE 2 — CHANGES LOG ═══════════════════════ -->
+<div class="page page-break">
+  <div class="section-bar"><div class="dot"></div> CHANGES MADE — SESSION LOG</div>
+
+  <h3>Visual Improvements</h3>
+
+  <div class="card">
+    <div class="card-title">Edge-to-edge background <span class="tag green">✓ Done</span></div>
+    <div class="card-body">
+      <strong>Problem:</strong> Background gradient stopped at the viewport edge, leaving black bars behind the iOS status bar and home indicator.<br>
+      <strong>Fix:</strong> Moved the gradient to a <code>body::before</code> pseudo-element with <code>position:fixed</code> and <code>bottom: calc(-1 * env(safe-area-inset-bottom, 50px))</code>. This extends the gradient physically past the viewport into the home indicator zone. The topbar was made fully transparent glass so the gradient shows behind the time/signal icons at the top.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">3D Robot SVG <span class="tag green">✓ Done</span></div>
+    <div class="card-body">
+      <strong>Problem:</strong> The original robot was a flat 2D icon with no depth.<br>
+      <strong>Fix:</strong> Replaced with a fully custom 88×88 SVG featuring radial gradients for body depth, a gold visor with linear gradient, specular highlight dots on the eye lenses, a gold antenna ball with halo glow, arm sections with sheen reflections, and a face scanner bar. The robot logo in the sidebar was also updated to match.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Connection-aware robot state <span class="tag green">✓ Done</span></div>
+    <div class="card-body">
+      <strong>Feature:</strong> The robot responds to network status in real time.<br>
+      Online → eyes glow green + robot spins (CSS animation running).<br>
+      Offline → eyes turn red + robot freezes (animation paused).<br>
+      Implemented via CSS custom property <code>--robot-eye</code> + JS <code>window.addEventListener('online'/'offline')</code>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pills flush to screen bottom <span class="tag green">✓ Done</span></div>
+    <div class="card-body">
+      <strong>Problem:</strong> The three action pills (Memory, Web Search, PDF Export) had excess space below them, sitting visually high above the home indicator.<br>
+      <strong>Fix:</strong> Reduced <code>.inzone</code> <code>padding-bottom</code> from <code>env(safe-area-inset-bottom, 20px)</code> to <code>4px</code>. The body gradient already extends behind the home indicator, so the pills now sit at the physical screen edge for an immersive feel.
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>Functionality Fixes</h3>
+
+  <div class="card">
+    <div class="card-title">PDF upload blank fix (PDF.js) <span class="tag green">✓ Done</span></div>
+    <div class="card-body">
+      <strong>Problem:</strong> Uploading a PDF for AI analysis produced no text — the extraction returned blank.<br>
+      <strong>Root cause:</strong> PDF.js v3.x deprecated <code>disableWorker: true</code>. Setting <code>workerSrc: ''</code> caused the library to silently fail on text extraction.<br>
+      <strong>Fix:</strong> Set <code>pdfjsLib.GlobalWorkerOptions.workerSrc</code> to the matching CDN URL for <code>pdf.worker.min.js</code> and removed the deprecated <code>disableWorker</code> option.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">PDF export blank/corrupted fix <span class="tag green">✓ Done</span></div>
+    <div class="card-body">
+      <strong>Problem:</strong> Exporting a conversation as PDF produced a blank or corrupted file.<br>
+      <strong>Root cause:</strong> The export function created an off-screen DOM wrapper with <code>position:fixed; left:-9999px</code>. html2canvas captured the actual screen at that coordinate — which is empty — not the wrapper's content.<br>
+      <strong>Fix:</strong> Replaced DOM-element approach with <code>html2pdf().from(htmlString, 'string')</code>. The content is passed as an HTML string, bypassing the off-screen rendering bug entirely.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">API fallback order corrected <span class="tag green">✓ Done</span></div>
+    <div class="card-body">
+      <strong>Change:</strong> Reordered the AI provider try-sequence to hit free-tier providers first.<br>
+      <strong>New order:</strong> Groq (free, fastest) → OpenRouter free models → Cerebras → Mistral → OpenAI → Anthropic → Gemini (last).<br>
+      This ensures users consume free quota before spending paid credits.
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>Security Upgrades</h3>
+
+  <table>
+    <tr>
+      <th>Layer</th>
+      <th>What Was Done</th>
+      <th>Priority</th>
+    </tr>
+    <tr>
+      <td><strong>Auth Gate</strong></td>
+      <td>Full-screen passphrase overlay before <code>boot()</code> runs. SHA-256 hash stored, never the passphrase. Session persists via sessionStorage — re-entry only on new tab or browser restart.</td>
+      <td><span class="prio prio-1">Critical</span></td>
+    </tr>
+    <tr>
+      <td><strong>AES-256-GCM Keys</strong></td>
+      <td>All API keys encrypted with PBKDF2-derived key (100k iterations). localStorage shows ciphertext blobs. Legacy plaintext keys auto-migrated and wiped on first unlock.</td>
+      <td><span class="prio prio-1">Critical</span></td>
+    </tr>
+    <tr>
+      <td><strong>In-memory vault</strong></td>
+      <td>Decrypted keys stored in module-level <code>_kv</code> object, never back to localStorage. All 15+ key-read call sites replaced with <code>getKey('provider')</code>.</td>
+      <td><span class="prio prio-1">Critical</span></td>
+    </tr>
+    <tr>
+      <td><strong>Anti-tamper</strong></td>
+      <td>Right-click, F12, Ctrl+Shift+I/J/C/K, Ctrl+U, and Mac equivalents blocked. Obfuscator's <code>debugProtection</code> triggers a <code>debugger</code> loop every 2 seconds in DevTools.</td>
+      <td><span class="prio prio-2">Medium</span></td>
+    </tr>
+    <tr>
+      <td><strong>CSP Header</strong></td>
+      <td>Content-Security-Policy added to <code>vercel.json</code>. Explicit allowlist for <code>connect-src</code>, <code>script-src</code>, <code>frame-ancestors: none</code>.</td>
+      <td><span class="prio prio-2">Medium</span></td>
+    </tr>
+    <tr>
+      <td><strong>Obfuscation upgrade</strong></td>
+      <td>Added <code>numbersToExpressions</code>, <code>splitStrings</code>, <code>transformObjectKeys</code>, higher wrapper counts and threshold to <code>build.js</code>.</td>
+      <td><span class="prio prio-3">Low</span></td>
+    </tr>
+  </table>
+
+  <hr>
+
+  <h3>Build Pipeline</h3>
+
+  <div class="card">
+    <div class="card-title">Obfuscated Vercel Deploy <span class="tag green">✓ Done</span></div>
+    <div class="card-body">
+      <p>A full build pipeline was added so the source code stays readable locally while production is protected.</p>
+      <pre>npm run build
+# → extracts all &lt;script&gt; blocks from index.html
+# → obfuscates each block with javascript-obfuscator
+# → copies assets (images, manifest, sw.js)
+# → writes dist/index.html (obfuscated)
+# Vercel auto-deploys from dist/</pre>
+      <p>Files created: <code>build.js</code>, <code>package.json</code>, updated <code>vercel.json</code> with <code>outputDirectory: "dist"</code>.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════ PAGE 3 — ARCHITECTURE ═══════════════════════ -->
+<div class="page page-break">
+  <div class="section-bar"><div class="dot"></div> ARCHITECTURE & TECHNICAL STACK</div>
+
+  <h3>File Structure</h3>
+
+  <pre>Bvmbino/
+├── index.html          ← Entire app (source, readable)
+├── build.js            ← Build script — obfuscates JS for production
+├── package.json        ← npm scripts + javascript-obfuscator dep
+├── vercel.json         ← Deploy config, security headers, rewrites
+├── sw.js               ← Service worker (PWA offline cache)
+├── manifest.json       ← PWA install metadata (icon, name, theme)
+├── index.css           ← Optional external stylesheet
+├── assets/             ← Images, icons
+├── js/                 ← Optional external JS modules
+└── dist/               ← Build output (deployed to Vercel, gitignored)</pre>
+
+  <h3>AI Provider Stack</h3>
+
+  <table>
+    <tr><th>#</th><th>Provider</th><th>Default Model</th><th>Tier</th></tr>
+    <tr><td>1</td><td>Groq</td><td>llama-3.3-70b-versatile, mixtral-8x7b</td><td><span class="prio prio-3">Free</span></td></tr>
+    <tr><td>2</td><td>OpenRouter</td><td>deepseek-chat-v3, llama-3.3-70b, gemini-2.0-flash (free variants)</td><td><span class="prio prio-3">Free</span></td></tr>
+    <tr><td>3</td><td>Cerebras</td><td>llama3.1-70b-versatile</td><td><span class="prio prio-3">Free</span></td></tr>
+    <tr><td>4</td><td>Mistral</td><td>mistral-small-latest</td><td><span class="prio prio-2">Paid</span></td></tr>
+    <tr><td>5</td><td>OpenAI</td><td>gpt-4o-mini</td><td><span class="prio prio-2">Paid</span></td></tr>
+    <tr><td>6</td><td>Anthropic</td><td>claude-haiku-4-5</td><td><span class="prio prio-2">Paid</span></td></tr>
+    <tr><td>7</td><td>Gemini</td><td>gemini-2.0-flash</td><td><span class="prio prio-2">Paid</span></td></tr>
+  </table>
+
+  <h3>Security Architecture</h3>
+
+  <pre>User enters passphrase
+       │
+       ▼
+SHA-256 hash checked against localStorage['bv_gate_hash']
+       │
+       ▼
+PBKDF2(passphrase, salt, 100000 iterations) → AES-256-GCM key
+       │
+       ▼
+Decrypt all provider keys from localStorage['bv_enc_*']
+       │
+       ▼
+_kv = { groq: 'sk-...', openai: 'sk-...', ... }  ← memory only
+       │
+       ▼
+boot() → App.init() → API calls use getKey('provider')</pre>
+
+  <div class="callout good">
+    <strong>What's protected</strong>
+    Keys at rest are AES-256 ciphertext. DevTools Application tab shows only blobs. The app gate blocks access without the passphrase. Obfuscation protects logic.
+  </div>
+
+  <div class="callout warn">
+    <strong>Known limitation (BYOK by design)</strong>
+    When an API call fires, the decrypted key appears in the network request's Authorization header. This is unavoidable in a browser-based BYOK model without a server proxy. Since users use their own keys, this is their personal responsibility — not a product security issue.
+  </div>
+
+  <h3>PWA Features</h3>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Installable</div>
+      <div class="card-body">Add to Home Screen on iOS/Android. Runs fullscreen like a native app, no browser chrome.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Offline shell</div>
+      <div class="card-body">Service worker caches the app. UI loads even without internet — AI responses obviously require connectivity.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Edge-to-edge</div>
+      <div class="card-body">Background extends behind iOS status bar and home indicator. Transparent topbar glass. Zero black bars.</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Safe area aware</div>
+      <div class="card-body">Uses <code>env(safe-area-inset-*)</code> and <code>100dvh</code> for precise layout on notched iPhones.</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>What Comes Next (Recommendations)</h3>
+
+  <table>
+    <tr><th>Idea</th><th>Benefit</th><th>Effort</th></tr>
+    <tr>
+      <td>System prompt server function</td>
+      <td>Your AI personality is never in the browser — even experts can't steal it</td>
+      <td>Low — one Vercel function</td>
+    </tr>
+    <tr>
+      <td>Cloudflare WAF in front of Vercel</td>
+      <td>Bot protection, rate limiting, DDoS shield, all free</td>
+      <td>Low — DNS change only</td>
+    </tr>
+    <tr>
+      <td>Custom domain</td>
+      <td>Professional branding, SSL included via Vercel/Cloudflare</td>
+      <td>Low — ~$12/yr</td>
+    </tr>
+    <tr>
+      <td>Supabase for conversation history</td>
+      <td>Sync history across devices, persistent memory</td>
+      <td>Medium — requires DB schema</td>
+    </tr>
+    <tr>
+      <td>File segmentation</td>
+      <td>Easier maintenance as the app grows beyond 6000 lines</td>
+      <td>Medium — refactor only</td>
+    </tr>
+  </table>
+
+  <hr>
+
+  <div style="text-align:center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 11px; letter-spacing: .05em;">
+    BVMBINO PRO v6.1 — CONFIDENTIAL — Generated May 2026
+  </div>
+</div>
+
+</body>
+</html>
