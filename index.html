@@ -1145,7 +1145,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
         <span class="lbl">🔗 Automation Hub</span>
         <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
           <div><div style="font-size:10px;color:var(--t3);margin-bottom:3px">n8n Webhook URL</div><input class="set-input" type="text" id="set-n8n-url" placeholder="https://…n8n.cloud/webhook/…" autocomplete="off"></div>
-          <div><div style="font-size:10px;color:var(--t3);margin-bottom:3px">Gmail App Password</div><input class="set-input" type="password" id="set-gmail-pass" placeholder="xxxx xxxx xxxx xxxx" autocomplete="off"></div>
+          <div><div style="font-size:10px;color:var(--t3);margin-bottom:3px">Gmail Webhook URL (Zapier/Make)</div><input class="set-input" type="text" id="set-gmail-pass" placeholder="https://hooks.zapier.com/..." autocomplete="off"></div>
           <div><div style="font-size:10px;color:var(--t3);margin-bottom:3px">Slack Webhook URL</div><input class="set-input" type="text" id="set-slack-url" placeholder="https://hooks.slack.com/…" autocomplete="off"></div>
           <button id="save-automation-btn" class="nbtn">💾 Save Automation Config</button>
         </div>
@@ -1306,25 +1306,26 @@ async function gateSubmit() {
 
   if (!pin) { _gateErr('Enter a passphrase'); return; }
 
+  const finalizeAuth = async (pinStr, hashToStore = null) => {
+    if (hashToStore) localStorage.setItem(_GATE_HASH_KEY, hashToStore);
+    sessionStorage.setItem('bv_pin', pinStr);
+    localStorage.setItem('bv_pin', pinStr);
+    localStorage.setItem('bv_gate_ok', '1');
+    await unlockKeys(pinStr);
+    _dismissGate();
+    boot();
+  };
+
   if (isSetup) {
     if (pin.length < 4)   { _gateErr('Minimum 4 characters'); return; }
     if (pin !== pin2)     { _gateErr('Passphrases do not match'); return; }
     const hash = await _sha256(_GATE_SALT + pin);
-    localStorage.setItem(_GATE_HASH_KEY, hash);
-    sessionStorage.setItem('bv_pin', pin);
-    sessionStorage.setItem('bv_gate_ok', '1');
-    await unlockKeys(pin);
-    _dismissGate();
-    boot();
+    await finalizeAuth(pin, hash);
   } else {
     const stored = localStorage.getItem(_GATE_HASH_KEY);
     const hash   = await _sha256(_GATE_SALT + pin);
     if (hash !== stored) { _gateErr('Wrong passphrase — try again'); return; }
-    sessionStorage.setItem('bv_pin', pin);
-    sessionStorage.setItem('bv_gate_ok', '1');
-    await unlockKeys(pin);
-    _dismissGate();
-    boot();
+    await finalizeAuth(pin);
   }
 }
 
@@ -1349,6 +1350,17 @@ async function gateInit() {
     _dismissGate();
     boot();
     return;
+  }
+
+  if (localStorage.getItem('bv_gate_ok') === '1') {
+    const pin = localStorage.getItem('bv_pin');
+    if (pin) {
+      sessionStorage.setItem('bv_pin', pin);
+      await unlockKeys(pin);
+      _dismissGate();
+      boot();
+      return;
+    }
   }
   // Show login screen (default state of the gate HTML)
 }
@@ -1549,6 +1561,7 @@ const state = {
   clients: [],
   APP_TOKEN: null,
   voiceLang: 'en-US',
+  language: localStorage.getItem('bv_lang') || 'EN',
   isRecording: false,
   recognition: null,
   config: { temp: 0.7, stream: false },
@@ -1619,7 +1632,16 @@ async function buildSys() {
   const pTier = document.getElementById('mp-projects')?.textContent || '';
 
   const custom = localStorage.getItem('bv_sysprompt') || '';
-  const base = custom || SYSTEM_IDENTITY;
+  let base = custom || SYSTEM_IDENTITY;
+
+  if (state.activeSkill && state.activeSkill !== 'kenzo') {
+    const sk = (typeof GRID_SKILLS !== 'undefined' ? GRID_SKILLS : []).find(s => s.id === state.activeSkill) || { name: state.activeSkill, persona: 'Specialist' };
+    base = `YOU ARE ${sk.name} — ${sk.persona}.\n\nYOUR CORE DIRECTIVE:\n${PROMPTS[state.activeSkill] || ''}\n\nDo NOT act as Billy. Act entirely as ${sk.name}. Use your specific expertise and persona to answer the user.`;
+  }
+
+  const langPrompt = state.language === 'FR' 
+    ? '\\n\\n[MANDATORY LANGUAGE]: You MUST speak entirely in French.'
+    : '\\n\\n[MANDATORY LANGUAGE]: You MUST speak entirely in English.';
 
   // Obsidian Core Memory — inject FIRST, right after base identity, so all agents see it with max attention
   const memBlock = kStr
@@ -1631,12 +1653,7 @@ async function buildSys() {
     : '';
 
   const webStr = '\n\n[WEB ACCESS]:\nYou have real-time web search. Use it ONLY when the question requires current data (today\'s news, live prices, recent stats, 2025-2026 events) OR when Boss explicitly asks you to search/find something online.\n\nFor general questions, strategy, advice, analysis — answer directly from your knowledge. Do NOT search for everything.\n\nWHEN TO SEARCH: [SEARCH: query] on its own line. System fetches results and calls you again with the data.\nWHEN TO READ A URL: [READ: https://url] on its own line.\n\nExamples of WHEN TO SEARCH:\n- "What\'s the AAPL price today?" → [SEARCH: AAPL stock price May 2026]\n- "Latest news on OpenAI" → [SEARCH: OpenAI news May 2026]\n- "Find me competitors of X" → [SEARCH: X competitors 2026]\n\nExamples of when NOT to search (just answer):\n- "How do I improve my sales pitch?" → answer directly\n- "What\'s a good GTM strategy?" → answer directly\n- "Analyze this document" → analyze directly';
-
-  const agentStr = (state.activeSkill && state.activeSkill !== 'kenzo')
-    ? `\n\n[ACTIVE SPECIALIST — STAY IN CHARACTER]: ${PROMPTS[state.activeSkill] || ''}`
-    : '';
-
-  return `${base}${memBlock}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}${agentStr}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
+  return `${base}${memBlock}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}${langPrompt}\\n\\nGLOBAL CONTEXT: ${vTier}\\nACTIVE PROJECTS: ${pTier}${memStr}\\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
 }
 
 // ── UTILITIES ──
@@ -2673,14 +2690,14 @@ function renderWelcome() {
 </svg></div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
-        <div class="wsubtitle">AI AGENTS V.6.1</div>
-        <p class="ws">I am Billy, your Sovereign Chief of Staff. I run the show and deploy the right specialists for your missions.</p>
+        <div class="wsubtitle">${state.language === 'FR' ? 'AGENTS IA V.6.1' : 'AI AGENTS V.6.1'}</div>
+        <p class="ws">${state.language === 'FR' ? 'Je suis Billy, votre Chef de Cabinet Souverain. Je dirige les opérations et déploie les spécialistes adéquats.' : 'I am Billy, your Sovereign Chief of Staff. I run the show and deploy the right specialists for your missions.'}</p>
         <div class="skills-grid-wrap">
-          <div class="skills-grid-label">Sovereign Expert Matrix</div>
+          <div class="skills-grid-label">${state.language === 'FR' ? "Matrice d'Experts Souveraine" : 'Sovereign Expert Matrix'}</div>
           <div class="matrix-grid" id="welcome-grid"></div>
-          <div id="see-more-wrap"><button id="see-more-btn">+ SEE MORE AGENTS</button></div>
+          <div id="see-more-wrap"><button id="see-more-btn">${state.language === 'FR' ? "+ VOIR PLUS D'AGENTS" : '+ SEE MORE AGENTS'}</button></div>
         </div>
-        <p class="shint">Pick a specialist above or use any agent below</p>
+        <p class="shint">${state.language === 'FR' ? "Choisissez un spécialiste ci-dessus ou utilisez un agent ci-dessous" : 'Pick a specialist above or use any agent below'}</p>
         <div class="cmd-strip" id="cmd-strip"></div>
       </div>`;
   }
@@ -2710,7 +2727,9 @@ function renderWelcome() {
       document.querySelectorAll('#welcome-grid .agent-hidden').forEach(el => {
         el.classList.toggle('agent-hidden-show', expanded);
       });
-      btn.textContent = expanded ? '— SHOW LESS' : '+ SEE MORE AGENTS';
+      btn.textContent = expanded 
+        ? (state.language === 'FR' ? '— VOIR MOINS' : '— SHOW LESS') 
+        : (state.language === 'FR' ? "+ VOIR PLUS D'AGENTS" : '+ SEE MORE AGENTS');
     };
   } else if (wrap) {
     wrap.style.display = 'none';
@@ -3761,15 +3780,22 @@ async function callAI() {
       let xtype = null, clean = reply;
       const mx = reply.match(/\[EXPORT:(\w+)\]/);
       if (mx) { clean = reply.replace(/\[EXPORT:\w+\]/, '').trim(); xtype = mx[1]; }
-      // Auto-fire n8n if AI outputs [EXECUTE:n8n] tag
-      const execN8n = /\[EXECUTE:n8n\]/i.test(clean);
-      if (execN8n) {
-        clean = clean.replace(/\[EXECUTE:n8n\]/gi, '').trim();
-        const n8nUrl = localStorage.getItem('bv_n8n_url');
-        if (n8nUrl && _isSafeExternalUrl(n8nUrl)) {
-          fetch(n8nUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ source:'bvmbino', agent: state.activeSkill||'kenzo', timestamp: new Date().toISOString(), content: clean }), signal: _abortIn(8000) })
-            .then(r => { window.logFeed && window.logFeed('system', `n8n auto-triggered: ${r.status}`); toast('⚡ n8n triggered'); })
-            .catch(e => { window.logFeed && window.logFeed('warn', 'n8n auto-trigger failed: ' + e.message); });
+      // Auto-fire Webhooks (n8n, slack, gmail) if AI outputs [EXECUTE:tag]
+      const webhooks = [
+        { regex: /\[EXECUTE:n8n\]/gi, lsKey: 'bv_n8n_url', name: 'n8n' },
+        { regex: /\[EXECUTE:slack\]/gi, lsKey: 'bv_slack_url', name: 'Slack' },
+        { regex: /\[EXECUTE:gmail\]/gi, lsKey: 'bv_gmail_pass', name: 'Gmail' }
+      ];
+      
+      for (const hook of webhooks) {
+        if (hook.regex.test(clean)) {
+          clean = clean.replace(hook.regex, '').trim();
+          const hookUrl = localStorage.getItem(hook.lsKey);
+          if (hookUrl && _isSafeExternalUrl(hookUrl)) {
+            fetch(hookUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ source:'bvmbino', agent: state.activeSkill||'kenzo', timestamp: new Date().toISOString(), content: clean }), signal: _abortIn(8000) })
+              .then(r => { window.logFeed && window.logFeed('system', `${hook.name} auto-triggered: ${r.status}`); toast(`⚡ ${hook.name} triggered`); })
+              .catch(e => { window.logFeed && window.logFeed('warn', `${hook.name} auto-trigger failed: ` + e.message); });
+          }
         }
       }
       state.msgs.push({ role: 'assistant', content: clean });
@@ -4673,6 +4699,33 @@ const App = {
 
     // ─ § NAVIGATION ──────────────────────────────────────────────
     this._on('mb-menu',      'click', () => this.toggleSidebar(true));
+    this._on('lang-btn',     'click', () => {
+      state.language = state.language === 'EN' ? 'FR' : 'EN';
+      localStorage.setItem('bv_lang', state.language);
+      document.getElementById('lang-btn').textContent = state.language;
+      const isFr = state.language === 'FR';
+      const inp = document.getElementById('inp');
+      if (inp) inp.placeholder = isFr ? "Qu'est-ce qu'on fait, Boss ?" : "Tell me what's next Boss...";
+      const tb = document.getElementById('tbtitle');
+      if (tb && tb.textContent.includes('Command')) tb.textContent = isFr ? 'Bvmbino Pro · Centre de Commandement' : 'Bvmbino Pro · Command Hub';
+      const wsub = document.querySelector('.wsubtitle');
+      if (wsub) wsub.textContent = isFr ? 'AGENTS IA V.6.1' : 'AI AGENTS V.6.1';
+      const ws = document.querySelector('.ws');
+      if (ws) ws.textContent = isFr ? 'Je suis Billy, votre Chef de Cabinet Souverain. Je dirige les opérations et déploie les spécialistes adéquats.' : 'I am Billy, your Sovereign Chief of Staff. I run the show and deploy the right specialists for your missions.';
+      const newChatBtn = document.getElementById('new-chat-btn');
+      if (newChatBtn) newChatBtn.innerHTML = `<span>+</span> ${isFr ? 'Nouvelle conversation' : 'New conversation'}`;
+      const shint = document.querySelector('.shint');
+      if (shint) shint.textContent = isFr ? "Choisissez un spécialiste ci-dessus ou utilisez un agent ci-dessous" : "Pick a specialist above or use any agent below";
+      const gLabel = document.querySelector('.skills-grid-label');
+      if (gLabel) gLabel.textContent = isFr ? "Matrice d'Experts Souveraine" : "Sovereign Expert Matrix";
+      const seeMore = document.getElementById('see-more-btn');
+      if (seeMore) {
+        const expanded = seeMore.textContent.includes('—');
+        seeMore.textContent = expanded 
+          ? (isFr ? '— VOIR MOINS' : '— SHOW LESS') 
+          : (isFr ? "+ VOIR PLUS D'AGENTS" : '+ SEE MORE AGENTS');
+      }
+    });
     this._on('new-chat-btn', 'click', () => { newChat(); this.toggleSidebar(false); });
     this._on('logo-btn',     'click', () => { newChat(); this.toggleSidebar(false); });
     this.dom.ov?.addEventListener('click', () => this.toggleSidebar(false));
@@ -5172,8 +5225,18 @@ const App = {
     if (btn) { btn.textContent = '⏳ Generating…'; btn.disabled = true; }
 
     try {
+      if (btn) { btn.textContent = '⏳ Loading Image...'; btn.disabled = true; }
       const url = await generateImage(prompt, size, quality);
       if (!url) throw new Error('No URL returned');
+      
+      // Wait for the image to load fully before injecting it
+      await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = () => reject(new Error('Image could not be loaded.'));
+        img.src = url;
+      });
+
       state._imgGenCount++;
       if (result) {
         result.style.display = 'block';
