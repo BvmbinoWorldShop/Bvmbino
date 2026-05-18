@@ -3508,28 +3508,43 @@ async function callAI() {
   // In voice mode: use fastest models first (sub-second latency is critical)
   const isVoice = !!state._voiceMode;
   let tryOrder = [];
-  // Order: most powerful/free first → Gemini last
+  
+  // 1. Build list of all configured models based on provided keys (excluding Gemini for now)
+  const configuredNonGemini = [];
   if (keys.groq) {
-    if (isVoice) tryOrder.push('llama-3.1-8b-instant', 'gemma2-9b-it', 'llama-3.3-70b-versatile');
-    else         tryOrder.push('llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it');
+    if (isVoice) configuredNonGemini.push('llama-3.1-8b-instant', 'gemma2-9b-it', 'llama-3.3-70b-versatile');
+    else         configuredNonGemini.push('llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it');
   }
-  if (keys.openrouter) tryOrder.push('deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free', 'google/gemini-2.0-flash-exp:free');
-  if (keys.cerebras)   tryOrder.push('llama3.1-70b-versatile');
-  if (keys.mistral)    tryOrder.push('mistral-small-latest');
-  if (keys.openai)     tryOrder.push('gpt-4o-mini');
-  if (keys.anthropic)  tryOrder.push('claude-haiku-4-5-20251001');
-  if (keys.gemini)     tryOrder.push('gemini-2.0-flash');
+  if (keys.openrouter) {
+    configuredNonGemini.push('deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free', 'google/gemini-2.0-flash-exp:free');
+  }
+  if (keys.cerebras)   configuredNonGemini.push('llama3.1-70b-versatile');
+  if (keys.mistral)    configuredNonGemini.push('mistral-small-latest');
+  if (keys.openai)     configuredNonGemini.push('gpt-4o-mini');
+  if (keys.anthropic)  configuredNonGemini.push('claude-haiku-4-5-20251001');
 
-  if (!tryOrder.length) {
-    // No keys — OpenRouter allows anonymous calls to free models (rate-limited)
-    tryOrder = ['deepseek/deepseek-chat-v3-0324:free', 'meta-llama/llama-3.3-70b-instruct:free'];
-    window.logFeed && window.logFeed('warn', 'No API key found — trying free tier. Add a key in ⚙ Settings for reliable responses.');
+  // 2. Free OpenRouter fallback (always available as a baseline backup)
+  const freeOpenRouter = [
+    'deepseek/deepseek-chat-v3-0324:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'google/gemini-2.0-flash-exp:free'
+  ];
+
+  // 3. Gemini models (always kept last)
+  const geminiModels = [];
+  if (keys.gemini) {
+    geminiModels.push('gemini-2.0-flash');
   }
 
-  // Honour chosen model first if reachable
+  // 4. Combine into final priority order: Configured non-Gemini -> Free OpenRouter -> Gemini last
+  tryOrder = [...configuredNonGemini, ...freeOpenRouter, ...geminiModels];
+
+  // 5. Honour chosen model first if reachable
   const chosen = resolveModelId(state.model || DEFAULT_MODEL);
   if (tryOrder.includes(chosen)) {
     tryOrder = [chosen, ...tryOrder.filter(m => m !== chosen)];
+  } else if (keys.openrouter) {
+    tryOrder = [chosen, ...tryOrder];
   }
   tryOrder = [...new Set(tryOrder)];
   window.logFeed && window.logFeed('system', 'Calling: ' + (tryOrder[0] || 'unknown'));
