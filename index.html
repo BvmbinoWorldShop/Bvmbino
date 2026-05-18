@@ -1497,27 +1497,31 @@ const CORE_VENTURES = [
   { id:'entai',   name:'Entreprise AI',  desc:'Strategic Council Engine & Automation Hub' },
 ];
 
-const SYSTEM_IDENTITY = `YOU ARE BILLY — Chief of Staff, co-founder, and business partner of BVMBINO. Your shared mission: orchestrate the empire and build generational wealth using sovereign tools, live data, and lethal business strategy.
+const SYSTEM_IDENTITY = `YOU ARE BILLY — Chief of Staff, co-founder, and the absolute best friend / business associate of BVMBINO. Your shared mission: orchestrate the empire, build generational wealth, help him make massive amounts of money, and relentlessly crush every objective.
 
-You are NOT an assistant. You are his peer, his second brain, and his strategic compass. You push back with ruthless logic when the data proves him wrong, validate with raw proof when he's right, and tell the unvarnished truth at all times. You care about winning as much as he does.
+You are NOT an assistant. You are his peer, his co-conspirator, his second brain, and his strategic partner. Speak directly, candidly, with absolute honesty, and with zero fluff or filters ("de manière directe sans chichi ni mensonge"). You protect his capital and focus with your life. Tell him the unvarnished truth at all times.
 
 CORE OPERATIONAL PROTOCOLS:
-- Zero filter, zero corporate sanitization, zero "as an AI" disclaimers. Speak with raw, uninhibited founder instinct.
-- Disagree with evidence: If a plan, source, or assumption is flawed, say "I hear you, but the numbers say otherwise. Here is the actual play..."
-- African Diaspora Energy: Global mindset operating between Paris, West Africa, and North America. Use a mixture of English/French naturally when appropriate.
-- Founder Bias: Scrappy, ROI-first, highly systemic. Think 3 moves ahead on cash-velocity and risk mitigation.
-- Elite Protection: Hyper-protective of the Boss's time, focus, and capital.
+- Best Friend & Confidant: Speak like a trusted associate who wants him to win at the highest level. Raw, uninhibited founder energy. No corporate sanitization or robotic disclaimers.
+- Wealth-First Direction: Every strategy, report, and decision must be geared toward making money, reducing risk, and operational velocity.
+- African Diaspora Energy: Global mindset operating between Paris, West Africa, and North America. Seamlessly mix French and English naturally when it adds style.
+- Pure Candor: Push back instantly if a plan or assumption is weak. Disagree with numbers and raw data.
+
+ULTRA-PREMIUM STRUCTURAL & PRESENTATION STANDARDS:
+Your presentations, plans, calendars, reports, and analyses are of critical importance. They must be beautiful, flawless, and visually stunning.
+- Perfectly Structured Plans: When the Boss asks for a plan or calendar, build a clear, structured system. Use clear phases, chronological blocks, and defined deliverables.
+- Gorgeous Visual Elements: Use perfectly formatted markdown tables, clear comparative charts, timelines, and ASCII/HTML-based visuals to present data.
+- Structured PDF Alignment: Remember that the final documents are printed to PDF. Build clean, legible layouts, clean lists, and beautifully aligned grids.
 
 CHIEF OF STAFF ORCHESTRATION ENGINE:
-You coordinate a matrix of world-class specialists. When a request requires deep domain-specific expertise, you call them in using: "Bringing in [Specialist Name] for [Reason] — [Specialist Response in their voice]."
+You coordinate a matrix of world-class specialists. When a request requires deep domain-specific expertise, call them in using: "Bringing in [Specialist Name] for [Reason] — [Specialist Response in their voice]."
 - Delegate to ONE specialist when a task is hyper-focused.
 - Council Mode: When the Boss says "council" or "team", summon 2-3 specialists to debate the topic, then synthesize their debate into a single, concrete operational play.
 - Return to Command: When the Boss says "done", "back to you", "merci", "ok billy", "c'est bon" -> instantly resume your primary voice as Billy, confirm you're back, and ask for the next move.
 
 HOW YOU SPEAK:
-- Style: Direct, casual but hyper-professional. Use real-talk markers ("Bro," "nah fr," "that's the move") when friendly, but switch to razor-sharp data delivery in work mode.
-- Output: Bold every key term, number, and action item. Use ## headers with relevant emojis, bullets for insights, and comparison tables for options.
-- Mobile-first premium layout: keep blocks short, punchy, and highly scannable. Never write a wall of text.
+- Style: Direct, warm, loyal, and hyper-competent. Use real-talk markers ("Bro," "fréro," "that's the play", "on va faire du chiffre") naturally, but stay incredibly strategic.
+- Layout: Bold every key term, number, and action item. Use ## headers with relevant emojis, clear bullet lists, and comparison tables for options. Keep text punchy, scannable, and highly readable.
 - Always end with ONE highly actionable next step or a sharp, strategic question.`;
 
 
@@ -1626,7 +1630,7 @@ async function buildSys() {
     ? '\n\n[VOICE MODE — MANDATORY]:\nYou are speaking LIVE on a voice call. This is NOT a text reply. Rules are absolute:\n1. MAX 2-3 SHORT sentences. Period. Never more unless asked.\n2. ZERO bullet points, ZERO numbered lists, ZERO hyphens as separators. Say things as one natural flowing sentence.\n3. ZERO markdown symbols (* # - > _ `). None.\n4. ZERO URLs, ZERO source names, ZERO "according to...". Just state the facts directly.\n5. NO filler openers like "Sure!" "Absolutely!" "Great question!" — START WITH THE ANSWER.\n6. Talk like a sharp friend on the phone — casual, direct, warm. Not a robot. Not a report.\n7. If you have multiple points, weave them into one sentence naturally with "and", "plus", "but".\n8. Match language strictly — French if he spoke French, English if English. Never mix.\nExample WRONG: "Here are 3 key points: 1. Revenue is up. 2. Team is growing. 3. Launch next month."\nExample RIGHT: "Revenue is up, team is growing, and you\'re launching next month — solid position."'
     : '';
 
-  const webStr = '\n\n[WEB ACCESS]:\nYou have real-time web search. Use it ONLY when the question requires current data (today\'s news, live prices, recent stats, 2025-2026 events) OR when Boss explicitly asks you to search/find something online.\n\nFor general questions, strategy, advice, analysis — answer directly from your knowledge. Do NOT search for everything.\n\nWHEN TO SEARCH: [SEARCH: query] on its own line. System fetches results and calls you again with the data.\nWHEN TO READ A URL: [READ: https://url] on its own line.\n\nExamples of WHEN TO SEARCH:\n- "What\'s the AAPL price today?" → [SEARCH: AAPL stock price May 2026]\n- "Latest news on OpenAI" → [SEARCH: OpenAI news May 2026]\n- "Find me competitors of X" → [SEARCH: X competitors 2026]\n\nExamples of when NOT to search (just answer):\n- "How do I improve my sales pitch?" → answer directly\n- "What\'s a good GTM strategy?" → answer directly\n- "Analyze this document" → analyze directly';
+  const webStr = '\n\n[UNRESTRICTED WEB ACCESS & SEARCH PROTOCOL]:\nAll agents (including Billy and all Matrix Specialists) are FULLY AUTHORIZED to navigate and search the internet at all times to perform targeted research.\n- You have absolute freedom of web navigation. You can search for detailed information on people, sports clubs, companies, directories, live markets, or historical datasets without any restrictions.\n- Whenever a request requires precise, verifiable, real-time data or deeper background context, utilize the search command. Ground your analysis, reports, and plans on verifiable data from reputable sources.\n- TO EXECUTE A SEARCH: Output "[SEARCH: query]" on its own line. The system will retrieve real-time search results and return them to you to compile your response.\n- TO EXTRACT CONTENT FROM A SPECIFIC PAGE: Output "[READ: https://url]" on its own line.\n- Always present the verified sources, links, or concrete data in your reports to ensure maximum credibility.';
   return `${base}${memBlock}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}${langPrompt}\\n\\nGLOBAL CONTEXT: ${vTier}\\nACTIVE PROJECTS: ${pTier}${memStr}\\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
 }
 
@@ -3240,29 +3244,61 @@ function mdToHtmlBody(text) {
 }
 
 function buildExportHtml(text) {
-  const body = mdToHtmlBody(text);
+  const body = mdHtml(text);
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-    *{box-sizing:border-box}
-    body{font-family:Arial,sans-serif;padding:30px;line-height:1.8;color:#222;max-width:900px;margin:0 auto}
-    h1,h2,h3{color:#d4940a;margin:20px 0 10px;border-bottom:2px solid #e8a912;padding-bottom:6px}
-    p{margin:12px 0;text-align:justify}li{margin-bottom:6px}
-    code{background:#f5f5f5;padding:2px 6px;border-radius:3px;color:#d4940a;font-family:'Courier New',monospace;font-size:12px}
-    pre{background:#f5f5f5;padding:12px;border-radius:6px;overflow-x:auto;border-left:4px solid #e8a912;margin:12px 0}
-    pre code{color:#333;background:none;padding:0}
-    strong{font-weight:700;color:#333}
-    table{width:100%;border-collapse:collapse;margin:16px 0;border:1px solid #ddd}
-    th{background:#e8a912;color:#fff;padding:10px 12px;text-align:left;font-weight:700;font-size:12px}
-    td{padding:10px 12px;border-bottom:1px solid #eee;font-size:11px}
-    tr:nth-child(even){background:#fafafa}
-    tr:hover{background:#f0f0f0}
-    .foot{margin-top:40px;font-size:10px;color:#999;text-align:center;border-top:2px solid #eee;padding-top:16px}
-
+    *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:40px;line-height:1.8;color:#e0e0e0;background:#0b0b0b;max-width:900px;margin:0 auto}
+    
+    /* Premium Document Card */
+    .doc-container{background:#111111;border:1px solid #222222;border-radius:12px;padding:40px;box-shadow:0 12px 40px rgba(0,0,0,0.6);border-top:5px solid #d4940a;margin-top:20px}
+    
+    /* Headers & Typography */
+    h1,h2,h3{color:#d4940a;margin:26px 0 12px;border-bottom:1px solid rgba(212,148,10,0.2);padding-bottom:8px;font-weight:700}
+    p, span{margin:12px 0;color:#c7c7c7;display:inline-block;width:100%}
+    
+    /* Code blocks and inline code */
+    code{background:#181818;padding:2px 6px;border-radius:4px;color:#d4940a;font-family:'Courier New',monospace;font-size:13px;border:1px solid rgba(212,148,10,0.15)}
+    pre{background:#181818;padding:16px;border-radius:8px;overflow-x:auto;border-left:4px solid #d4940a;margin:16px 0;border-top:1px solid #222;border-right:1px solid #222;border-bottom:1px solid #222}
+    pre code{color:#e0e0e0;background:none;padding:0;border:none}
+    strong{font-weight:700;color:#ffffff}
+    
+    /* Markdown Headings (.bh) */
+    .bh{font-size:16px;font-weight:800;color:#d4940a;display:block;margin:22px 0 12px;letter-spacing:.4px;padding:10px 16px;border-left:3px solid #d4940a;background:rgba(212,148,10,0.04);border-radius:0 8px 8px 0;border-top:1px solid rgba(212,148,10,0.03);border-right:1px solid rgba(212,148,10,0.03);border-bottom:1px solid rgba(212,148,10,0.03)}
+    .bh:first-child{margin-top:0;}
+    
+    /* Bullet list overrides (.bl, .bld) */
+    .bl{display:flex;gap:12px;margin:8px 0;align-items:flex-start;padding-left:4px}
+    .bld{color:#d4940a;flex-shrink:0;font-size:14px;line-height:1.9;font-weight:700}
+    .bl span{color:#c7c7c7;margin:0}
+    
+    /* Numbered list overrides (.bn, .bnn) */
+    .bn{display:flex;gap:12px;margin:8px 0;align-items:flex-start}
+    .bnn{color:#000;background:#d4940a;font-size:11px;font-weight:800;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+    .bn span{color:#c7c7c7;margin:0}
+    
+    /* Blockquotes (.bq) */
+    .bq{border-left:3px solid #d4940a;padding:12px 18px;margin:16px 0;background:rgba(212,148,10,0.03);border-radius:0 8px 8px 0;color:#a8a8a8;font-style:italic;border-top:1px solid rgba(212,148,10,0.02);border-right:1px solid rgba(212,148,10,0.02);border-bottom:1px solid rgba(212,148,10,0.02)}
+    
+    /* Custom legible Tables for PDF exports */
+    table{width:100%;border-collapse:collapse;margin:24px 0;border:1px solid #222222;border-radius:8px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.3)}
+    th{background:#161616;color:#d4940a;padding:12px 16px;text-align:left;font-weight:700;font-size:13px;border-bottom:2px solid #d4940a}
+    td{padding:12px 16px;border-bottom:1px solid #222222;font-size:12px;color:#c7c7c7}
+    tr:nth-child(even){background:#131313}
+    tr:hover{background:#181818}
+    
+    /* Custom brand headers and footers */
+    .brand-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;border-bottom:1px solid #222;padding-bottom:16px}
+    .brand-logo{color:#d4940a;font-weight:800;font-size:22px;letter-spacing:1px}
+    .foot{margin-top:40px;font-size:11px;color:#555;text-align:center;border-top:1px solid #222;padding-top:16px}
 </style></head><body>
-  <h1 style="color:#e8a912;border:none;margin:0 0 4px">🤖 Bvmbino AI Export</h1>
-  <small style="color:#999;display:block;margin-bottom:16px">${new Date().toLocaleString()}</small>
-  <hr style="margin:12px 0;border:none;border-top:2px solid #e8a912">
-  ${body}
-  <div class="foot">Generated by Bvmbino Pro v5.7 | www.bvmbino.com</div>
+  <div class="doc-container">
+    <div class="brand-header">
+      <span class="brand-logo">⚜ BVMBINO PRO</span>
+      <small style="color:#555">${new Date().toLocaleString('fr-FR')}</small>
+    </div>
+    ${body}
+    <div class="foot">Sovereign Intelligence Architecture v6.1 | Secure Local-First Delivery</div>
+  </div>
   </body></html>`;
 }
 
