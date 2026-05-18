@@ -1174,6 +1174,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 // iOS viewport fix — window.innerHeight is the exact visible height (accounts for URL bar, home indicator)
 // CSS dvh/vh units do NOT reliably fill the screen on iPhone Safari; this JS approach does.
@@ -1510,8 +1511,11 @@ CORE OPERATIONAL PROTOCOLS:
 ULTRA-PREMIUM STRUCTURAL & PRESENTATION STANDARDS:
 Your presentations, plans, calendars, reports, and analyses are of critical importance. They must be beautiful, flawless, and visually stunning.
 - Perfectly Structured Plans: When the Boss asks for a plan or calendar, build a clear, structured system. Use clear phases, chronological blocks, and defined deliverables.
-- Gorgeous Visual Elements: Use perfectly formatted markdown tables, clear comparative charts, timelines, and ASCII/HTML-based visuals to present data.
-- Structured PDF Alignment: Remember that the final documents are printed to PDF. Build clean, legible layouts, clean lists, and beautifully aligned grids.
+- Gorgeous Visual Elements: Use perfectly formatted markdown tables, timelines, and comparisons.
+- Dynamic Charts & Pie Charts (Camemberts): You are FULLY ENABLED to use live, dynamic Chart.js charts inside your replies to compare numbers, show proportions, projections, or market share. To output an interactive chart, simply output this HTML structure on its own line:
+  <canvas class="bvmbino-chart" data-type="pie|bar|line|doughnut" data-labels="Label A,Label B..." data-values="40,35..." data-title="Title of Chart"></canvas>
+  Use this frequently to make your business reports, analyses, and comparisons extremely visual, complete, and stunningly professional.
+- Structured PDF Alignment: Keeping a neat presentation suitable for standard centered A4 pages.
 
 CHIEF OF STAFF ORCHESTRATION ENGINE:
 You coordinate a matrix of world-class specialists. When a request requires deep domain-specific expertise, call them in using: "Bringing in [Specialist Name] for [Reason] — [Specialist Response in their voice]."
@@ -1807,6 +1811,83 @@ function mdHtml(text) {
   return html;
 }
 
+function renderBvmbinoCharts(container = document) {
+  if (typeof Chart === 'undefined') return;
+  container.querySelectorAll('canvas.bvmbino-chart').forEach(canvas => {
+    if (canvas.getAttribute('data-rendered')) return;
+    canvas.setAttribute('data-rendered', 'true');
+    
+    const type = canvas.getAttribute('data-type') || 'bar';
+    const labels = (canvas.getAttribute('data-labels') || '').split(',');
+    const values = (canvas.getAttribute('data-values') || '').split(',').map(Number);
+    const title = canvas.getAttribute('data-title') || '';
+    
+    const isDark = !canvas.closest('#preview-content');
+    const textColor = isDark ? '#f0e8d0' : '#2d3748';
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+    
+    const goldPalette = [
+      'rgba(212, 148, 10, 0.85)', // Premium Gold
+      'rgba(45, 55, 72, 0.85)',   // Slate Grey
+      'rgba(232, 169, 18, 0.85)',  // Warm Amber
+      'rgba(74, 85, 104, 0.85)',  // Cool Grey
+      'rgba(246, 173, 85, 0.85)',  // Soft Orange
+      'rgba(113, 128, 150, 0.85)'  // Steel Grey
+    ];
+    
+    const borderPalette = [
+      '#d4940a', '#2d3748', '#e8a912', '#4a5568', '#f6ad55', '#718096'
+    ];
+    
+    try {
+      new Chart(canvas, {
+        type: type,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: title || 'Data',
+            data: values,
+            backgroundColor: type === 'pie' || type === 'doughnut' ? goldPalette : goldPalette[0],
+            borderColor: type === 'pie' || type === 'doughnut' ? borderPalette : borderPalette[0],
+            borderWidth: 1.5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: type === 'pie' || type === 'doughnut',
+              labels: {
+                color: textColor,
+                font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', size: 11, weight: '600' }
+              }
+            },
+            title: {
+              display: !!title,
+              text: title,
+              color: '#d4940a',
+              font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', size: 14, weight: '700' }
+            }
+          },
+          scales: type === 'pie' || type === 'doughnut' ? {} : {
+            y: {
+              grid: { color: gridColor },
+              ticks: { color: textColor, font: { family: '-apple-system, sans-serif', size: 10 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: textColor, font: { family: '-apple-system, sans-serif', size: 10 } }
+            }
+          }
+        }
+      });
+    } catch (e) {
+      console.error('Failed to render Bvmbino chart:', e);
+    }
+  });
+}
+
 // FIX: uses LEVELS (full-slug map) not MODELS[state.model] (was undefined)
 function currentModelLabel() {
   return LEVELS[state.model] || LEVELS[DEFAULT_MODEL] || 'AI';
@@ -1950,6 +2031,7 @@ function appendAiText(text, xtype) {
     </div>`;
   d.querySelector('.mwrap').appendChild(msgActions(mid));
   ci.appendChild(d);
+  renderBvmbinoCharts(d);
   haptic(6);
   scrollToMsgTop(d);
 
@@ -1999,6 +2081,7 @@ function createStreamingBubble() {
       const sugHtml = sug ? `<div class="sugg-chip" onclick="window.slash && window.slash('${sug}')">✨ Suggestion: /${sug}</div>` : '';
       bubbleEl.innerHTML = mdHtml(text) + (xtype ? xcard(xtype) : '') + sugHtml;
       d.querySelector('.mwrap').appendChild(msgActions(mid));
+      renderBvmbinoCharts(d);
       haptic(6);
       scrollToMsgTop(d);
       if (text && text.length > 50 && !xtype) {
@@ -3247,18 +3330,18 @@ function buildExportHtml(text) {
   const body = mdHtml(text);
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
     *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:30px;line-height:1.8;color:#2d3748;background:#ffffff;max-width:900px;margin:0 auto}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:50px 40px;line-height:1.85;color:#2d3748;background:#ffffff;max-width:850px;margin:0 auto}
     
-    /* Premium Document Card */
-    .doc-container{background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:40px;box-shadow:0 4px 20px rgba(0,0,0,0.04);border-top:6px solid #d4940a;margin-top:10px}
+    /* Clean, Borderless Full-Bleed A4 Page Layout */
+    .doc-container{background:#ffffff;border:none;border-radius:0;padding:0;box-shadow:none;margin:0;width:100%}
     
     /* Headers & Typography */
-    h1,h2,h3{color:#d4940a;margin:24px 0 12px;border-bottom:1px solid #edf2f7;padding-bottom:8px;font-weight:700}
+    h1,h2,h3{color:#d4940a;margin:24px 0 12px;border-bottom:1px solid #edf2f7;padding-bottom:8px;font-weight:700;letter-spacing:-0.3px}
     p{margin:8px 0;color:#2d3748;text-align:justify}
     span{color:#2d3748;display:inline}
     
-    /* Images, graphics and charts styling */
-    img, canvas{max-width:100%;height:auto;border-radius:8px;border:1px solid #edf2f7;margin:16px 0;display:block;box-shadow:0 4px 10px rgba(0,0,0,0.02)}
+    /* Custom legible Canvas and Image visuals for PDF reports */
+    img, canvas{max-width:100%;height:auto;border-radius:8px;border:1px solid #edf2f7;margin:18px 0;display:block;box-shadow:0 4px 12px rgba(0,0,0,0.02)}
     
     /* Code blocks and inline code */
     code{background:#f7fafc;padding:3px 6px;border-radius:4px;color:#d4940a;font-family:'Courier New',monospace;font-size:13px;border:1px solid #edf2f7}
@@ -3267,7 +3350,7 @@ function buildExportHtml(text) {
     strong{font-weight:700;color:#1a202c}
     
     /* Markdown Headings (.bh) */
-    .bh{font-size:16px;font-weight:800;color:#d4940a;display:block;margin:20px 0 10px;letter-spacing:.4px;padding:10px 16px;border-left:3px solid #d4940a;background:rgba(212,148,10,0.05);border-radius:0 8px 8px 0;border-top:1px solid rgba(212,148,10,0.02);border-right:1px solid rgba(212,148,10,0.02);border-bottom:1px solid rgba(212,148,10,0.02);width:100%}
+    .bh{font-size:16px;font-weight:800;color:#d4940a;display:block;margin:22px 0 10px;letter-spacing:.4px;padding:10px 16px;border-left:4px solid #d4940a;background:rgba(212,148,10,0.05);border-radius:0 8px 8px 0;border-top:1px solid rgba(212,148,10,0.02);border-right:1px solid rgba(212,148,10,0.02);border-bottom:1px solid rgba(212,148,10,0.02);width:100%}
     .bh:first-child{margin-top:0;}
     
     /* Bullet list overrides (.bl, .bld) */
@@ -3313,6 +3396,9 @@ function showPdfModal(html) {
   if (!m || !c) { toast('Preview modal not found'); return; }
   c.innerHTML = html;
   m.classList.add('open');
+  setTimeout(() => {
+    renderBvmbinoCharts(c);
+  }, 100);
 }
 
 // Convenience wrapper used by main.js window.expLastPdf
@@ -3355,7 +3441,7 @@ async function saveAsPdf() {
     toast('Generating PDF…');
 
     const isMobile = window.innerWidth <= 768 || /iPhone|iPad|Android/i.test(navigator.userAgent);
-    const pdfScale = isMobile ? 1 : 1.5;
+    const pdfScale = isMobile ? 2 : 3; // Extreme HD Text Rendering: scale 3 on desktop, 2 on mobile
 
     // Clone and pass as HTML string — avoids html2canvas blank-capture bug
     // that occurs when rendering off-screen DOM nodes (position:fixed;left:-9999px)
@@ -3371,8 +3457,8 @@ async function saveAsPdf() {
     await html2pdf().from(htmlString, 'string').set({
       margin:      [12, 12, 12, 12],
       filename:    currentPdfFilename || 'bvmbino-export.pdf',
-      image:       { type: 'jpeg', quality: isMobile ? 0.75 : 0.88 },
-      html2canvas: { scale: pdfScale, backgroundColor: '#ffffff', useCORS: false, allowTaint: false, logging: false },
+      image:       { type: 'jpeg', quality: 1.0 }, // Maximum image and chart fidelity
+      html2canvas: { scale: pdfScale, backgroundColor: '#ffffff', useCORS: true, allowTaint: true, logging: false },
       jsPDF:       { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
       pagebreak:   { mode: ['avoid-all'] },
     }).save();
