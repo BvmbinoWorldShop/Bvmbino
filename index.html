@@ -3553,6 +3553,12 @@ function buildExportHtml(text) {
 </div>`;
 }
 
+// renderBvmbinoCharts — safe stub (charts are rendered inline via Chart.js in the preview HTML itself)
+function renderBvmbinoCharts(container) {
+  // No-op: charts are already embedded as canvas via Chart.js at build time.
+  // This function exists as a safe hook for future chart post-processing.
+}
+
 // FIX: uses .open class — matches .modal-overlay CSS, not .show
 function showPdfModal(html) {
   const m = document.getElementById('preview-modal');
@@ -3560,9 +3566,6 @@ function showPdfModal(html) {
   if (!m || !c) { toast('Preview modal not found'); return; }
   c.innerHTML = html;
   m.classList.add('open');
-  setTimeout(() => {
-    renderBvmbinoCharts(c);
-  }, 100);
 }
 
 // Convenience wrapper used by main.js window.expLastPdf
@@ -3590,60 +3593,94 @@ function closePreview() {
 async function saveAsPdf() {
   if (saveAsPdf._busy) { toast('PDF is already generating…'); return; }
   saveAsPdf._busy = true;
+
+  const wrapper = document.createElement('div');
+  let wrapperInDom = false;
+
   try {
     const el = document.getElementById('preview-content');
-    if (!el) { toast('Nothing to export'); return; }
+    if (!el || !el.innerHTML.trim()) { toast('Nothing to export'); return; }
 
-    // Wait up to 6s for html2pdf to finish loading from CDN
+    // Wait up to 8s for html2pdf to finish loading from CDN
     let waited = 0;
-    while (typeof html2pdf === 'undefined' && waited < 6000) {
+    while (typeof html2pdf === 'undefined' && waited < 8000) {
       await new Promise(r => setTimeout(r, 300));
       waited += 300;
     }
-    if (typeof html2pdf === 'undefined') { toast('PDF library not loaded — check connection'); return; }
+    if (typeof html2pdf === 'undefined') { toast('PDF library not loaded — check internet connection'); return; }
 
-    toast('Generating PDF…');
+    toast('⏳ Generating PDF…');
 
     const isMobile = window.innerWidth <= 768 || /iPhone|iPad|Android/i.test(navigator.userAgent);
-    const pdfScale = isMobile ? 2 : 3; // Extreme HD Text Rendering: scale 3 on desktop, 2 on mobile
+    const pdfScale = isMobile ? 2 : 3;
 
+    // Deep clone — replace videos with placeholders
     const inner = el.cloneNode(true);
-    inner.querySelectorAll('video').forEach(m => {
+    inner.querySelectorAll('video').forEach(v => {
       const ph = document.createElement('span');
       ph.textContent = '[video]';
       ph.style.cssText = 'color:#888;font-size:11px;font-style:italic;display:inline-block;margin:4px 0;';
-      m.replaceWith(ph);
+      v.replaceWith(ph);
+    });
+    // Remove any canvas elements that html2canvas can't re-render (they'll be blank)
+    inner.querySelectorAll('canvas').forEach(c => {
+      const ph = document.createElement('div');
+      ph.style.cssText = 'color:#999;font-size:10px;font-style:italic;padding:8px;border:1px solid #eee;border-radius:4px;margin:8px 0;';
+      ph.textContent = '[Chart — visible in preview]';
+      c.replaceWith(ph);
     });
 
-    // Create a pristine fixed-width container matching A4 layout exactly to prevent horizontal clipping
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'width: 794px; background: #ffffff; color: #2d3748; padding: 0; margin: 0; box-sizing: border-box; overflow: hidden;';
+    // CRITICAL: wrapper MUST be in the live DOM for html2canvas to measure it correctly
+    wrapper.style.cssText = [
+      'position:fixed',
+      'top:-9999px',
+      'left:0',
+      'width:794px',
+      'background:#ffffff',
+      'color:#2d3748',
+      'padding:0',
+      'margin:0',
+      'box-sizing:border-box',
+      'overflow:hidden',
+      'z-index:-1',
+    ].join(';');
     wrapper.innerHTML = inner.innerHTML;
+    document.body.appendChild(wrapper);
+    wrapperInDom = true;
+
+    // Small delay so browser paints the wrapper before capture
+    await new Promise(r => setTimeout(r, 80));
 
     await html2pdf().from(wrapper).set({
-      margin:      [15, 15, 15, 15], // Premium 15mm page margins
+      margin:      [15, 15, 15, 15],
       filename:    currentPdfFilename || 'bvmbino-export.pdf',
-      image:       { type: 'jpeg', quality: 1.0 }, // Maximum crisp resolution
-      html2canvas: { 
-        scale: pdfScale, 
-        backgroundColor: '#ffffff', 
-        useCORS: true, 
-        allowTaint: true, 
-        logging: false,
-        width: 794,        // Lock screenshot canvas width to standard A4 pixels
-        windowWidth: 794   // Lock browser layout width to prevent device clipping
+      image:       { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale:           pdfScale,
+        backgroundColor: '#ffffff',
+        useCORS:         true,
+        allowTaint:      true,
+        logging:         false,
+        width:           794,
+        windowWidth:     794,
+        scrollX:         0,
+        scrollY:         0,
       },
-      jsPDF:       { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
-      pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] },
+      jsPDF:     { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
     }).save();
-    
-    toast('PDF Exported ✓');
+
+    toast('✅ PDF Exported');
     closePreview();
+
   } catch (err) {
-    console.error('PDF export error:', err);
-    toast('PDF export failed');
+    console.error('[PDF] export error:', err);
+    toast('⚠️ PDF failed: ' + (err.message || 'unknown error'));
   } finally {
     saveAsPdf._busy = false;
+    if (wrapperInDom) {
+      try { document.body.removeChild(wrapper); } catch {}
+    }
   }
 }
 
@@ -4296,27 +4333,60 @@ async function handleScrape(url) {
 }
 
 // ── IMAGE GENERATION ──
+// Model priority (all free via Pollinations):
+//  1. gptimage-large  — GPT-4o image gen, best photorealism & instruction-following
+//  2. seedream-pro    — Artistic premium model, great for creative/branding visuals
+//  3. seedream5       — Solid fallback if pro is overloaded
+//  4. flux            — Reliable baseline, always available
+const _IMG_FREE_MODELS = ['gptimage-large', 'seedream-pro', 'seedream5', 'flux'];
+
 let _imgGenActive = false;
 async function generateImage(prompt, size = '1024x1024', quality = 'standard') {
   if (_imgGenActive) throw new Error('Already generating an image — please wait');
   _imgGenActive = true;
   try {
+    // 1. DALL-E 3 via OpenAI key (paid — best possible quality if key present)
     const openaiKey = safeKey(getKey('openai'));
     if (openaiKey) {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 30000);
+      const timer = setTimeout(() => ctrl.abort(), 35000);
       try {
         const res = await fetch('https://api.openai.com/v1/images/generations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openaiKey },
-          body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, quality, style: 'vivid', response_format: 'url' }),
+          body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, quality: 'hd', style: 'vivid', response_format: 'url' }),
           signal: ctrl.signal,
         });
         clearTimeout(timer);
-        if (res.ok) { const d = await res.json(); return d.data?.[0]?.url || ''; }
-      } catch (e) { clearTimeout(timer); console.warn('DALL-E failed, using Pollinations:', e.message); }
+        if (res.ok) { const d = await res.json(); const url = d.data?.[0]?.url; if (url) return url; }
+      } catch (e) { clearTimeout(timer); console.warn('[img] DALL-E failed → Pollinations:', e.message); }
     }
-    return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${size.split('x')[0]}&height=${size.split('x')[1]}&nologo=true&seed=${Date.now()}&enhance=true&model=flux`;
+
+    // 2. Free Pollinations chain — try best models first, fallback on error/timeout
+    const [w, h] = size.split('x').map(Number);
+    const seed = Math.floor(Math.random() * 999999);
+    const baseParams = `width=${w || 1024}&height=${h || 1024}&nologo=true&seed=${seed}&enhance=true`;
+
+    for (const model of _IMG_FREE_MODELS) {
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${baseParams}&model=${model}`;
+      try {
+        const ctrl = new AbortController();
+        // gptimage-large and seedream-pro can be slow — allow up to 45s
+        const timeout = model === 'flux' ? 20000 : 45000;
+        const timer = setTimeout(() => ctrl.abort(), timeout);
+        const res = await fetch(url, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (res.ok && res.headers.get('content-type')?.startsWith('image/')) {
+          window.logFeed && window.logFeed('system', `Image gen: ${model} ✓`);
+          return url;
+        }
+        console.warn(`[img] ${model} returned non-image (${res.status}) → next`);
+      } catch (e) {
+        console.warn(`[img] ${model} failed: ${e.message} → next`);
+      }
+    }
+
+    throw new Error('All free image models failed — check connection');
   } finally {
     _imgGenActive = false;
   }
