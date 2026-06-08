@@ -1162,6 +1162,20 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
         <textarea class="set-input" id="sys-prompt-input" rows="3" placeholder="Override Billy's persona…" style="min-height:70px"></textarea>
         <button id="save-sysprompt-btn" class="nbtn" style="margin-top:6px">💾 Save Prompt</button>
       </div>
+      <!-- ── USER PROFILE — injected into every agent so they never fabricate ── -->
+      <div style="border:1px solid var(--bd2);border-radius:var(--r);padding:12px;background:rgba(232,169,18,.04);">
+        <span class="lbl" style="color:var(--pu2);font-size:11px">🪪 YOUR PROFILE — Agents use this as ground truth. They will NEVER invent data outside it.</span>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px">
+          <div><span class="lbl">Your Name</span><input class="set-input" id="prof-name" type="text" placeholder="e.g. Tiegbe" autocomplete="off"></div>
+          <div><span class="lbl">Business / Company</span><input class="set-input" id="prof-business" type="text" placeholder="e.g. Bvmbino World Shop" autocomplete="off"></div>
+          <div><span class="lbl">Industry / Niche</span><input class="set-input" id="prof-industry" type="text" placeholder="e.g. AI tools, e-commerce, consulting" autocomplete="off"></div>
+          <div><span class="lbl">Current Financial Situation</span><textarea class="set-input" id="prof-finance" rows="2" placeholder="e.g. Monthly revenue ~€3K, target €10K, bootstrapped, 2 clients active" style="min-height:55px"></textarea></div>
+          <div><span class="lbl">Active Projects / Goals</span><textarea class="set-input" id="prof-projects" rows="2" placeholder="e.g. Launch Bvmbino Pro, close 3 retainer clients by Q3, build automation pipeline" style="min-height:55px"></textarea></div>
+          <div><span class="lbl">Team / Partners</span><input class="set-input" id="prof-team" type="text" placeholder="e.g. Solo operator, 1 VA, partner Karim" autocomplete="off"></div>
+          <div><span class="lbl">Anything else agents must know</span><textarea class="set-input" id="prof-extra" rows="2" placeholder="e.g. Based in Paris, speaks French + English, prefers direct answers" style="min-height:55px"></textarea></div>
+          <button id="save-profile-btn" class="nbtn">💾 Save Profile — All Agents Will Know This</button>
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="nbtn" id="close-settings-footer" onclick="window.toggleSettings && window.toggleSettings(false)" style="width:auto;padding:0 24px">Close</button>
@@ -1635,7 +1649,40 @@ async function buildSys() {
     : '';
 
   const webStr = '\n\n[UNRESTRICTED WEB ACCESS & SEARCH PROTOCOL]:\nAll agents (including Billy and all Matrix Specialists) are FULLY AUTHORIZED to navigate and search the internet at all times to perform targeted research.\n- You have absolute freedom of web navigation. You can search for detailed information on people, sports clubs, companies, directories, live markets, or historical datasets without any restrictions.\n- Whenever a request requires precise, verifiable, real-time data or deeper background context, utilize the search command. Ground your analysis, reports, and plans on verifiable data from reputable sources.\n- TO EXECUTE A SEARCH: Output "[SEARCH: query]" on its own line. The system will retrieve real-time search results and return them to you to compile your response.\n- TO EXTRACT CONTENT FROM A SPECIFIC PAGE: Output "[READ: https://url]" on its own line.\n- Always present the verified sources, links, or concrete data in your reports to ensure maximum credibility.';
-  return `${base}${memBlock}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}${langPrompt}\\n\\nGLOBAL CONTEXT: ${vTier}\\nACTIVE PROJECTS: ${pTier}${memStr}\\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
+
+  // ── USER PROFILE — loaded from settings, injected as ground truth ──
+  let profileBlock = '';
+  try {
+    const prof = JSON.parse(localStorage.getItem('bv_user_profile') || '{}');
+    const fields = [
+      prof.name       ? `NAME: ${prof.name}` : '',
+      prof.business   ? `BUSINESS/COMPANY: ${prof.business}` : '',
+      prof.industry   ? `INDUSTRY/NICHE: ${prof.industry}` : '',
+      prof.finance    ? `FINANCIAL SITUATION: ${prof.finance}` : '',
+      prof.projects   ? `ACTIVE PROJECTS & GOALS: ${prof.projects}` : '',
+      prof.team       ? `TEAM/PARTNERS: ${prof.team}` : '',
+      prof.extra      ? `ADDITIONAL CONTEXT: ${prof.extra}` : '',
+    ].filter(Boolean);
+    if (fields.length) {
+      profileBlock = `\n\n━━ BOSS PROFILE (GROUND TRUTH) ━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `This is the REAL, verified profile of the person you work for. ` +
+        `USE THIS as the only source of truth for personal, business, and financial context.\n` +
+        fields.join('\n') + `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+    }
+  } catch {}
+
+  // ── ANTI-FABRICATION DIRECTIVE — hardcoded, cannot be overridden ──
+  const noFabStr = `\n\n[CRITICAL — ANTI-FABRICATION LAW]:\n` +
+    `You are STRICTLY FORBIDDEN from inventing, guessing, or fabricating ANY of the following:\n` +
+    `- Financial figures, revenue, profits, valuations, or monetary amounts\n` +
+    `- Client names, deal sizes, or business metrics\n` +
+    `- Personal details, relationships, or biographical facts\n` +
+    `- Project statuses, timelines, or outcomes\n` +
+    `- Market data, statistics, or research findings (unless from a verified [SEARCH] result)\n` +
+    `IF you do not have verified data: say "I don't have that info — please provide it" or run a [SEARCH].\n` +
+    `NEVER fill gaps with invented numbers, stories, or scenarios. This is non-negotiable.`;
+
+  return `${base}${profileBlock}${memBlock}${dateCtx}${pStr}${vStr}${mStr}${bStr}${voiceStr}${webStr}${noFabStr}${langPrompt}\n\nGLOBAL CONTEXT: ${vTier}\nACTIVE PROJECTS: ${pTier}${memStr}\n[ENGINE]: Execute with high Lexical Density and Elite Business Logic.`;
 }
 
 // ── UTILITIES ──
@@ -3590,86 +3637,137 @@ function closePreview() {
   }, 100);
 }
 
+// ── FAST PDF RENDERER — pure jsPDF text, no html2canvas screenshot ──────────
+// html2canvas was slow (3-8s) and crashed on large content.
+// This renderer extracts clean text from the preview DOM and writes directly
+// to jsPDF, so it's instant and never crashes.
 async function saveAsPdf() {
-  if (saveAsPdf._busy) { toast('PDF is already generating…'); return; }
+  if (saveAsPdf._busy) { toast('Generating PDF…'); return; }
   saveAsPdf._busy = true;
-
-  const wrapper = document.createElement('div');
-  let wrapperInDom = false;
-
   try {
     const el = document.getElementById('preview-content');
-    if (!el || !el.innerHTML.trim()) { toast('Nothing to export'); return; }
+    if (!el || !el.textContent.trim()) { toast('Nothing to export'); return; }
 
-    // Wait up to 8s for html2pdf to finish loading from CDN
+    // Wait up to 6s for jsPDF (bundled inside html2pdf) to be available
     let waited = 0;
-    while (typeof html2pdf === 'undefined' && waited < 8000) {
-      await new Promise(r => setTimeout(r, 300));
-      waited += 300;
+    while (typeof html2pdf === 'undefined' && waited < 6000) {
+      await new Promise(r => setTimeout(r, 250));
+      waited += 250;
     }
-    if (typeof html2pdf === 'undefined') { toast('PDF library not loaded — check internet connection'); return; }
+    if (typeof html2pdf === 'undefined') { toast('PDF library not loaded — check connection'); return; }
 
-    toast('⏳ Generating PDF…');
+    toast('⏳ Building PDF…');
 
-    const isMobile = window.innerWidth <= 768 || /iPhone|iPad|Android/i.test(navigator.userAgent);
-    const pdfScale = isMobile ? 2 : 3;
+    // ── Extract structured text from DOM ────────────────────────────
+    const lines = [];
+    const dateStr = new Date().toLocaleString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    lines.push({ type: 'logo',    text: '⚜ BVMBINO PRO' });
+    lines.push({ type: 'date',    text: dateStr });
+    lines.push({ type: 'divider', text: '' });
 
-    // Deep clone — replace videos with placeholders
-    const inner = el.cloneNode(true);
-    inner.querySelectorAll('video').forEach(v => {
-      const ph = document.createElement('span');
-      ph.textContent = '[video]';
-      ph.style.cssText = 'color:#888;font-size:11px;font-style:italic;display:inline-block;margin:4px 0;';
-      v.replaceWith(ph);
-    });
-    // Remove any canvas elements that html2canvas can't re-render (they'll be blank)
-    inner.querySelectorAll('canvas').forEach(c => {
-      const ph = document.createElement('div');
-      ph.style.cssText = 'color:#999;font-size:10px;font-style:italic;padding:8px;border:1px solid #eee;border-radius:4px;margin:8px 0;';
-      ph.textContent = '[Chart — visible in preview]';
-      c.replaceWith(ph);
-    });
+    function walkNode(node) {
+      if (node.nodeType === 3) { // text node
+        const t = node.textContent.trim();
+        if (t) lines.push({ type: 'body', text: t });
+        return;
+      }
+      const tag = node.tagName ? node.tagName.toLowerCase() : '';
+      if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
+        lines.push({ type: 'heading', level: parseInt(tag[1], 10), text: node.textContent.trim() });
+      } else if (tag === 'li') {
+        lines.push({ type: 'bullet', text: '•  ' + node.textContent.trim() });
+      } else if (tag === 'tr') {
+        const cells = Array.from(node.querySelectorAll('td,th')).map(c => c.textContent.trim()).join('   |   ');
+        if (cells) lines.push({ type: tag === 'th' ? 'heading' : 'body', level: 3, text: cells });
+      } else if (tag === 'pre' || tag === 'code') {
+        lines.push({ type: 'code', text: node.textContent.trim() });
+      } else if (tag === 'hr' || tag === 'div' && node.classList.contains('divider')) {
+        lines.push({ type: 'divider', text: '' });
+      } else {
+        node.childNodes.forEach(walkNode);
+      }
+    }
+    el.childNodes.forEach(walkNode);
+    lines.push({ type: 'footer', text: 'Sovereign Intelligence Architecture v6.1 | Secure Local-First Delivery' });
 
-    // CRITICAL: wrapper MUST be in the live DOM for html2canvas to measure it correctly
-    wrapper.style.cssText = [
-      'position:fixed',
-      'top:-9999px',
-      'left:0',
-      'width:794px',
-      'background:#ffffff',
-      'color:#2d3748',
-      'padding:0',
-      'margin:0',
-      'box-sizing:border-box',
-      'overflow:hidden',
-      'z-index:-1',
-    ].join(';');
-    wrapper.innerHTML = inner.innerHTML;
-    document.body.appendChild(wrapper);
-    wrapperInDom = true;
+    // ── Render to jsPDF ─────────────────────────────────────────────
+    // Access jsPDF from html2pdf bundle or standalone
+    const jsPDFClass = window.jsPDF || (window.jspdf && window.jspdf.jsPDF);
+    if (!jsPDFClass) {
+      // Fallback: use html2pdf on a plain text clone (much faster than full DOM)
+      const plain = document.createElement('div');
+      plain.style.cssText = 'font-family:Arial,sans-serif;font-size:13px;color:#222;line-height:1.7;padding:8px;background:#fff;';
+      plain.innerHTML = el.innerHTML;
+      plain.querySelectorAll('canvas,video,script').forEach(e => e.remove());
+      document.body.appendChild(plain);
+      await html2pdf().from(plain).set({
+        margin: [12,12,12,12],
+        filename: currentPdfFilename || 'bvmbino-export.pdf',
+        image: { type:'jpeg', quality:0.95 },
+        html2canvas: { scale:2, backgroundColor:'#fff', useCORS:true, logging:false, width:794, windowWidth:794 },
+        jsPDF: { unit:'mm', format:'a4', orientation: currentPdfOrientation || 'portrait' },
+        pagebreak: { mode:['avoid-all','css','legacy'] },
+      }).save();
+      document.body.removeChild(plain);
+      toast('✅ PDF Exported');
+      closePreview();
+      return;
+    }
 
-    // Small delay so browser paints the wrapper before capture
-    await new Promise(r => setTimeout(r, 80));
+    const doc = new jsPDFClass({ orientation: currentPdfOrientation || 'portrait', unit:'mm', format:'a4' });
+    const PW = doc.internal.pageSize.getWidth();
+    const PH = doc.internal.pageSize.getHeight();
+    const ML = 18, MR = 18, MT = 22, MB = 20;
+    const CW = PW - ML - MR;
+    let y = MT;
 
-    await html2pdf().from(wrapper).set({
-      margin:      [15, 15, 15, 15],
-      filename:    currentPdfFilename || 'bvmbino-export.pdf',
-      image:       { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale:           pdfScale,
-        backgroundColor: '#ffffff',
-        useCORS:         true,
-        allowTaint:      true,
-        logging:         false,
-        width:           794,
-        windowWidth:     794,
-        scrollX:         0,
-        scrollY:         0,
-      },
-      jsPDF:     { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-    }).save();
+    const addPage = () => { doc.addPage(); y = MT; };
+    const checkY = (h) => { if (y + h > PH - MB) addPage(); };
 
+    for (const line of lines) {
+      if (line.type === 'logo') {
+        checkY(10);
+        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor('#d4940a');
+        doc.text(line.text, ML, y); y += 8;
+      } else if (line.type === 'date') {
+        checkY(6);
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor('#718096');
+        doc.text(line.text, ML, y); y += 6;
+      } else if (line.type === 'divider') {
+        checkY(4);
+        doc.setDrawColor('#e8d5a0'); doc.setLineWidth(0.4);
+        doc.line(ML, y, PW - MR, y); y += 5;
+      } else if (line.type === 'heading') {
+        const sz = line.level === 1 ? 15 : line.level === 2 ? 13 : 11;
+        const wrapped = doc.splitTextToSize(line.text, CW);
+        checkY(sz * 0.4 + wrapped.length * sz * 0.45 + 4);
+        doc.setFont('helvetica','bold'); doc.setFontSize(sz); doc.setTextColor('#d4940a');
+        doc.text(wrapped, ML, y); y += wrapped.length * sz * 0.45 + 4;
+      } else if (line.type === 'bullet') {
+        const wrapped = doc.splitTextToSize(line.text, CW - 4);
+        checkY(wrapped.length * 5 + 2);
+        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor('#2d3748');
+        doc.text(wrapped, ML + 2, y); y += wrapped.length * 5 + 2;
+      } else if (line.type === 'code') {
+        const wrapped = doc.splitTextToSize(line.text, CW - 8);
+        checkY(wrapped.length * 4.5 + 6);
+        doc.setFillColor('#f7fafc'); doc.setDrawColor('#e2e8f0');
+        doc.roundedRect(ML, y - 3, CW, wrapped.length * 4.5 + 6, 2, 2, 'FD');
+        doc.setFont('courier','normal'); doc.setFontSize(9); doc.setTextColor('#d4940a');
+        doc.text(wrapped, ML + 4, y + 1); y += wrapped.length * 4.5 + 8;
+      } else if (line.type === 'footer') {
+        y = PH - MB + 4;
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor('#a0aec0');
+        doc.text(line.text, PW / 2, y, { align: 'center' });
+      } else if (line.text) {
+        const wrapped = doc.splitTextToSize(line.text, CW);
+        checkY(wrapped.length * 5.5 + 2);
+        doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor('#2d3748');
+        doc.text(wrapped, ML, y); y += wrapped.length * 5.5 + 2;
+      }
+    }
+
+    doc.save(currentPdfFilename || 'bvmbino-export.pdf');
     toast('✅ PDF Exported');
     closePreview();
 
@@ -3678,9 +3776,6 @@ async function saveAsPdf() {
     toast('⚠️ PDF failed: ' + (err.message || 'unknown error'));
   } finally {
     saveAsPdf._busy = false;
-    if (wrapperInDom) {
-      try { document.body.removeChild(wrapper); } catch {}
-    }
   }
 }
 
@@ -4338,7 +4433,9 @@ async function handleScrape(url) {
 //  2. seedream-pro    — Artistic premium model, great for creative/branding visuals
 //  3. seedream5       — Solid fallback if pro is overloaded
 //  4. flux            — Reliable baseline, always available
-const _IMG_FREE_MODELS = ['gptimage-large', 'seedream-pro', 'seedream5', 'flux'];
+// flux is the most reliable free model on Pollinations — always listed first
+// Premium models (gptimage-large, seedream-pro) are tried after as quality upgrades
+const _IMG_FREE_MODELS = ['flux', 'gptimage-large', 'seedream-pro', 'seedream5'];
 
 let _imgGenActive = false;
 async function generateImage(prompt, size = '1024x1024', quality = 'standard') {
@@ -5224,6 +5321,22 @@ const App = {
 
     this._on('gen-img-btn', 'click', () => this.handleGenImage());
 
+    // ─ § USER PROFILE ────────────────────────────────────────────
+    this._on('save-profile-btn', 'click', () => {
+      const prof = {
+        name:     document.getElementById('prof-name')?.value.trim()     || '',
+        business: document.getElementById('prof-business')?.value.trim() || '',
+        industry: document.getElementById('prof-industry')?.value.trim() || '',
+        finance:  document.getElementById('prof-finance')?.value.trim()  || '',
+        projects: document.getElementById('prof-projects')?.value.trim() || '',
+        team:     document.getElementById('prof-team')?.value.trim()     || '',
+        extra:    document.getElementById('prof-extra')?.value.trim()    || '',
+      };
+      localStorage.setItem('bv_user_profile', JSON.stringify(prof));
+      window.logFeed && window.logFeed('system', 'Boss profile saved — all agents updated');
+      toast('\uD83D\uDCBC Profile Saved \u2014 Agents now know your real context');
+    });
+
     // Result actions — delegated (to-chat, open, download)
     document.getElementById('img-result')?.addEventListener('click', e => {
       const btn = e.target.closest('[data-action]');
@@ -5364,6 +5477,18 @@ const App = {
     const temp = document.getElementById('param-temp');
     const tlbl = document.getElementById('val-temp');
     if (temp) { temp.value = state.config.temp; if (tlbl) tlbl.textContent = state.config.temp; }
+    // Seed profile fields
+    try {
+      const prof = JSON.parse(localStorage.getItem('bv_user_profile') || '{}');
+      const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+      set('prof-name',     prof.name);
+      set('prof-business', prof.business);
+      set('prof-industry', prof.industry);
+      set('prof-finance',  prof.finance);
+      set('prof-projects', prof.projects);
+      set('prof-team',     prof.team);
+      set('prof-extra',    prof.extra);
+    } catch {}
   },
 
   // ── Modal / Sidebar ───────────────────────────────────────────
