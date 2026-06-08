@@ -1621,9 +1621,9 @@ async function buildSys() {
     base = `YOU ARE ${sk.name} — ${sk.persona}.\n\nYOUR CORE DIRECTIVE:\n${PROMPTS[state.activeSkill] || ''}\n\nDo NOT act as Billy. Act entirely as ${sk.name}. Use your specific expertise and persona to answer the user.`;
   }
 
-  const langPrompt = state.language === 'FR' 
-    ? '\\n\\n[MANDATORY LANGUAGE]: You MUST speak entirely in French.'
-    : '\\n\\n[MANDATORY LANGUAGE]: You MUST speak entirely in English.';
+  const langPrompt = state.language === 'FR'
+    ? '\n\n[MANDATORY LANGUAGE]: You MUST speak entirely in French. All replies in French.'
+    : '\n\n[MANDATORY LANGUAGE]: You MUST speak entirely in English. All replies in English.';
 
   // Obsidian Core Memory — inject FIRST, right after base identity, so all agents see it with max attention
   const memBlock = kStr
@@ -5573,45 +5573,48 @@ const App = {
     const prompt  = document.getElementById('img-prompt')?.value.trim();
     if (!prompt) { toast('Enter an image prompt'); return; }
 
-    // Limit to 3 images per session
+    // Session cap — 6 per session (raised from 3)
     state._imgGenCount = state._imgGenCount || 0;
-    if (state._imgGenCount >= 3) { toast('3 images max per session — refresh to reset'); return; }
+    if (state._imgGenCount >= 6) { toast('6 images reached — refresh to reset'); return; }
 
     const size    = document.getElementById('img-size')?.value    || '1024x1024';
     const quality = document.getElementById('img-quality')?.value || 'standard';
     const btn     = document.getElementById('gen-img-btn');
     const result  = document.getElementById('img-result');
 
-    if (btn) { btn.textContent = '⏳ Generating…'; btn.disabled = true; }
+    if (btn) { btn.textContent = '🔍 Trying best model…'; btn.disabled = true; }
+    window.logFeed && window.logFeed('system', 'Image gen started: ' + prompt.slice(0, 60));
 
     try {
-      if (btn) { btn.textContent = '⏳ Loading Image...'; btn.disabled = true; }
       const url = await generateImage(prompt, size, quality);
       if (!url) throw new Error('No URL returned');
-      
-      // Wait for the image to load fully before injecting it
+
+      if (btn) btn.textContent = '⏳ Loading image…';
+
+      // Pre-load the image so it's ready before injecting into gallery
       await new Promise((resolve, reject) => {
         const img = new Image();
-        img.onload = resolve;
-        img.onerror = () => reject(new Error('Image could not be loaded.'));
+        const timer = setTimeout(() => resolve(), 12000); // don't block forever on slow CDN
+        img.onload = () => { clearTimeout(timer); resolve(); };
+        img.onerror = () => { clearTimeout(timer); reject(new Error('Image failed to load — try again')); };
         img.src = url;
       });
 
       state._imgGenCount++;
+      const remaining = 6 - state._imgGenCount;
+
       if (result) {
         result.style.display = 'block';
-        // Append new image to gallery instead of replacing
         const card = document.createElement('div');
         card.style.cssText = 'margin-bottom:12px;border-bottom:1px solid var(--bd);padding-bottom:10px';
         card.innerHTML = `
-          <div style="font-size:9px;color:var(--t3);margin-bottom:4px">#${state._imgGenCount}/3 — ${esc(prompt.slice(0, 60))}${prompt.length > 60 ? '…' : ''}</div>
+          <div style="font-size:9px;color:var(--t3);margin-bottom:4px">#${state._imgGenCount}/6 — ${esc(prompt.slice(0, 60))}${prompt.length > 60 ? '…' : ''}</div>
           <img src="${esc(url)}" class="gen-img" alt="Generated" style="width:100%;border-radius:6px" onerror="this.style.opacity='.4'">
           <div class="gen-img-actions" style="margin-top:6px">
             <button class="mact" data-action="to-chat"  data-url="${esc(url)}" data-prompt="${esc(prompt)}">💬 To Chat</button>
             <button class="mact" data-action="open"     data-url="${esc(url)}">🔗 Open</button>
-            <button class="mact" data-action="download" data-url="${esc(url)}">⬇️ Download</button>
+            <button class="mact" data-action="download" data-url="${esc(url)}">⬇️ Save</button>
           </div>`;
-        // Wire buttons on this card
         card.querySelectorAll('[data-action]').forEach(b => {
           b.addEventListener('click', () => {
             if (b.dataset.action === 'to-chat')  this.sendImgToChat(url, prompt);
@@ -5619,13 +5622,15 @@ const App = {
             if (b.dataset.action === 'download')  this.downloadImg(url);
           });
         });
-        result.appendChild(card);
-        if (state._imgGenCount >= 3) toast('3/3 images generated — session limit reached');
-        else toast(`Image ${state._imgGenCount}/3 generated ✓`);
+        result.insertBefore(card, result.firstChild); // newest on top
+        window.logFeed && window.logFeed('system', `Image ${state._imgGenCount}/6 ready`);
+        if (remaining <= 0) toast('6/6 session limit reached — refresh to reset');
+        else toast(`✅ Image ${state._imgGenCount}/6 ready — ${remaining} left`);
       }
     } catch (e) {
-      toast('Image generation failed: ' + e.message);
-      console.error(e);
+      console.error('[img] handleGenImage:', e);
+      toast('⚠️ ' + e.message);
+      window.logFeed && window.logFeed('warn', 'Image gen failed: ' + e.message);
     } finally {
       if (btn) { btn.textContent = '🎨 Generate'; btn.disabled = false; }
     }
