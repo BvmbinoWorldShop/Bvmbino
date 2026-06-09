@@ -397,6 +397,60 @@ textarea.set-input{resize:vertical;min-height:80px;line-height:1.5;}
 #preview-content code{background:#f0eeff;padding:1px 5px;border-radius:3px;color:#d4940a;}
 #preview-content strong{color:#0a0800;}
 
+/* PDF Render Page-Break & Layout Rules */
+.pdf-render-active h1, .pdf-render-active h2, .pdf-render-active h3 {
+  color: #d4940a !important;
+  font-family: Arial, sans-serif !important;
+  margin-top: 18px !important;
+  margin-bottom: 8px !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  page-break-after: avoid !important;
+  break-after: avoid !important;
+}
+.pdf-render-active p, .pdf-render-active li, .pdf-render-active tr, .pdf-render-active blockquote {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  margin-bottom: 10px !important;
+}
+.pdf-render-active pre, .pdf-render-active code {
+  background: #f7fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4px !important;
+  padding: 10px !important;
+  font-family: Courier, monospace !important;
+  font-size: 12px !important;
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+.pdf-render-active table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 15px 0 !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+.pdf-render-active th, .pdf-render-active td {
+  border: 1px solid #cbd5e0 !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  text-align: left !important;
+}
+.pdf-render-active th {
+  background: #edf2f7 !important;
+  color: #2d3748 !important;
+}
+.pdf-render-active img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block !important;
+  margin: 10px 0 !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
 .toast-ctn{position:fixed;top:70px;right:16px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
 #toasts{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;}
 .toast{padding:9px 16px;border-radius:20px;font-size:11px;font-family:var(--mono);background:var(--s2);border:1px solid var(--bd2);color:var(--t1);box-shadow:var(--shadow);animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;max-width:300px;white-space:nowrap;}
@@ -3638,13 +3692,11 @@ function closePreview() {
 }
 
 // ── FAST PDF RENDERER — pure A4 html2pdf rendering with page-break safety ──
-// Renders to a temporary 800px wrapper to ensure perfect A4 layout scaling on both
-// mobile and desktop without cutting or slicing text inside paragraphs.
+// Renders the visible preview container styled to exactly A4 margins on capture.
 async function saveAsPdf() {
   if (saveAsPdf._busy) { toast('Generating PDF…'); return; }
   saveAsPdf._busy = true;
 
-  let wrapper = null;
   try {
     const el = document.getElementById('preview-content');
     if (!el || !el.textContent.trim()) { toast('Nothing to export'); return; }
@@ -3659,89 +3711,28 @@ async function saveAsPdf() {
 
     toast('⏳ Generating A4 PDF…');
 
-    // Create a temporary hidden wrapper styled specifically for A4 layout (800px width is perfect)
-    wrapper = document.createElement('div');
-    wrapper.className = 'pdf-wrapper-temp';
-    wrapper.style.cssText = `
-      position: absolute;
-      left: -9999px;
-      top: 0;
-      width: 800px;
-      background: #ffffff;
-      color: #1a202c;
-      font-family: 'Inter', Arial, sans-serif;
-      font-size: 14px;
-      line-height: 1.6;
-      padding: 50px;
-      box-sizing: border-box;
+    // Save original styles to restore them after capture
+    const originalStyle = el.style.cssText;
+
+    // Apply temporary layout formatting to preview-content itself
+    // so html2canvas renders it beautifully without clipping the right side.
+    el.style.cssText = `
+      width: 800px !important;
+      max-width: 800px !important;
+      background: #ffffff !important;
+      color: #1a202c !important;
+      font-family: 'Inter', Arial, sans-serif !important;
+      font-size: 14px !important;
+      line-height: 1.6 !important;
+      padding: 50px !important;
+      box-sizing: border-box !important;
     `;
 
-    // Clone preview content
-    const clone = el.cloneNode(true);
-    
-    // Inject print/pagebreak styles inside the wrapper to avoid half-cut lines of text
-    const styleEl = document.createElement('style');
-    styleEl.textContent = `
-      .pdf-wrapper-temp h1, .pdf-wrapper-temp h2, .pdf-wrapper-temp h3 {
-        color: #d4940a !important;
-        font-family: Arial, sans-serif !important;
-        margin-top: 18px !important;
-        margin-bottom: 8px !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        page-break-after: avoid !important;
-        break-after: avoid !important;
-      }
-      .pdf-wrapper-temp p, .pdf-wrapper-temp li, .pdf-wrapper-temp tr, .pdf-wrapper-temp blockquote {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin-bottom: 10px !important;
-      }
-      .pdf-wrapper-temp pre, .pdf-wrapper-temp code {
-        background: #f7fafc !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 4px !important;
-        padding: 10px !important;
-        font-family: Courier, monospace !important;
-        font-size: 12px !important;
-        white-space: pre-wrap !important;
-        word-wrap: break-word !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-      .pdf-wrapper-temp table {
-        width: 100% !important;
-        border-collapse: collapse !important;
-        margin: 15px 0 !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-      .pdf-wrapper-temp th, .pdf-wrapper-temp td {
-        border: 1px solid #cbd5e0 !important;
-        padding: 8px 12px !important;
-        font-size: 13px !important;
-        text-align: left !important;
-      }
-      .pdf-wrapper-temp th {
-        background: #edf2f7 !important;
-        color: #2d3748 !important;
-      }
-      .pdf-wrapper-temp img {
-        max-width: 100% !important;
-        height: auto !important;
-        display: block !important;
-        margin: 10px 0 !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-    `;
+    // Add temporary class for page breaks
+    el.classList.add('pdf-render-active');
 
-    wrapper.appendChild(styleEl);
-    wrapper.appendChild(clone);
-    document.body.appendChild(wrapper);
-
-    // Wait a brief moment to ensure layout calculations are applied
-    await new Promise(r => setTimeout(r, 150));
+    // Wait a brief moment to ensure browser applies styling before canvas capture
+    await new Promise(r => setTimeout(r, 200));
 
     const opt = {
       margin:       15,
@@ -3759,7 +3750,7 @@ async function saveAsPdf() {
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
-    await html2pdf().from(wrapper).set(opt).save();
+    await html2pdf().from(el).set(opt).save();
 
     toast('✅ PDF Exported');
     closePreview();
@@ -3768,8 +3759,11 @@ async function saveAsPdf() {
     console.error('[PDF] export error:', err);
     toast('⚠️ PDF failed: ' + (err.message || 'unknown error'));
   } finally {
-    if (wrapper && wrapper.parentNode) {
-      try { wrapper.parentNode.removeChild(wrapper); } catch {}
+    const el = document.getElementById('preview-content');
+    if (el) {
+      el.classList.remove('pdf-render-active');
+      // Restore original styling
+      el.style.cssText = 'padding:32px;background:#fff;color:#111;font-family:sans-serif;line-height:1.7;font-size:13px;';
     }
     saveAsPdf._busy = false;
   }
@@ -5683,14 +5677,18 @@ const App = {
 
       if (btn) btn.textContent = '⏳ Loading image…';
 
-      // Pre-load the image so it's ready before injecting into gallery
-      await new Promise((resolve, reject) => {
-        const img = new Image();
-        const timer = setTimeout(() => resolve(), 12000); // don't block forever on slow CDN
-        img.onload = () => { clearTimeout(timer); resolve(); };
-        img.onerror = () => { clearTimeout(timer); reject(new Error('Image failed to load — try again')); };
-        img.src = url;
-      });
+      // Pre-load the image so it is cached by the browser, but do not block if it fails or is slow
+      try {
+        await new Promise((resolve) => {
+          const img = new Image();
+          const timer = setTimeout(() => resolve(), 15000); // 15s max timeout
+          img.onload = () => { clearTimeout(timer); resolve(); };
+          img.onerror = () => { clearTimeout(timer); resolve(); }; // Resolve anyway so it renders in the UI
+          img.src = url;
+        });
+      } catch (e) {
+        console.warn('[img] Pre-load check error (ignoring to proceed):', e.message);
+      }
 
       state._imgGenCount++;
       const remaining = 6 - state._imgGenCount;
