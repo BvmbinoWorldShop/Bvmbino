@@ -3637,18 +3637,19 @@ function closePreview() {
   }, 100);
 }
 
-// ── FAST PDF RENDERER — pure jsPDF text, no html2canvas screenshot ──────────
-// html2canvas was slow (3-8s) and crashed on large content.
-// This renderer extracts clean text from the preview DOM and writes directly
-// to jsPDF, so it's instant and never crashes.
+// ── FAST PDF RENDERER — pure A4 html2pdf rendering with page-break safety ──
+// Renders to a temporary 800px wrapper to ensure perfect A4 layout scaling on both
+// mobile and desktop without cutting or slicing text inside paragraphs.
 async function saveAsPdf() {
   if (saveAsPdf._busy) { toast('Generating PDF…'); return; }
   saveAsPdf._busy = true;
+
+  let wrapper = null;
   try {
     const el = document.getElementById('preview-content');
     if (!el || !el.textContent.trim()) { toast('Nothing to export'); return; }
 
-    // Wait up to 6s for jsPDF (bundled inside html2pdf) to be available
+    // Wait up to 6s for html2pdf to finish loading from CDN
     let waited = 0;
     while (typeof html2pdf === 'undefined' && waited < 6000) {
       await new Promise(r => setTimeout(r, 250));
@@ -3656,118 +3657,110 @@ async function saveAsPdf() {
     }
     if (typeof html2pdf === 'undefined') { toast('PDF library not loaded — check connection'); return; }
 
-    toast('⏳ Building PDF…');
+    toast('⏳ Generating A4 PDF…');
 
-    // ── Extract structured text from DOM ────────────────────────────
-    const lines = [];
-    const dateStr = new Date().toLocaleString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
-    lines.push({ type: 'logo',    text: '⚜ BVMBINO PRO' });
-    lines.push({ type: 'date',    text: dateStr });
-    lines.push({ type: 'divider', text: '' });
+    // Create a temporary hidden wrapper styled specifically for A4 layout (800px width is perfect)
+    wrapper = document.createElement('div');
+    wrapper.className = 'pdf-wrapper-temp';
+    wrapper.style.cssText = `
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 800px;
+      background: #ffffff;
+      color: #1a202c;
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 50px;
+      box-sizing: border-box;
+    `;
 
-    function walkNode(node) {
-      if (node.nodeType === 3) { // text node
-        const t = node.textContent.trim();
-        if (t) lines.push({ type: 'body', text: t });
-        return;
+    // Clone preview content
+    const clone = el.cloneNode(true);
+    
+    // Inject print/pagebreak styles inside the wrapper to avoid half-cut lines of text
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+      .pdf-wrapper-temp h1, .pdf-wrapper-temp h2, .pdf-wrapper-temp h3 {
+        color: #d4940a !important;
+        font-family: Arial, sans-serif !important;
+        margin-top: 18px !important;
+        margin-bottom: 8px !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        page-break-after: avoid !important;
+        break-after: avoid !important;
       }
-      const tag = node.tagName ? node.tagName.toLowerCase() : '';
-      if (tag === 'h1' || tag === 'h2' || tag === 'h3') {
-        lines.push({ type: 'heading', level: parseInt(tag[1], 10), text: node.textContent.trim() });
-      } else if (tag === 'li') {
-        lines.push({ type: 'bullet', text: '•  ' + node.textContent.trim() });
-      } else if (tag === 'tr') {
-        const cells = Array.from(node.querySelectorAll('td,th')).map(c => c.textContent.trim()).join('   |   ');
-        if (cells) lines.push({ type: tag === 'th' ? 'heading' : 'body', level: 3, text: cells });
-      } else if (tag === 'pre' || tag === 'code') {
-        lines.push({ type: 'code', text: node.textContent.trim() });
-      } else if (tag === 'hr' || tag === 'div' && node.classList.contains('divider')) {
-        lines.push({ type: 'divider', text: '' });
-      } else {
-        node.childNodes.forEach(walkNode);
+      .pdf-wrapper-temp p, .pdf-wrapper-temp li, .pdf-wrapper-temp tr, .pdf-wrapper-temp blockquote {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 10px !important;
       }
-    }
-    el.childNodes.forEach(walkNode);
-    lines.push({ type: 'footer', text: 'Sovereign Intelligence Architecture v6.1 | Secure Local-First Delivery' });
-
-    // ── Render to jsPDF ─────────────────────────────────────────────
-    // Access jsPDF from html2pdf bundle or standalone
-    const jsPDFClass = window.jsPDF || (window.jspdf && window.jspdf.jsPDF);
-    if (!jsPDFClass) {
-      // Fallback: use html2pdf on a plain text clone (much faster than full DOM)
-      const plain = document.createElement('div');
-      plain.style.cssText = 'font-family:Arial,sans-serif;font-size:13px;color:#222;line-height:1.7;padding:8px;background:#fff;';
-      plain.innerHTML = el.innerHTML;
-      plain.querySelectorAll('canvas,video,script').forEach(e => e.remove());
-      document.body.appendChild(plain);
-      await html2pdf().from(plain).set({
-        margin: [12,12,12,12],
-        filename: currentPdfFilename || 'bvmbino-export.pdf',
-        image: { type:'jpeg', quality:0.95 },
-        html2canvas: { scale:2, backgroundColor:'#fff', useCORS:true, logging:false, width:794, windowWidth:794 },
-        jsPDF: { unit:'mm', format:'a4', orientation: currentPdfOrientation || 'portrait' },
-        pagebreak: { mode:['avoid-all','css','legacy'] },
-      }).save();
-      document.body.removeChild(plain);
-      toast('✅ PDF Exported');
-      closePreview();
-      return;
-    }
-
-    const doc = new jsPDFClass({ orientation: currentPdfOrientation || 'portrait', unit:'mm', format:'a4' });
-    const PW = doc.internal.pageSize.getWidth();
-    const PH = doc.internal.pageSize.getHeight();
-    const ML = 18, MR = 18, MT = 22, MB = 20;
-    const CW = PW - ML - MR;
-    let y = MT;
-
-    const addPage = () => { doc.addPage(); y = MT; };
-    const checkY = (h) => { if (y + h > PH - MB) addPage(); };
-
-    for (const line of lines) {
-      if (line.type === 'logo') {
-        checkY(10);
-        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor('#d4940a');
-        doc.text(line.text, ML, y); y += 8;
-      } else if (line.type === 'date') {
-        checkY(6);
-        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor('#718096');
-        doc.text(line.text, ML, y); y += 6;
-      } else if (line.type === 'divider') {
-        checkY(4);
-        doc.setDrawColor('#e8d5a0'); doc.setLineWidth(0.4);
-        doc.line(ML, y, PW - MR, y); y += 5;
-      } else if (line.type === 'heading') {
-        const sz = line.level === 1 ? 15 : line.level === 2 ? 13 : 11;
-        const wrapped = doc.splitTextToSize(line.text, CW);
-        checkY(sz * 0.4 + wrapped.length * sz * 0.45 + 4);
-        doc.setFont('helvetica','bold'); doc.setFontSize(sz); doc.setTextColor('#d4940a');
-        doc.text(wrapped, ML, y); y += wrapped.length * sz * 0.45 + 4;
-      } else if (line.type === 'bullet') {
-        const wrapped = doc.splitTextToSize(line.text, CW - 4);
-        checkY(wrapped.length * 5 + 2);
-        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor('#2d3748');
-        doc.text(wrapped, ML + 2, y); y += wrapped.length * 5 + 2;
-      } else if (line.type === 'code') {
-        const wrapped = doc.splitTextToSize(line.text, CW - 8);
-        checkY(wrapped.length * 4.5 + 6);
-        doc.setFillColor('#f7fafc'); doc.setDrawColor('#e2e8f0');
-        doc.roundedRect(ML, y - 3, CW, wrapped.length * 4.5 + 6, 2, 2, 'FD');
-        doc.setFont('courier','normal'); doc.setFontSize(9); doc.setTextColor('#d4940a');
-        doc.text(wrapped, ML + 4, y + 1); y += wrapped.length * 4.5 + 8;
-      } else if (line.type === 'footer') {
-        y = PH - MB + 4;
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor('#a0aec0');
-        doc.text(line.text, PW / 2, y, { align: 'center' });
-      } else if (line.text) {
-        const wrapped = doc.splitTextToSize(line.text, CW);
-        checkY(wrapped.length * 5.5 + 2);
-        doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor('#2d3748');
-        doc.text(wrapped, ML, y); y += wrapped.length * 5.5 + 2;
+      .pdf-wrapper-temp pre, .pdf-wrapper-temp code {
+        background: #f7fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 4px !important;
+        padding: 10px !important;
+        font-family: Courier, monospace !important;
+        font-size: 12px !important;
+        white-space: pre-wrap !important;
+        word-wrap: break-word !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
-    }
+      .pdf-wrapper-temp table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        margin: 15px 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .pdf-wrapper-temp th, .pdf-wrapper-temp td {
+        border: 1px solid #cbd5e0 !important;
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        text-align: left !important;
+      }
+      .pdf-wrapper-temp th {
+        background: #edf2f7 !important;
+        color: #2d3748 !important;
+      }
+      .pdf-wrapper-temp img {
+        max-width: 100% !important;
+        height: auto !important;
+        display: block !important;
+        margin: 10px 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+    `;
 
-    doc.save(currentPdfFilename || 'bvmbino-export.pdf');
+    wrapper.appendChild(styleEl);
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    // Wait a brief moment to ensure layout calculations are applied
+    await new Promise(r => setTimeout(r, 150));
+
+    const opt = {
+      margin:       15,
+      filename:     currentPdfFilename || 'bvmbino-export.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { 
+        scale: 2, 
+        useCORS: true, 
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 800,
+        windowWidth: 800
+      },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
+      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    await html2pdf().from(wrapper).set(opt).save();
+
     toast('✅ PDF Exported');
     closePreview();
 
@@ -3775,6 +3768,9 @@ async function saveAsPdf() {
     console.error('[PDF] export error:', err);
     toast('⚠️ PDF failed: ' + (err.message || 'unknown error'));
   } finally {
+    if (wrapper && wrapper.parentNode) {
+      try { wrapper.parentNode.removeChild(wrapper); } catch {}
+    }
     saveAsPdf._busy = false;
   }
 }
@@ -4428,62 +4424,33 @@ async function handleScrape(url) {
 }
 
 // ── IMAGE GENERATION ──
-// Model priority (all free via Pollinations):
-//  1. gptimage-large  — GPT-4o image gen, best photorealism & instruction-following
-//  2. seedream-pro    — Artistic premium model, great for creative/branding visuals
-//  3. seedream5       — Solid fallback if pro is overloaded
-//  4. flux            — Reliable baseline, always available
-// flux is the most reliable free model on Pollinations — always listed first
-// Premium models (gptimage-large, seedream-pro) are tried after as quality upgrades
-const _IMG_FREE_MODELS = ['flux', 'gptimage-large', 'seedream-pro', 'seedream5'];
-
+// flux is the most reliable free model on Pollinations — used exclusively
 let _imgGenActive = false;
 async function generateImage(prompt, size = '1024x1024', quality = 'standard') {
   if (_imgGenActive) throw new Error('Already generating an image — please wait');
   _imgGenActive = true;
   try {
-    // 1. DALL-E 3 via OpenAI key (paid — best possible quality if key present)
-    const openaiKey = safeKey(getKey('openai'));
-    if (openaiKey) {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 35000);
-      try {
-        const res = await fetch('https://api.openai.com/v1/images/generations', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + openaiKey },
-          body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, quality: 'hd', style: 'vivid', response_format: 'url' }),
-          signal: ctrl.signal,
-        });
-        clearTimeout(timer);
-        if (res.ok) { const d = await res.json(); const url = d.data?.[0]?.url; if (url) return url; }
-      } catch (e) { clearTimeout(timer); console.warn('[img] DALL-E failed → Pollinations:', e.message); }
-    }
-
-    // 2. Free Pollinations chain — try best models first, fallback on error/timeout
     const [w, h] = size.split('x').map(Number);
     const seed = Math.floor(Math.random() * 999999);
-    const baseParams = `width=${w || 1024}&height=${h || 1024}&nologo=true&seed=${seed}&enhance=true`;
-
-    for (const model of _IMG_FREE_MODELS) {
-      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${baseParams}&model=${model}`;
-      try {
-        const ctrl = new AbortController();
-        // gptimage-large and seedream-pro can be slow — allow up to 45s
-        const timeout = model === 'flux' ? 20000 : 45000;
-        const timer = setTimeout(() => ctrl.abort(), timeout);
-        const res = await fetch(url, { signal: ctrl.signal });
-        clearTimeout(timer);
-        if (res.ok && res.headers.get('content-type')?.startsWith('image/')) {
-          window.logFeed && window.logFeed('system', `Image gen: ${model} ✓`);
-          return url;
-        }
-        console.warn(`[img] ${model} returned non-image (${res.status}) → next`);
-      } catch (e) {
-        console.warn(`[img] ${model} failed: ${e.message} → next`);
+    const baseParams = `width=${w || 1024}&height=${h || 1024}&nologo=true&seed=${seed}&enhance=true&model=flux`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?${baseParams}`;
+    
+    // Check if the image resolves successfully (200 OK)
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const res = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (res.ok && res.headers.get('content-type')?.startsWith('image/')) {
+        window.logFeed && window.logFeed('system', 'Image generated via Flux');
+        return url;
       }
+    } catch (e) {
+      clearTimeout(timer);
+      console.warn('[img] Flux fetch check failed, returning url directly:', e.message);
     }
-
-    throw new Error('All free image models failed — check connection');
+    // Return the url anyway as fallback
+    return url;
   } finally {
     _imgGenActive = false;
   }
