@@ -3441,6 +3441,16 @@ function buildExportHtml(text) {
       box-sizing: border-box;
     }
     
+    /* Presentation Page-Breaks & Clean Layout Split */
+    h1, h2, h3 {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+    p, li, tr, blockquote, pre, img, table {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+    
     /* Headers & Typography */
     h1, h2, h3 {
       color: #d4940a;
@@ -3715,16 +3725,17 @@ async function saveAsPdf() {
     const originalStyle = el.style.cssText;
 
     // Apply temporary layout formatting to preview-content itself
-    // so html2canvas renders it beautifully without clipping the right side.
+    // We use exactly 794px width (standard A4 width at 96 DPI) with 0 margins to fit the page edge-to-edge.
     el.style.cssText = `
-      width: 800px !important;
-      max-width: 800px !important;
+      width: 794px !important;
+      max-width: 794px !important;
+      min-height: 1123px !important;
       background: #ffffff !important;
-      color: #1a202c !important;
-      font-family: 'Inter', Arial, sans-serif !important;
+      color: #2d3748 !important;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
       font-size: 14px !important;
-      line-height: 1.6 !important;
-      padding: 50px !important;
+      line-height: 1.8 !important;
+      padding: 60px 50px !important;
       box-sizing: border-box !important;
     `;
 
@@ -3732,19 +3743,19 @@ async function saveAsPdf() {
     el.classList.add('pdf-render-active');
 
     // Wait a brief moment to ensure browser applies styling before canvas capture
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 250));
 
     const opt = {
-      margin:       15,
+      margin:       0, // Zero margin full bleed so A4 width maps perfectly to the 794px container
       filename:     currentPdfFilename || 'bvmbino-export.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
+      image:        { type: 'jpeg', quality: 1.0 },
       html2canvas:  { 
-        scale: 2, 
+        scale: 2.5, // Ultra sharp text and chart resolution
         useCORS: true, 
         backgroundColor: '#ffffff',
         logging: false,
-        width: 800,
-        windowWidth: 800
+        width: 794,
+        windowWidth: 794
       },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: currentPdfOrientation || 'portrait' },
       pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
