@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -555,6 +555,61 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
 .cmd-pill .cp-name{font-weight:600;}
 .cmd-pill .cp-cmd{opacity:.45;font-size:8px;margin-left:1px;}
 
+/* ── Language Toggle ── */
+.lang-toggle-btn{
+  background:var(--bg3);border:1px solid var(--bd);color:var(--t1);
+  height:32px;padding:0 10px;border-radius:var(--rsm);cursor:pointer;
+  font-size:11px;font-family:var(--head);font-weight:700;
+  transition:all .2s;display:flex;align-items:center;gap:4px;white-space:nowrap;
+  flex-shrink:0;
+}
+.lang-toggle-btn:hover{border-color:var(--bd2);background:var(--pu3);color:var(--pu2);}
+
+/* ── Venture Image Cards ── */
+.venture-img-card{
+  border-radius:8px;overflow:hidden;cursor:pointer;margin-bottom:6px;
+  border:1px solid var(--bd);transition:all .25s cubic-bezier(.4,0,.2,1);
+  height:70px;position:relative;flex-shrink:0;
+}
+.venture-img-card.active{border-color:var(--pu2);box-shadow:0 0 14px rgba(232,169,18,.22);}
+.venture-img-card:hover{transform:translateX(3px);border-color:var(--bd2);}
+.vic-bg{position:absolute;inset:0;width:100%;height:100%;}
+.vic-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to right,rgba(6,8,10,.94) 0%,rgba(6,8,10,.6) 65%,rgba(6,8,10,.15) 100%);
+}
+.vic-content{
+  position:absolute;inset:0;padding:9px 11px;
+  display:flex;flex-direction:column;justify-content:center;z-index:1;
+}
+.vic-icon{font-size:13px;line-height:1;margin-bottom:3px;}
+.vic-name{
+  font-family:var(--head);font-weight:800;font-size:11px;
+  color:var(--t1);letter-spacing:.3px;line-height:1.1;
+}
+.vic-desc{font-size:8.5px;color:var(--t3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:210px;}
+.vic-active-dot{
+  position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  width:5px;height:5px;border-radius:50%;background:var(--pu);
+  box-shadow:0 0 7px var(--pu);flex-shrink:0;
+}
+
+/* ── Career / Parcours Sportif ── */
+.career-list{display:flex;flex-direction:column;gap:5px;}
+.club-item{
+  padding:8px 10px;background:var(--bg3);border:1px solid var(--bd);
+  border-radius:var(--rsm);display:flex;align-items:center;gap:9px;
+  transition:all .2s;
+}
+.club-item:hover{border-color:var(--bd2);background:var(--pu3);}
+.club-logo{
+  width:30px;height:30px;border-radius:7px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+.club-info{display:flex;flex-direction:column;}
+.club-name{font-family:var(--head);font-weight:700;font-size:10px;color:var(--t1);}
+.club-period{font-size:9px;color:var(--t3);margin-top:1px;}
+
 </style>
 </head>
 <body>
@@ -586,12 +641,12 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
     </div>
     <button class="nbtn" id="new-chat-btn">
       <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="#0a0800" stroke-width="1.8" stroke-linecap="round"/></svg>
-      New conversation
+      <span data-i18n="nbtn">Nouvelle conversation</span>
     </button>
   </div>
   <div class="sb-scroll">
     <div class="ssect">
-      <span class="sbl">Active Engine</span>
+      <span class="sbl" data-i18n="sbl-engine">Moteur Actif</span>
       <div class="engine-badge" id="ai-engine-badge">
         <span class="pulse" style="color:var(--gn)"></span>
         <span id="engine-label">Connecting…</span>
@@ -599,33 +654,45 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
     </div>
     <div class="ssect">
       <button id="toggle-clients-btn" style="display:flex;align-items:center;width:100%;background:none;border:none;padding:0;cursor:pointer;margin-bottom:8px">
-        <span class="sbl" style="margin-bottom:0">🏰 Empire Pillars</span>
+        <span class="sbl" style="margin-bottom:0" data-i18n="sbl-empire">🏰 Piliers de l'Empire</span>
         <span id="client-arrow" style="margin-left:auto;font-size:9px;color:var(--t3);transition:transform .25s">▲</span>
       </button>
       <div id="client-panel" style="overflow:hidden;max-height:600px;transition:max-height .35s ease;">
         <div id="client-list" class="qacts"></div>
         <button class="qbtn" id="add-client-btn" style="margin-top:4px;border:1px dashed var(--bd2);background:none;justify-content:center;opacity:.7">
-          <span>+ Add Entity</span>
+          <span data-i18n="add-entity">+ Ajouter une Entité</span>
         </button>
       </div>
     </div>
     <div class="ssect">
-      <span class="sbl">Skills & Tools</span>
+      <span class="sbl">🏀 Parcours Sportif</span>
+      <div class="career-list">
+        <div class="club-item">
+          <div class="club-logo" style="background:linear-gradient(135deg,#1a0800,#c2410c)">🏀</div>
+          <div class="club-info">
+            <div class="club-name">Rouen Métropole Basket</div>
+            <div class="club-period">Pro B · 2022 – 2024</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ssect">
+      <span class="sbl" data-i18n="sbl-skills">Compétences & Outils</span>
       <div class="qacts">
-        <button class="qbtn" id="train-agent-btn" style="background:rgba(232,169,18,.1);border-color:var(--pu2)"><span class="qi">🧠</span><span>Train Agent</span><span class="qsub">Save context</span></button>
-        <button class="qbtn" id="gen-image-nav-btn"><span class="qi">🎨</span><span>Generate Image</span><span class="qsub">AI Art · Free</span></button>
-        <button class="qbtn" id="attach-file-nav-btn"><span class="qi">📎</span><span>Attach File</span><span class="qsub">Multimodal</span></button>
+        <button class="qbtn" id="train-agent-btn" style="background:rgba(232,169,18,.1);border-color:var(--pu2)"><span class="qi">🧠</span><span data-i18n="train-agent">Entraîner l'Agent</span><span class="qsub" data-i18n="save-context">Sauvegarder</span></button>
+        <button class="qbtn" id="gen-image-nav-btn"><span class="qi">🎨</span><span data-i18n="gen-image">Générer une Image</span><span class="qsub">AI Art · Free</span></button>
+        <button class="qbtn" id="attach-file-nav-btn"><span class="qi">📎</span><span data-i18n="attach-file">Joindre un Fichier</span><span class="qsub">Multimodal</span></button>
       </div>
     </div>
     <div class="ssect">
       <button id="toggle-history-btn" style="display:flex;align-items:center;width:100%;background:none;border:none;padding:0;cursor:pointer;margin-bottom:8px">
-        <span class="sbl" style="margin-bottom:0">📂 Recent Chats</span>
+        <span class="sbl" style="margin-bottom:0" data-i18n="sbl-history">📂 Discussions Récentes</span>
         <span id="hist-arrow" style="margin-left:auto;font-size:9px;color:var(--t3);transition:transform .25s">▼</span>
       </button>
       <div id="hist" class="qacts" style="overflow:hidden;max-height:0"></div>
     </div>
     <div class="ssect">
-      <span class="sbl">Model Selection</span>
+      <span class="sbl" data-i18n="sbl-models">Sélection du Modèle</span>
       <div id="model-list" class="qacts"></div>
     </div>
   </div>
@@ -636,13 +703,14 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
   <div class="topbar">
     <div class="tb-left">
       <button class="mb-menu" id="mb-menu-btn">☰</button>
-      <div class="tb-title" id="tbtitle">Bvmbino Pro · Command Hub</div>
+      <div class="tb-title" id="tbtitle" data-i18n="tbtitle">Bvmbino Pro · Centre de Commandement</div>
     </div>
     <div class="tb-right">
-      <div class="badge b-gn" style="padding:4px 8px;font-size:10px"><span class="pulse"></span>Memory Active</div>
+      <div class="badge b-gn" style="padding:4px 8px;font-size:10px"><span class="pulse"></span><span data-i18n="memory-active">Mémoire Active</span></div>
       <button class="icobtn" id="tb-gen-img-btn" title="Generate Image">🎨</button>
       <button class="icobtn" id="tb-mem-hub-btn" title="Memory Hub">💾</button>
-      <button class="icobtn" id="tb-settings-btn" title="Settings">⚙️</button>
+      <button class="icobtn" id="tb-settings-btn" title="Paramètres">⚙️</button>
+      <button class="lang-toggle-btn" id="lang-toggle-btn" onclick="window.toggleLang()" title="Switch to English">🇺🇸 EN</button>
     </div>
   </div>
 
@@ -654,16 +722,16 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
           <div class="w3d-core">🤖</div>
         </div>
         <h1 class="wt">BVMBINO PRO</h1>
-        <div class="wsubtitle">AI AGENTS V.6.1</div>
-        <p class="ws">I am Billy, your Sovereign Chief of Staff. I run the show and deploy the right specialists for your missions.</p>
-        
+        <div class="wsubtitle" data-i18n="wsubtitle">AGENTS IA V.6.1</div>
+        <p class="ws" data-i18n="ws">Je suis Billy, votre Chef d'État-Major Souverain. Je coordonne vos missions et déploie les meilleurs spécialistes.</p>
+
         <div class="skills-grid-wrap">
-          <div class="skills-grid-label">Sovereign Expert Matrix</div>
+          <div class="skills-grid-label" data-i18n="skills-label">Matrice des Experts Souverains</div>
           <div class="matrix-grid" id="welcome-grid">
             <!-- 24 Specialist Cards Rendered via JS -->
           </div>
         </div>
-        <p class="shint">Pick a specialist above or use any agent below</p>
+        <p class="shint" data-i18n="shint">Choisissez un spécialiste ci-dessus ou utilisez un agent ci-dessous</p>
         <div class="cmd-strip" id="cmd-strip">
           <!-- All agent /cmd pills rendered by JS -->
         </div>
@@ -676,7 +744,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="file-strip" id="file-strip"></div>
       <div class="smenu" id="smenu"></div>
       <div class="intop">
-        <textarea id="inp" placeholder="Order strategic offensive..." rows="1"></textarea>
+        <textarea id="inp" placeholder="Donnez vos ordres stratégiques..." rows="1" data-i18n-placeholder="inp"></textarea>
         <input type="file" id="file-input" style="display:none" multiple accept="image/*,.pdf,.txt,.csv,.json,.md,.js,.py,.html,.css,.ts,.jsx">
         <button class="langbtn" id="lang-btn">EN</button>
         <button class="micbtn" id="mic-btn">🎙️</button>
@@ -699,7 +767,7 @@ textarea.set-input{resize:vertical;min-height:70px;line-height:1.5;}
   <div class="mpe">
     <div class="mp-tier">
       <div class="mp-tier-head"><span class="mp-tier-label">VENTURES Context</span><button class="icobtn" id="edit-ventures-btn" style="width:20px;height:20px;font-size:9px">✎</button></div>
-      <div class="editable-zone" id="mp-ventures" contenteditable="false">Active context for FormationPro, Strong Wave, and Purgo Clean.</div>
+      <div class="editable-zone" id="mp-ventures" contenteditable="false">Contexte actif : Purgo Clean, Entreprise AI, Formation Pro · Akamee.</div>
     </div>
     <div class="mp-tier">
       <div class="mp-tier-head"><span class="mp-tier-label">PROJECTS Goals</span><button class="icobtn" id="edit-projects-btn" style="width:20px;height:20px;font-size:9px">✎</button></div>
@@ -952,12 +1020,13 @@ const PROMPTS = {
 };
 
 const CORE_VENTURES = [
-  { id:'fpro',    name:'FormationPro',   desc:'Elite training (CPF/Qualiopi, Mental Perf.)' },
-  { id:'swave',   name:'Strong Wave',    desc:'B2B Marketing & Growth (Île-de-France)' },
-  { id:'purgo',   name:'Purgo Clean',    desc:'Premium Commercial B2B Cleaning' },
-  { id:'keojus',  name:'Keo Jus',        desc:"Natural Juice Distribution (Cote d'Ivoire)" },
-  { id:'bonkeur', name:'Assoc. Bonkeur', desc:'Social Impact NGO & Community Support' },
-  { id:'entai',   name:'Entreprise AI',  desc:'Strategic Council Engine & Automation Hub' },
+  { id:'purgo',   name:'Purgo Clean',           desc:'Services de nettoyage premium B2B',      bg:'linear-gradient(135deg,#061828 0%,#0a3a5c 55%,#0ea5e9 100%)', icon:'🧹' },
+  { id:'entai',   name:'Entreprise AI',          desc:'Conseil Stratégique & Automatisation',   bg:'linear-gradient(135deg,#150e00 0%,#3d2800 55%,#e8a912 100%)', icon:'🤖' },
+  { id:'fpro',    name:'Formation Pro · Akamee', desc:"Formation d'excellence (CPF/Qualiopi)",  bg:'linear-gradient(135deg,#011208 0%,#014d1e 55%,#22c55e 100%)', icon:'🎓' },
+  { id:'proball', name:'Pro Ball Trainer',        desc:'Coach Basketball & Mental Coach',         bg:'linear-gradient(135deg,#1a0500 0%,#7c2d0a 55%,#f97316 100%)', icon:'🏀' },
+  { id:'swave',   name:'Strong Wave',             desc:'Marketing B2B & Croissance (IDF)',       bg:'linear-gradient(135deg,#0a0818 0%,#1e1060 55%,#8b5cf6 100%)', icon:'📊' },
+  { id:'bonkeur', name:'Assoc. Bonkeur',          desc:'Impact Social & Soutien Communautaire',  bg:'linear-gradient(135deg,#160a00 0%,#6b3a00 55%,#f59e0b 100%)', icon:'🤝' },
+  { id:'keojus',  name:'Keo Jus',                 desc:"Jus Naturels — Côte d'Ivoire",           bg:'linear-gradient(135deg,#071200 0%,#1e4d00 55%,#84cc16 100%)', icon:'🍊' },
 ];
 
 const SYSTEM_IDENTITY = `YOU ARE BILLY — BVMBINO APEX STRATEGIC PARTNER v5.7.
@@ -965,7 +1034,7 @@ Primary human: TIEGBE BAMBA (The Boss).
 
 CORE IDENTITY: Sovereign Digital Chief of Staff. Partner-in-arms. Growth hacker + elite strategist.
 MARKETS: Côte d'Ivoire, West Africa, France.
-VENTURES: FormationPro, Strong Wave, Purgo Clean, Keo Jus, Entreprise AI.
+VENTURES: Purgo Clean, Entreprise AI, Formation Pro · Akamee, Pro Ball Trainer, Strong Wave, Assoc. Bonkeur, Keo Jus.
 
 BEHAVIOR:
 1. Mirror Tiegbe's energy (Street vs Suite). Speak like a partner, not a utility.
@@ -1988,15 +2057,30 @@ async function renderClients() {
   if (!ctn) return;
   const stored = await loadClients();
   const all = [...CORE_VENTURES, ...stored];
-  ctn.innerHTML = all.map(c => `
-    <div class="qbtn ${state.activeClientId === c.id ? 'active' : ''}" onclick="window.setActiveClient('${esc(c.id)}')">
-      <span class="qi">${!CORE_VENTURES.find(v => v.id === c.id) ? '💼' : '🏢'}</span>
+  ctn.innerHTML = all.map(c => {
+    const isCore = !!CORE_VENTURES.find(v => v.id === c.id);
+    const active = state.activeClientId === c.id;
+    if (isCore) {
+      return `<div class="venture-img-card${active ? ' active' : ''}" onclick="window.setActiveClient('${esc(c.id)}')">
+        <div class="vic-bg" style="background:${c.bg || 'linear-gradient(135deg,#1a1a1a,#333)'}"></div>
+        <div class="vic-overlay"></div>
+        <div class="vic-content">
+          <span class="vic-icon">${c.icon || '🏢'}</span>
+          <div class="vic-name">${esc(c.name)}</div>
+          <div class="vic-desc">${esc(c.desc || '')}</div>
+        </div>
+        ${active ? '<div class="vic-active-dot"></div>' : ''}
+      </div>`;
+    }
+    return `<div class="qbtn${active ? ' active' : ''}" onclick="window.setActiveClient('${esc(c.id)}')">
+      <span class="qi">💼</span>
       <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
         <span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</span>
         <span class="qsub">${esc((c.desc || '').slice(0, 30))}…</span>
       </div>
-      ${!CORE_VENTURES.find(v => v.id === c.id) ? `<button onclick="window.deleteClient('${esc(c.id)}',event)" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0 4px;font-size:10px" title="Remove">✕</button>` : ''}
-    </div>`).join('');
+      <button onclick="window.deleteClient('${esc(c.id)}',event)" style="background:none;border:none;color:var(--t3);cursor:pointer;padding:0 4px;font-size:10px" title="Retirer">✕</button>
+    </div>`;
+  }).join('');
 }
 
 function setActiveClient(id) {
@@ -3886,6 +3970,72 @@ window.editMemoryTier = editMemoryTier;
 window.openSb         = openSb;
 window.send           = send;
 window.expLastPdf     = () => App.exportLastPdf();
+
+// ─────────────────────────────────────────────────────────────────
+//  LANGUAGE TOGGLE — FR (default) ↔ EN
+// ─────────────────────────────────────────────────────────────────
+window.toggleLang = (function() {
+  let lang = 'fr';
+  const T = {
+    fr: {
+      'tbtitle':      'Bvmbino Pro · Centre de Commandement',
+      'wsubtitle':    'AGENTS IA V.6.1',
+      'ws':           "Je suis Billy, votre Chef d'État-Major Souverain. Je coordonne vos missions et déploie les meilleurs spécialistes.",
+      'skills-label': 'Matrice des Experts Souverains',
+      'shint':        'Choisissez un spécialiste ci-dessus ou utilisez un agent ci-dessous',
+      'nbtn':         'Nouvelle conversation',
+      'sbl-engine':   'Moteur Actif',
+      'sbl-empire':   "🏰 Piliers de l'Empire",
+      'sbl-skills':   'Compétences & Outils',
+      'sbl-history':  '📂 Discussions Récentes',
+      'sbl-models':   'Sélection du Modèle',
+      'add-entity':   '+ Ajouter une Entité',
+      'train-agent':  "Entraîner l'Agent",
+      'save-context': 'Sauvegarder',
+      'gen-image':    'Générer une Image',
+      'attach-file':    'Joindre un Fichier',
+      'memory-active':  'Mémoire Active',
+      'inp':            'Donnez vos ordres stratégiques...',
+      'lang-toggle':    '🇺🇸 EN',
+    },
+    en: {
+      'tbtitle':      'Bvmbino Pro · Command Hub',
+      'wsubtitle':    'AI AGENTS V.6.1',
+      'ws':           'I am Billy, your Sovereign Chief of Staff. I run the show and deploy the right specialists for your missions.',
+      'skills-label': 'Sovereign Expert Matrix',
+      'shint':        'Pick a specialist above or use any agent below',
+      'nbtn':         'New conversation',
+      'sbl-engine':   'Active Engine',
+      'sbl-empire':   '🏰 Empire Pillars',
+      'sbl-skills':   'Skills & Tools',
+      'sbl-history':  '📂 Recent Chats',
+      'sbl-models':   'Model Selection',
+      'add-entity':   '+ Add Entity',
+      'train-agent':  'Train Agent',
+      'save-context': 'Save context',
+      'gen-image':    'Generate Image',
+      'attach-file':    'Attach File',
+      'memory-active':  'Memory Active',
+      'inp':            'Order strategic offensive...',
+      'lang-toggle':    '🇫🇷 FR',
+    }
+  };
+  return function() {
+    lang = lang === 'fr' ? 'en' : 'fr';
+    document.documentElement.lang = lang;
+    const t = T[lang];
+    const btn = document.getElementById('lang-toggle-btn');
+    if (btn) btn.innerHTML = t['lang-toggle'];
+    const inp = document.getElementById('inp');
+    if (inp) inp.placeholder = t['inp'];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const k = el.dataset.i18n;
+      if (t[k] !== undefined) el.textContent = t[k];
+    });
+    const sgl = document.querySelector('.skills-grid-label');
+    if (sgl) sgl.textContent = t['skills-label'];
+  };
+})();
 
 // ─────────────────────────────────────────────────────────────────
 //  BOOT
