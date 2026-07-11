@@ -29,6 +29,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/enterprise",        "destination": "/enterprise/index.html" },
+    { "source": "/enterprise/(.*)",   "destination": "/enterprise/index.html" },
+    { "source": "/((?!api|enterprise).*)", "destination": "/index.html" }
   ]
 }

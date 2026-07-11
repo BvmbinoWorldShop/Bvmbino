@@ -17,8 +17,8 @@ const OUT  = path.join(DIST, 'index.html');
 
 if (!fs.existsSync(DIST)) fs.mkdirSync(DIST, { recursive: true });
 
-// Copy all assets (images, manifest, sw, css, js folder)
-const ASSETS = ['assets', 'manifest.json', 'sw.js', 'index.css', 'js'];
+// Copy all assets (images, manifest, sw, css, js folder, enterprise)
+const ASSETS = ['assets', 'manifest.json', 'sw.js', 'index.css', 'js', 'enterprise'];
 ASSETS.forEach(item => {
   const src = path.join(__dirname, item);
   if (!fs.existsSync(src)) return;
